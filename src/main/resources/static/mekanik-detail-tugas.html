@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detail Tugas Teknisi — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a href="mekanik-tugas.html" class="back-btn" aria-label="Kembali ke daftar tugas">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Detail tugas</h1>
+        <p id="detailKodeSub" class="app-bar-subtitle">Memuat kode tugas...</p>
+      </div>
+    </header>
+
+    <section class="page-body has-bottom-action">
+      <div id="detailError" class="error-banner" role="alert"></div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <span id="detailMeta" style="font-size:11px;color:#64748B;">-</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span id="detailPriorityPill" class="priority-pill" style="display:none;">-</span>
+            <span id="detailStatusBadge" class="status-badge status-diproses">
+              <span class="status-dot"></span>
+              <span>Diproses</span>
+            </span>
+          </div>
+        </div>
+        <h2 id="detailTitle" class="detail-title">Memuat detail tugas...</h2>
+      </div>
+
+      <div id="detailPhotoBox" class="photo-box">
+        <img id="detailPhotoImg" class="photo-img" src="" alt="Foto bukti kerusakan" />
+        <div class="photo-placeholder-label">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+            <path d="M4 16L8.586 11.414C9.367 10.633 10.633 10.633 11.414 11.414L16 16M14 14L15.586 12.414C16.367 11.633 17.633 11.633 18.414 12.414L20 14M6 20H18C19.105 20 20 19.105 20 18V6C20 4.895 19.105 4 18 4H6C4.895 4 4 4.895 4 6V18C4 19.105 4.895 20 6 20ZM9 9C9 9.552 8.552 10 8 10C7.448 10 7 9.552 7 9C7 8.448 7.448 8 8 8C8.552 8 9 8.448 9 9Z" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>Foto bukti kerusakan dari pelapor (placeholder)</span>
+        </div>
+        <div id="photoCountPill" class="photo-count-pill" style="display:none;">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M10.5 7.49985L8.957 5.95685C8.58 5.58 7.92 5.58 7.543 5.95685L3 10.4998M2.5 1.5H9.5C10.0523 1.5 10.5 1.94772 10.5 2.5V9.5C10.5 10.0523 10.0523 10.5 9.5 10.5H2.5C1.94772 10.5 1.5 10.0523 1.5 9.5V2.5C1.5 1.94772 1.94772 1.5 2.5 1.5ZM5.5 4.5C5.5 5.05228 5.05228 5.5 4.5 5.5C3.94772 5.5 3.5 5.05228 3.5 4.5C3.5 3.94772 3.94772 3.5 4.5 3.5C5.05228 3.5 5.5 3.94772 5.5 4.5Z" stroke="white" stroke-linecap="round" />
+          </svg>
+          <span>1 foto</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <p id="detailDesc" class="detail-desc">-</p>
+        <div class="detail-location-row">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;">
+            <path d="M13.3328 6.66662C13.3328 9.9956 9.64054 13.4626 8.40066 14.5333C8.16 14.71 7.84 14.71 7.59941 14.5333C6.35953 13.4626 2.66724 9.9956 2.66724 6.66662C2.66724 3.72 5.05 1.33279 8.00004 1.33279C10.95 1.33279 13.3328 3.72 13.3328 6.66662ZM9.99984 6.66662C9.99984 7.77129 9.1045 8.66681 8.00004 8.66681C6.89558 8.66681 6.00024 7.77129 6.00024 6.66662C6.00024 5.56195 6.89558 4.66644 8.00004 4.66644C9.1045 4.66644 9.99984 5.56195 9.99984 6.66662Z" stroke="#2563EB" stroke-width="1.3" stroke-linecap="round" />
+          </svg>
+          <span id="detailLokasi">-</span>
+        </div>
+      </div>
+
+      <div class="resident-info-card">
+        <div id="residentAvatar" class="resident-avatar">P</div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
+          <div style="font-size:10px;color:#64748B;">Pelapor</div>
+          <div id="detailPenghuniNama" style="font-size:14px;font-weight:600;color:#172554;">-</div>
+          <div id="detailPenghuniKamar" style="font-size:12px;color:#64748B;">Kamar -</div>
+        </div>
+      </div>
+
+      <div class="info-banner">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
+          <path d="M8.5 11.3336V8.50001M8.5 5.66645H8.50708M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <strong style="font-size:12px;color:#172554;">Catatan / Instruksi Owner</strong>
+          <span id="detailOwnerNote">Belum ada catatan khusus dari pengelola. Lakukan pengecekan dan perbaikan sesuai keluhan penghuni.</span>
+        </div>
+      </div>
+
+      <div id="mekanikProofSection" style="display:none;flex-direction:column;gap:12px;">
+        <h3 class="section-title">Bukti &amp; Catatan Penyelesaian</h3>
+        <div class="summary-mini-card">
+          <div class="kv-row">
+            <span class="kv-label">Catatan Teknisi</span>
+            <span id="detailMekanikCatatan" class="kv-value">-</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Waktu Selesai</span>
+            <span id="detailWaktuSelesai" class="kv-value">-</span>
+          </div>
+        </div>
+        <div id="detailSelesaiPhotoBox" class="photo-box">
+          <img id="detailSelesaiPhotoImg" class="photo-img" src="" alt="Foto bukti perbaikan selesai" />
+          <div class="photo-placeholder-label">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M4 16L8.586 11.414C9.367 10.633 10.633 10.633 11.414 11.414L16 16M14 14L15.586 12.414C16.367 11.633 17.633 11.633 18.414 12.414L20 14M6 20H18C19.105 20 20 19.105 20 18V6C20 4.895 19.105 4 18 4H6C4.895 4 4 4.895 4 6V18C4 19.105 4.895 20 6 20Z" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Belum ada foto bukti penyelesaian</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <h3 class="section-title">Timeline pengerjaan</h3>
+        <div id="timelineContainer" class="timeline"></div>
+      </div>
+    </section>
+
+    <div id="mekanikActionBar" class="mekanik-bottom-action-bar">
+      <a id="updateTugasBtn" href="mekanik-update-pekerjaan.html" class="btn btn-primary">Update Pekerjaan</a>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const user = SarprasApp.requireMekanikAuth();
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      const errorBanner = document.getElementById('detailError');
+
+      function showError(msg) {
+        errorBanner.textContent = msg;
+        errorBanner.classList.add('visible');
+      }
+
+      if (!id) {
+        showError('ID tugas tidak ditemukan di URL.');
+        document.getElementById('detailTitle').textContent = 'Tugas tidak ditemukan';
+        document.getElementById('mekanikActionBar').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('updateTugasBtn').href = `mekanik-update-pekerjaan.html?id=${encodeURIComponent(id)}`;
+
+      function renderTimeline(laporan) {
+        const status = (laporan.status || 'DIPROSES').toUpperCase();
+        const isDiprosesOrSelesai = status === 'DIPROSES' || status === 'SELESAI';
+        const isSelesai = status === 'SELESAI';
+        const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.99969 3L4.50024 8.4996L2.00049 5.99978" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+        const steps = [
+          {
+            state: 'done',
+            label: 'Laporan masuk',
+            time: SarprasApp.formatDateTimeIndo(laporan.tanggal_lapor),
+            bold: false
+          },
+          {
+            state: isDiprosesOrSelesai ? 'done' : 'active',
+            label: 'Ditugaskan ke teknisi',
+            time: laporan.tanggal_diproses ? SarprasApp.formatDateTimeIndo(laporan.tanggal_diproses) : 'Menunggu penugasan',
+            bold: false
+          },
+          {
+            state: isSelesai ? 'done' : 'active',
+            label: 'Proses perbaikan lapangan',
+            time: isSelesai ? 'Dikerjakan teknisi' : 'Sedang dikerjakan',
+            bold: !isSelesai
+          },
+          {
+            state: isSelesai ? 'done' : 'pending',
+            label: 'Perbaikan selesai',
+            time: laporan.tanggal_selesai ? SarprasApp.formatDateTimeIndo(laporan.tanggal_selesai) : 'Menunggu penyelesaian',
+            bold: isSelesai
+          }
+        ];
+
+        document.getElementById('timelineContainer').innerHTML = steps.map((step, index) => {
+          const isLast = index === steps.length - 1;
+          const dotContent = step.state === 'done' ? checkSvg : '';
+          const labelClass = step.state === 'pending' ? 'timeline-label muted' : (step.bold ? 'timeline-label bold' : 'timeline-label');
+          return `
+            <div class="timeline-item">
+              <div class="timeline-rail">
+                <div class="timeline-dot ${step.state}">${dotContent}</div>
+                ${isLast ? '' : '<div class="timeline-line"></div>'}
+              </div>
+              <div class="timeline-content" style="${isLast ? 'padding-bottom:0;' : ''}">
+                <span class="${labelClass}">${SarprasApp.escapeHtml(step.label)}</span>
+                <span class="timeline-time">${SarprasApp.escapeHtml(step.time)}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function bindPhoto(boxId, imgId, pillId, url) {
+        const box = document.getElementById(boxId);
+        const img = document.getElementById(imgId);
+        const pill = pillId ? document.getElementById(pillId) : null;
+        if (url) {
+          img.src = url;
+          box.classList.add('has-image');
+          if (pill) pill.style.display = 'inline-flex';
+          img.onerror = () => {
+            img.setAttribute('src', '');
+            box.classList.remove('has-image');
+            if (pill) pill.style.display = 'none';
+          };
+        }
+      }
+
+      function renderDetail(laporan) {
+        document.getElementById('detailKodeSub').textContent = laporan.kode_laporan;
+        document.getElementById('detailMeta').textContent = `${laporan.kategori_fasilitas} • ${SarprasApp.formatDateIndo(laporan.tanggal_lapor)}`;
+        document.getElementById('detailTitle').textContent = SarprasApp.deriveTitle(laporan);
+        document.getElementById('detailDesc').textContent = laporan.deskripsi || '-';
+        document.getElementById('detailLokasi').textContent = laporan.lokasi_kamar || '-';
+
+        const statusMeta = SarprasApp.getStatusMeta(laporan.status);
+        const badge = document.getElementById('detailStatusBadge');
+        badge.className = `status-badge ${statusMeta.className}`;
+        badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(statusMeta.label)}</span>`;
+
+        const priorityPill = document.getElementById('detailPriorityPill');
+        if (laporan.prioritas) {
+          const pMeta = SarprasApp.getPriorityMeta(laporan.prioritas);
+          priorityPill.className = `priority-pill ${pMeta.className}`;
+          priorityPill.textContent = laporan.prioritas;
+          priorityPill.style.display = 'inline-flex';
+        }
+
+        const namaPenghuni = laporan.nama_penghuni || 'Penghuni Kost';
+        document.getElementById('residentAvatar').textContent = namaPenghuni.trim().charAt(0).toUpperCase() || 'P';
+        document.getElementById('detailPenghuniNama').textContent = `${namaPenghuni} • Penghuni`;
+        document.getElementById('detailPenghuniKamar').textContent = laporan.nomor_kamar_penghuni
+          ? `Kamar ${laporan.nomor_kamar_penghuni}`
+          : 'Penghuni Kost Cendana';
+
+        if (laporan.catatan_owner) {
+          document.getElementById('detailOwnerNote').textContent = laporan.catatan_owner;
+        } else if (laporan.catatan_penanganan) {
+          document.getElementById('detailOwnerNote').textContent = laporan.catatan_penanganan;
+        }
+
+        bindPhoto('detailPhotoBox', 'detailPhotoImg', 'photoCountPill', laporan.foto_url);
+
+        if (laporan.catatan_mekanik || laporan.foto_selesai_url || (laporan.status || '').toUpperCase() === 'SELESAI') {
+          document.getElementById('mekanikProofSection').style.display = 'flex';
+          document.getElementById('detailMekanikCatatan').textContent = laporan.catatan_mekanik || laporan.catatan_penanganan || '-';
+          document.getElementById('detailWaktuSelesai').textContent = laporan.tanggal_selesai
+            ? SarprasApp.formatDateTimeIndo(laporan.tanggal_selesai)
+            : '-';
+          bindPhoto('detailSelesaiPhotoBox', 'detailSelesaiPhotoImg', null, laporan.foto_selesai_url);
+        }
+
+        if ((laporan.status || '').toUpperCase() === 'SELESAI') {
+          document.getElementById('updateTugasBtn').textContent = 'Perbarui Bukti / Catatan';
+        }
+
+        renderTimeline(laporan);
+      }
+
+      try {
+        const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
+        renderDetail(laporan);
+      } catch (err) {
+        showError(err.message || 'Gagal memuat detail tugas.');
+        document.getElementById('detailTitle').textContent = 'Gagal memuat data';
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fasilitas Kamar — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a href="home.html" class="back-btn" aria-label="Kembali ke beranda">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Fasilitas kamar</h1>
+        <p id="fasilitasRoomSub" class="app-bar-subtitle">Inventaris dan kondisi fasilitas</p>
+      </div>
+    </header>
+
+    <section class="page-body has-bottom-nav">
+      <div id="fasilitasSuccess" class="success-banner" role="status"></div>
+      <div id="fasilitasError" class="error-banner" role="alert"></div>
+
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">Tambah fasilitas</h2>
+          <span class="form-hint">Catat barang di kamar</span>
+        </div>
+
+        <form id="createFasilitasForm" class="form-stack" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="createNamaInput">Nama fasilitas</label>
+            <div class="input-wrap">
+              <input
+                id="createNamaInput"
+                name="nama_fasilitas"
+                type="text"
+                class="input-control"
+                placeholder="Contoh: Lemari Pakaian 2 Pintu"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createMerkInput">Merk / tipe</label>
+            <div class="input-wrap">
+              <input
+                id="createMerkInput"
+                name="merk_tipe"
+                type="text"
+                class="input-control"
+                placeholder="Contoh: Olympic Minimalis (opsional)"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createKondisiInput">Kondisi saat ini</label>
+            <div class="input-wrap">
+              <select id="createKondisiInput" name="kondisi" class="input-control">
+                <option value="BAIK">Baik</option>
+                <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
+                <option value="RUSAK">Rusak</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="createKeteranganInput">Keterangan</label>
+            <div class="input-wrap textarea-wrap">
+              <textarea
+                id="createKeteranganInput"
+                name="keterangan"
+                class="textarea-control"
+                style="min-height:72px;"
+                placeholder="Catatan kondisi atau kelengkapan fasilitas (opsional)..."
+              ></textarea>
+            </div>
+          </div>
+
+          <button type="submit" id="createFasilitasBtn" class="btn btn-primary">Tambah Fasilitas</button>
+        </form>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="section-header">
+          <h2 class="section-title">Daftar fasilitas</h2>
+          <span id="fasilitasCountLabel" class="section-meta">0 item</span>
+        </div>
+
+        <div id="fasilitasList" class="report-list">
+          <div class="loading-state">Memuat daftar fasilitas...</div>
+        </div>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Navigasi utama">
+      <div class="bottom-nav-grid">
+        <a href="home.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.125 18.3743V11.3743C13.125 10.9 12.73 10.4993 12.25 10.4993H8.75C8.27 10.4993 7.875 10.9 7.875 11.3743V18.3743M2.625 8.74975C2.625 8.23 2.86 7.74 3.245 7.41L9.37 2.16C10.02 1.61 10.98 1.61 11.63 2.16L17.755 7.41C18.14 7.74 18.375 8.23 18.375 8.75V16.625C18.375 17.59 17.59 18.375 16.625 18.375H4.375C3.41 18.375 2.625 17.59 2.625 16.625V8.74975Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Beranda</span>
+        </a>
+        <a href="riwayat.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.9997 3.49947H15.7495C16.716 3.49947 17.4993 4.283 17.4993 5.24961V17.5006C17.4993 18.467 16.716 19.2507 15.7495 19.2507H5.25056C4.284 19.2507 3.50073 18.467 3.50073 17.5006V5.24961C3.50073 4.283 4.284 3.49947 5.25056 3.49947H7.00038M10.5 9.62496H13.9997M10.5 14.0003H13.9997M7.00038 9.62496H7.00913M7.00038 14.0003H7.00913M7.87529 1.74933H13.1248C13.608 1.74933 13.9997 2.14111 13.9997 2.6244V4.37454C13.9997 4.85783 13.608 5.24961 13.1248 5.24961H7.87529C7.39209 5.24961 7.00038 4.85783 7.00038 4.37454V2.6244C7.00038 2.14111 7.39209 1.74933 7.87529 1.74933Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Riwayat</span>
+        </a>
+        <a href="fasilitas.html" class="bottom-nav-item active">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M3.5 8.75V5.25C3.5 4.2835 4.2835 3.5 5.25 3.5H15.75C16.7165 3.5 17.5 4.2835 17.5 5.25V8.75M3.5 8.75H17.5M3.5 8.75V15.75C3.5 16.7165 4.2835 17.5 5.25 17.5H15.75C16.7165 17.5 17.5 16.7165 17.5 15.75V8.75M7.875 13.125H13.125" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Fasilitas</span>
+        </a>
+        <a href="profil.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M10.5 11.375C12.916 11.375 14.8746 9.41625 14.8746 7C14.8746 4.58375 12.916 2.625 10.5 2.625C8.08403 2.625 6.12547 4.58375 6.12547 7C6.12547 9.41625 8.08403 11.375 10.5 11.375ZM10.5 11.375C14.37 11.375 17.5 14.51 17.5 18.375M10.5 11.375C6.63 11.375 3.5 14.51 3.5 18.375" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Profil</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Edit Fasilitas Sheet -->
+    <div id="editFasilitasSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Edit Fasilitas</h3>
+          <button type="button" class="text-link" data-close-sheet="editFasilitasSheet">Batal</button>
+        </div>
+        <form id="editFasilitasForm" class="form-stack" novalidate>
+          <input type="hidden" id="editFasilitasId" />
+          <div id="editFasilitasError" class="error-banner" role="alert"></div>
+
+          <div class="form-group">
+            <label class="form-label" for="editNamaInput">Nama fasilitas</label>
+            <div class="input-wrap">
+              <input id="editNamaInput" type="text" class="input-control" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editMerkInput">Merk / tipe</label>
+            <div class="input-wrap">
+              <input id="editMerkInput" type="text" class="input-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editKondisiInput">Kondisi</label>
+            <div class="input-wrap">
+              <select id="editKondisiInput" class="input-control">
+                <option value="BAIK">Baik</option>
+                <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
+                <option value="RUSAK">Rusak</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="editKeteranganInput">Keterangan</label>
+            <div class="input-wrap textarea-wrap">
+              <textarea id="editKeteranganInput" class="textarea-control" style="min-height:76px;"></textarea>
+            </div>
+          </div>
+
+          <button type="submit" id="saveEditFasilitasBtn" class="btn btn-primary">Simpan Perubahan</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Sheet -->
+    <div id="deleteFasilitasSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Hapus Fasilitas?</h3>
+          <button type="button" class="text-link" data-close-sheet="deleteFasilitasSheet">Batal</button>
+        </div>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;">
+          Fasilitas <strong id="deleteFasilitasName" style="color:#172554;">-</strong> akan dihapus permanen dari daftar inventaris kamar Anda.
+        </p>
+        <div class="action-row">
+          <button type="button" class="btn btn-outline" data-close-sheet="deleteFasilitasSheet">Batal</button>
+          <button type="button" id="confirmDeleteFasilitasBtn" class="btn btn-danger">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (() => {
+      const user = SarprasApp.requireAuth();
+      if (!user) return;
+
+      SarprasApp.attachSheetControls();
+
+      if (user.nomor_kamar) {
+        document.getElementById('fasilitasRoomSub').textContent = `Inventaris Kamar ${user.nomor_kamar}`;
+      }
+
+      const fasilitasSuccess = document.getElementById('fasilitasSuccess');
+      const fasilitasError = document.getElementById('fasilitasError');
+      const fasilitasList = document.getElementById('fasilitasList');
+      const fasilitasCountLabel = document.getElementById('fasilitasCountLabel');
+
+      const createForm = document.getElementById('createFasilitasForm');
+      const createNamaInput = document.getElementById('createNamaInput');
+      const createMerkInput = document.getElementById('createMerkInput');
+      const createKondisiInput = document.getElementById('createKondisiInput');
+      const createKeteranganInput = document.getElementById('createKeteranganInput');
+      const createBtn = document.getElementById('createFasilitasBtn');
+
+      const editForm = document.getElementById('editFasilitasForm');
+      const editFasilitasId = document.getElementById('editFasilitasId');
+      const editNamaInput = document.getElementById('editNamaInput');
+      const editMerkInput = document.getElementById('editMerkInput');
+      const editKondisiInput = document.getElementById('editKondisiInput');
+      const editKeteranganInput = document.getElementById('editKeteranganInput');
+      const editFasilitasError = document.getElementById('editFasilitasError');
+      const saveEditBtn = document.getElementById('saveEditFasilitasBtn');
+
+      const deleteFasilitasName = document.getElementById('deleteFasilitasName');
+      const confirmDeleteBtn = document.getElementById('confirmDeleteFasilitasBtn');
+
+      let itemsCache = [];
+      let pendingDeleteId = null;
+
+      function showSuccess(msg) {
+        fasilitasError.classList.remove('visible');
+        fasilitasSuccess.textContent = msg;
+        fasilitasSuccess.classList.add('visible');
+      }
+
+      function showError(msg) {
+        fasilitasSuccess.classList.remove('visible');
+        fasilitasError.textContent = msg;
+        fasilitasError.classList.add('visible');
+      }
+
+      function renderFasilitasCard(item) {
+        const meta = SarprasApp.getKondisiMeta(item.kondisi);
+        const merk = item.merk_tipe ? SarprasApp.escapeHtml(item.merk_tipe) : 'Merk/tipe belum dicatat';
+        const ket = item.keterangan
+          ? `<p class="facility-notes">${SarprasApp.escapeHtml(item.keterangan)}</p>`
+          : '';
+        return `
+          <article class="facility-card">
+            <div class="facility-header">
+              <div style="min-width:0;">
+                <h3 class="facility-title">${SarprasApp.escapeHtml(item.nama_fasilitas)}</h3>
+                <div class="facility-brand">${merk}</div>
+              </div>
+              <span class="status-badge ${meta.className}">
+                <span class="status-dot"></span>
+                <span>${SarprasApp.escapeHtml(meta.label)}</span>
+              </span>
+            </div>
+            ${ket}
+            <div class="action-row">
+              <button type="button" class="btn btn-secondary btn-sm" data-edit-id="${item.id}">Edit</button>
+              <button type="button" class="btn btn-danger-outline btn-sm" data-delete-id="${item.id}">Hapus</button>
+            </div>
+          </article>
+        `;
+      }
+
+      async function loadFasilitas() {
+        fasilitasList.innerHTML = '<div class="loading-state">Memuat daftar fasilitas...</div>';
+        try {
+          const list = await SarprasApp.requestJson(`/fasilitas/penghuni/${encodeURIComponent(user.id)}`);
+          itemsCache = Array.isArray(list) ? list : [];
+          fasilitasCountLabel.textContent = `${itemsCache.length} item`;
+
+          if (itemsCache.length === 0) {
+            fasilitasList.innerHTML = '<div class="empty-state">Belum ada fasilitas tercatat untuk kamar Anda.</div>';
+          } else {
+            fasilitasList.innerHTML = itemsCache.map(renderFasilitasCard).join('');
+          }
+        } catch (err) {
+          fasilitasList.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
+        }
+      }
+
+      createForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        fasilitasError.classList.remove('visible');
+        fasilitasSuccess.classList.remove('visible');
+
+        const nama_fasilitas = createNamaInput.value.trim();
+        const merk_tipe = createMerkInput.value.trim();
+        const kondisi = createKondisiInput.value;
+        const keterangan = createKeteranganInput.value.trim();
+
+        if (!nama_fasilitas) {
+          showError('Nama fasilitas wajib diisi.');
+          return;
+        }
+
+        createBtn.disabled = true;
+        createBtn.textContent = 'Menyimpan...';
+
+        try {
+          await SarprasApp.requestJson('/fasilitas', {
+            method: 'POST',
+            body: JSON.stringify({
+              penghuni_id: user.id,
+              nama_fasilitas,
+              merk_tipe,
+              kondisi,
+              keterangan
+            })
+          });
+          createForm.reset();
+          createKondisiInput.value = 'BAIK';
+          showSuccess('Fasilitas kamar berhasil ditambahkan.');
+          await loadFasilitas();
+        } catch (err) {
+          showError(err.message || 'Gagal menambahkan fasilitas.');
+        } finally {
+          createBtn.disabled = false;
+          createBtn.textContent = 'Tambah Fasilitas';
+        }
+      });
+
+      fasilitasList.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-edit-id]');
+        if (editBtn) {
+          const id = Number(editBtn.getAttribute('data-edit-id'));
+          const item = itemsCache.find((f) => f.id === id);
+          if (!item) return;
+
+          editFasilitasError.classList.remove('visible');
+          editFasilitasId.value = item.id;
+          editNamaInput.value = item.nama_fasilitas || '';
+          editMerkInput.value = item.merk_tipe || '';
+          editKondisiInput.value = item.kondisi || 'BAIK';
+          editKeteranganInput.value = item.keterangan || '';
+          SarprasApp.openSheet('editFasilitasSheet');
+          return;
+        }
+
+        const deleteBtn = e.target.closest('[data-delete-id]');
+        if (deleteBtn) {
+          const id = Number(deleteBtn.getAttribute('data-delete-id'));
+          const item = itemsCache.find((f) => f.id === id);
+          if (!item) return;
+
+          pendingDeleteId = id;
+          deleteFasilitasName.textContent = item.nama_fasilitas;
+          SarprasApp.openSheet('deleteFasilitasSheet');
+        }
+      });
+
+      editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        editFasilitasError.classList.remove('visible');
+
+        const id = editFasilitasId.value;
+        const nama_fasilitas = editNamaInput.value.trim();
+        const merk_tipe = editMerkInput.value.trim();
+        const kondisi = editKondisiInput.value;
+        const keterangan = editKeteranganInput.value.trim();
+
+        if (!nama_fasilitas) {
+          editFasilitasError.textContent = 'Nama fasilitas tidak boleh kosong.';
+          editFasilitasError.classList.add('visible');
+          return;
+        }
+
+        saveEditBtn.disabled = true;
+        saveEditBtn.textContent = 'Menyimpan...';
+
+        try {
+          await SarprasApp.requestJson(`/fasilitas/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              nama_fasilitas,
+              merk_tipe,
+              kondisi,
+              keterangan
+            })
+          });
+          SarprasApp.closeSheet('editFasilitasSheet');
+          showSuccess('Data fasilitas berhasil diperbarui.');
+          await loadFasilitas();
+        } catch (err) {
+          editFasilitasError.textContent = err.message || 'Gagal memperbarui fasilitas.';
+          editFasilitasError.classList.add('visible');
+        } finally {
+          saveEditBtn.disabled = false;
+          saveEditBtn.textContent = 'Simpan Perubahan';
+        }
+      });
+
+      confirmDeleteBtn.addEventListener('click', async () => {
+        if (!pendingDeleteId) return;
+
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.textContent = 'Menghapus...';
+
+        try {
+          await SarprasApp.requestJson(`/fasilitas/${encodeURIComponent(pendingDeleteId)}`, {
+            method: 'DELETE'
+          });
+          pendingDeleteId = null;
+          SarprasApp.closeSheet('deleteFasilitasSheet');
+          showSuccess('Fasilitas berhasil dihapus.');
+          await loadFasilitas();
+        } catch (err) {
+          SarprasApp.closeSheet('deleteFasilitasSheet');
+          showError(err.message || 'Gagal menghapus fasilitas.');
+        } finally {
+          confirmDeleteBtn.disabled = false;
+          confirmDeleteBtn.textContent = 'Ya, Hapus';
+        }
+      });
+
+      loadFasilitas();
+    })();
+  </script>
+</body>
+</html>

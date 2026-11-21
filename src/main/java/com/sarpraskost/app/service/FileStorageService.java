@@ -3,10 +3,13 @@ package com.sarpraskost.app.service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class FileStorageService {
 
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
     private static final long MAX_FILE_SIZE_BYTES = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp");
 
@@ -66,6 +70,33 @@ public class FileStorageService {
 
     public Path getUploadDir() {
         return uploadDir;
+    }
+
+    public void deleteFoto(String fotoUrl) {
+        if (fotoUrl == null || fotoUrl.trim().isEmpty()) {
+            return;
+        }
+        String trimmed = fotoUrl.trim();
+        String relative;
+        if (trimmed.startsWith("/uploads/")) {
+            relative = trimmed.substring("/uploads/".length());
+        } else if (trimmed.startsWith("uploads/")) {
+            relative = trimmed.substring("uploads/".length());
+        } else {
+            return;
+        }
+        if (relative.isEmpty()) {
+            return;
+        }
+        try {
+            Path target = uploadDir.resolve(relative).normalize();
+            if (!target.startsWith(uploadDir) || target.equals(uploadDir)) {
+                return;
+            }
+            Files.deleteIfExists(target);
+        } catch (InvalidPathException | IOException ex) {
+            log.warn("Gagal menghapus file foto {}: {}", fotoUrl, ex.getMessage());
+        }
     }
 
     private String resolveExtension(String originalFilename, String contentType) {

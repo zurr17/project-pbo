@@ -13,6 +13,14 @@ public interface LaporanKerusakanRepository extends JpaRepository<LaporanKerusak
     @EntityGraph(attributePaths = "penghuni")
     List<LaporanKerusakan> findByPenghuniIdOrderByTanggalLaporDescIdDesc(Long penghuniId);
 
+    @EntityGraph(attributePaths = "penghuni")
+    List<LaporanKerusakan> findAllByOrderByTanggalLaporDescIdDesc();
+
+    @EntityGraph(attributePaths = "penghuni")
+    List<LaporanKerusakan> findByMekanikIdOrderByTanggalLaporDescIdDesc(Long mekanikId);
+
+    long countByMekanikId(Long mekanikId);
+
     @Query("SELECT l FROM LaporanKerusakan l JOIN FETCH l.penghuni WHERE l.id = :id")
     Optional<LaporanKerusakan> findDetailById(@Param("id") Long id);
 

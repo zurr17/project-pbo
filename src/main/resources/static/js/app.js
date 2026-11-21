@@ -22,10 +22,43 @@ const SarprasApp = (() => {
     window.location.href = 'login.html';
   }
 
+  function getDashboardUrlByRole(role) {
+    const normalized = (role || '').toUpperCase();
+    if (normalized === 'OWNER') return 'owner-home.html';
+    if (normalized === 'MEKANIK') return 'mekanik-home.html';
+    return 'home.html';
+  }
+
   function requireAuth() {
     const user = getCurrentUser();
     if (!user) {
       window.location.href = 'login.html';
+      return null;
+    }
+    return user;
+  }
+
+  function requireOwnerAuth() {
+    const user = getCurrentUser();
+    if (!user) {
+      window.location.href = 'login.html';
+      return null;
+    }
+    if ((user.role || '').toUpperCase() !== 'OWNER') {
+      window.location.href = getDashboardUrlByRole(user.role);
+      return null;
+    }
+    return user;
+  }
+
+  function requireMekanikAuth() {
+    const user = getCurrentUser();
+    if (!user) {
+      window.location.href = 'login.html';
+      return null;
+    }
+    if ((user.role || '').toUpperCase() !== 'MEKANIK') {
+      window.location.href = getDashboardUrlByRole(user.role);
       return null;
     }
     return user;
@@ -167,6 +200,44 @@ const SarprasApp = (() => {
     if (el) el.classList.add('open');
   }
 
+  function closeSheet(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  }
+
+  function getKondisiMeta(kondisi) {
+    switch ((kondisi || '').toUpperCase()) {
+      case 'PERLU_PERAWATAN':
+        return { label: 'Perlu Perawatan', className: 'status-menunggu' };
+      case 'RUSAK':
+        return { label: 'Rusak', className: 'status-ditolak' };
+      case 'BAIK':
+      default:
+        return { label: 'Baik', className: 'status-selesai' };
+    }
+  }
+
+  async function requestJson(path, options = {}) {
+    const headers = { ...(options.headers || {}) };
+    if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const text = await res.text();
+    let data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
+    if (!res.ok) {
+      throw new Error(data.message || `Permintaan gagal (${res.status}).`);
+    }
+    return data;
+  }
+
   function populateAccountSheet(user) {
     const nameEl = document.getElementById('akunNama');
     const emailEl = document.getElementById('akunEmail');
@@ -220,12 +291,164 @@ const SarprasApp = (() => {
     return data;
   }
 
+  async function fetchOwnerDashboard() {
+    return requestJson('/owner/dashboard');
+  }
+
+  async function fetchOwnerLaporan(status = '', query = '') {
+    const params = new URLSearchParams();
+    if (status && status !== 'SEMUA') params.set('status', status);
+    if (query && query.trim()) params.set('q', query.trim());
+    const qs = params.toString();
+    return requestJson(`/owner/laporan${qs ? '?' + qs : ''}`);
+  }
+
+  async function fetchMekanikList() {
+    return requestJson('/users/mekanik');
+  }
+
+  async function fetchMekanikDashboard(mekanikId) {
+    return requestJson(`/mekanik/${encodeURIComponent(mekanikId)}/dashboard`);
+  }
+
+  async function fetchMekanikTugas(mekanikId, status = '', query = '') {
+    const params = new URLSearchParams();
+    if (status && status !== 'SEMUA') params.set('status', status);
+    if (query && query.trim()) params.set('q', query.trim());
+    const qs = params.toString();
+    return requestJson(`/mekanik/${encodeURIComponent(mekanikId)}/tugas${qs ? '?' + qs : ''}`);
+  }
+
+  function getPriorityMeta(prioritas) {
+    const p = (prioritas || '').trim().toLowerCase();
+    if (p === 'darurat' || p === 'mendesak' || p === 'tinggi') {
+      return { label: prioritas, className: 'high' };
+    }
+    if (p === 'sedang') {
+      return { label: prioritas, className: 'medium' };
+    }
+    return { label: prioritas || 'Rendah', className: 'low' };
+  }
+
+  function renderAssignedReportCard(laporan, detailPage, extraLineHtml) {
+    const statusMeta = getStatusMeta(laporan.status);
+    const title = deriveTitle(laporan);
+    const tanggal = formatDateIndo(laporan.tanggal_lapor);
+    const residentLabel = laporan.nama_penghuni
+      ? `${laporan.nama_penghuni}${laporan.nomor_kamar_penghuni ? ' (Kamar ' + laporan.nomor_kamar_penghuni + ')' : ''}`
+      : laporan.lokasi_kamar;
+    const priorityHtml = laporan.prioritas
+      ? `<span class="priority-pill ${getPriorityMeta(laporan.prioritas).className}">${escapeHtml(laporan.prioritas)}</span>`
+      : '';
+
+    return `
+      <a class="report-card" href="${detailPage}?id=${encodeURIComponent(laporan.id)}">
+        <div class="report-card-top">
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <span class="report-code">${escapeHtml(laporan.kode_laporan)}</span>
+            ${priorityHtml}
+          </div>
+          <span class="status-badge ${statusMeta.className}">
+            <span class="status-dot"></span>
+            ${escapeHtml(statusMeta.label)}
+          </span>
+        </div>
+        <div class="report-card-body">
+          <div class="report-cat-icon">
+            ${getCategoryIconSvg(laporan.kategori_fasilitas)}
+          </div>
+          <div class="report-card-text">
+            <div class="report-title">${escapeHtml(title)}</div>
+            <div class="report-sub">${escapeHtml(residentLabel)} &bull; ${escapeHtml(tanggal)}</div>
+            ${extraLineHtml || ''}
+          </div>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+    `;
+  }
+
+  function renderOwnerReportCard(laporan) {
+    const mechanicLine = laporan.nama_mekanik
+      ? `<div class="report-sub" style="color:#2563EB;font-weight:500;">Teknisi: ${escapeHtml(laporan.nama_mekanik)}</div>`
+      : '';
+    return renderAssignedReportCard(laporan, 'owner-detail-laporan.html', mechanicLine);
+  }
+
+  function renderMekanikTaskCard(laporan) {
+    const locationLine = laporan.lokasi_kamar
+      ? `<div class="report-sub" style="color:#2563EB;font-weight:500;">Lokasi: ${escapeHtml(laporan.lokasi_kamar)}</div>`
+      : '';
+    return renderAssignedReportCard(laporan, 'mekanik-detail-tugas.html', locationLine);
+  }
+
+  function populateRoleNotifSheet(reports, detailPage, emptyText) {
+    const container = document.getElementById('notifList');
+    if (!container) return;
+    if (!reports || reports.length === 0) {
+      container.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
+      return;
+    }
+    container.innerHTML = reports.slice(0, 5).map((item) => {
+      const meta = getStatusMeta(item.status);
+      const timeRef = item.tanggal_selesai || item.tanggal_diproses || item.tanggal_lapor;
+      const roomInfo = item.nomor_kamar_penghuni ? `Kamar ${item.nomor_kamar_penghuni}` : item.lokasi_kamar;
+      return `
+        <a href="${detailPage}?id=${encodeURIComponent(item.id)}" class="report-card" style="padding:12px;">
+          <div class="report-card-top">
+            <span class="report-code">${escapeHtml(item.kode_laporan)}</span>
+            <span class="status-badge ${meta.className}"><span class="status-dot"></span>${escapeHtml(meta.label)}</span>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#172554;">${escapeHtml(deriveTitle(item))}</div>
+          <div style="font-size:11px;color:#64748B;">${escapeHtml(item.nama_penghuni || 'Penghuni')} &bull; ${escapeHtml(roomInfo || '-')} &bull; ${escapeHtml(formatDateTimeIndo(timeRef))}</div>
+        </a>
+      `;
+    }).join('');
+  }
+
+  function populateOwnerNotifSheet(reports) {
+    populateRoleNotifSheet(reports, 'owner-detail-laporan.html', 'Belum ada laporan masuk.');
+  }
+
+  function populateMekanikNotifSheet(reports) {
+    populateRoleNotifSheet(reports, 'mekanik-detail-tugas.html', 'Belum ada tugas yang ditugaskan.');
+  }
+
+  function populateRoleAccountSheet(user, defaultRoleLabel) {
+    const nameEl = document.getElementById('akunNama');
+    const emailEl = document.getElementById('akunEmail');
+    const roleEl = document.getElementById('akunRole');
+    const specEl = document.getElementById('akunSpesialisasi');
+    if (nameEl) nameEl.textContent = user.nama || '-';
+    if (emailEl) emailEl.textContent = user.email || '-';
+    if (roleEl) roleEl.textContent = user.role || defaultRoleLabel;
+    if (specEl) specEl.textContent = user.nomor_kamar || 'Teknisi Kost Cendana';
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.onclick = logout;
+    }
+  }
+
+  function populateOwnerAccountSheet(user) {
+    populateRoleAccountSheet(user, 'OWNER');
+  }
+
+  function populateMekanikAccountSheet(user) {
+    populateRoleAccountSheet(user, 'MEKANIK');
+  }
+
   return {
     API_BASE,
     getCurrentUser,
     saveUser,
     logout,
+    getDashboardUrlByRole,
     requireAuth,
+    requireOwnerAuth,
+    requireMekanikAuth,
     escapeHtml,
     getGreetingByHour,
     formatDateIndo,
@@ -236,8 +459,23 @@ const SarprasApp = (() => {
     renderReportCard,
     attachSheetControls,
     openSheet,
+    closeSheet,
+    getKondisiMeta,
+    requestJson,
     populateAccountSheet,
     populateNotifSheet,
-    fetchPenghuniLaporan
+    fetchPenghuniLaporan,
+    fetchOwnerDashboard,
+    fetchOwnerLaporan,
+    fetchMekanikList,
+    fetchMekanikDashboard,
+    fetchMekanikTugas,
+    getPriorityMeta,
+    renderOwnerReportCard,
+    renderMekanikTaskCard,
+    populateOwnerNotifSheet,
+    populateMekanikNotifSheet,
+    populateOwnerAccountSheet,
+    populateMekanikAccountSheet
   };
 })();

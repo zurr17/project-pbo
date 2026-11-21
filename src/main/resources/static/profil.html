@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profil Penghuni — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a href="home.html" class="back-btn" aria-label="Kembali ke beranda">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Profil saya</h1>
+        <p class="app-bar-subtitle">Kelola data akun penghuni kost</p>
+      </div>
+    </header>
+
+    <section class="page-body has-bottom-nav">
+      <div class="profile-hero">
+        <div id="profileAvatar" class="profile-avatar">P</div>
+        <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span id="profileHeroNama" style="font-size:17px;font-weight:700;">Penghuni</span>
+            <span id="profileRoleBadge" class="profile-role-pill">PENGHUNI</span>
+          </div>
+          <div id="profileHeroEmail" style="font-size:12px;color:#CBD5E1;word-break:break-all;">-</div>
+          <div id="profileHeroKamar" style="font-size:12px;color:#93C5FD;font-weight:600;">Kamar -</div>
+        </div>
+      </div>
+
+      <div id="profileSuccess" class="success-banner" role="status"></div>
+      <div id="profileError" class="error-banner" role="alert"></div>
+
+      <div class="section-card">
+        <h2 class="section-title">Ubah informasi profil</h2>
+
+        <form id="profileForm" class="form-stack" novalidate>
+          <div class="form-group">
+            <label class="form-label">Email akun</label>
+            <div id="profileEmailDisplay" class="readonly-value">-</div>
+            <span class="form-hint">Email digunakan sebagai identitas login dan tidak dapat diubah.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="profileNamaInput">Nama lengkap</label>
+            <div class="input-wrap">
+              <input id="profileNamaInput" name="nama" type="text" class="input-control" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="profileKamarInput">Nomor kamar</label>
+            <div class="input-wrap">
+              <input
+                id="profileKamarInput"
+                name="nomor_kamar"
+                type="text"
+                class="input-control"
+                placeholder="Contoh: A-12"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="profilePasswordInput">Kata sandi baru (opsional)</label>
+            <div class="input-wrap">
+              <input
+                id="profilePasswordInput"
+                name="password"
+                type="password"
+                class="input-control"
+                placeholder="Kosongkan jika tidak ingin mengubah"
+                autocomplete="new-password"
+              />
+              <button type="button" id="toggleProfilePasswordBtn" class="input-icon-btn" aria-label="Tampilkan kata sandi">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M1.5 9C2.7 5.7 5.6 3.75 9 3.75C12.4 3.75 15.3 5.7 16.5 9C15.3 12.3 12.4 14.25 9 14.25C5.6 14.25 2.7 12.3 1.5 9Z" stroke="#64748B" stroke-width="1.4" stroke-linecap="round" />
+                  <circle cx="9" cy="9" r="2.25" stroke="#64748B" stroke-width="1.4" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="saveProfileBtn" class="btn btn-primary">Simpan Perubahan</button>
+        </form>
+      </div>
+
+      <button type="button" id="logoutBtn" class="btn btn-outline">Keluar dari Akun</button>
+
+      <div class="danger-zone-card">
+        <div style="font-size:14px;font-weight:700;color:#991B1B;">Hapus Akun Permanen</div>
+        <div style="font-size:12px;line-height:1.55;color:#B91C1C;">
+          Menghapus akun akan menghapus seluruh data laporan kerusakan, foto bukti, dan daftar fasilitas kamar Anda secara permanen.
+        </div>
+        <button type="button" id="openDeleteAccountBtn" class="btn btn-danger-outline">Hapus Akun</button>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Navigasi utama">
+      <div class="bottom-nav-grid">
+        <a href="home.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.125 18.3743V11.3743C13.125 10.9 12.73 10.4993 12.25 10.4993H8.75C8.27 10.4993 7.875 10.9 7.875 11.3743V18.3743M2.625 8.74975C2.625 8.23 2.86 7.74 3.245 7.41L9.37 2.16C10.02 1.61 10.98 1.61 11.63 2.16L17.755 7.41C18.14 7.74 18.375 8.23 18.375 8.75V16.625C18.375 17.59 17.59 18.375 16.625 18.375H4.375C3.41 18.375 2.625 17.59 2.625 16.625V8.74975Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Beranda</span>
+        </a>
+        <a href="riwayat.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.9997 3.49947H15.7495C16.716 3.49947 17.4993 4.283 17.4993 5.24961V17.5006C17.4993 18.467 16.716 19.2507 15.7495 19.2507H5.25056C4.284 19.2507 3.50073 18.467 3.50073 17.5006V5.24961C3.50073 4.283 4.284 3.49947 5.25056 3.49947H7.00038M10.5 9.62496H13.9997M10.5 14.0003H13.9997M7.00038 9.62496H7.00913M7.00038 14.0003H7.00913M7.87529 1.74933H13.1248C13.608 1.74933 13.9997 2.14111 13.9997 2.6244V4.37454C13.9997 4.85783 13.608 5.24961 13.1248 5.24961H7.87529C7.39209 5.24961 7.00038 4.85783 7.00038 4.37454V2.6244C7.00038 2.14111 7.39209 1.74933 7.87529 1.74933Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Riwayat</span>
+        </a>
+        <a href="fasilitas.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M3.5 8.75V5.25C3.5 4.2835 4.2835 3.5 5.25 3.5H15.75C16.7165 3.5 17.5 4.2835 17.5 5.25V8.75M3.5 8.75H17.5M3.5 8.75V15.75C3.5 16.7165 4.2835 17.5 5.25 17.5H15.75C16.7165 17.5 17.5 16.7165 17.5 15.75V8.75M7.875 13.125H13.125" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Fasilitas</span>
+        </a>
+        <a href="profil.html" class="bottom-nav-item active">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M10.5 11.375C12.916 11.375 14.8746 9.41625 14.8746 7C14.8746 4.58375 12.916 2.625 10.5 2.625C8.08403 2.625 6.12547 4.58375 6.12547 7C6.12547 9.41625 8.08403 11.375 10.5 11.375ZM10.5 11.375C14.37 11.375 17.5 14.51 17.5 18.375M10.5 11.375C6.63 11.375 3.5 14.51 3.5 18.375" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Profil</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Delete Account Confirmation Modal/Sheet -->
+    <div id="deleteAccountSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Konfirmasi Hapus Akun</h3>
+          <button type="button" class="text-link" data-close-sheet="deleteAccountSheet">Batal</button>
+        </div>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;">
+          Apakah Anda yakin ingin menghapus akun ini? Semua laporan kerusakan dan inventaris fasilitas Anda akan dihapus dan tidak dapat dipulihkan.
+        </p>
+        <div class="action-row">
+          <button type="button" class="btn btn-outline" data-close-sheet="deleteAccountSheet">Batal</button>
+          <button type="button" id="confirmDeleteAccountBtn" class="btn btn-danger">Ya, Hapus Akun</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      let currentUser = SarprasApp.requireAuth();
+      if (!currentUser) return;
+
+      SarprasApp.attachSheetControls();
+
+      const profileAvatar = document.getElementById('profileAvatar');
+      const profileHeroNama = document.getElementById('profileHeroNama');
+      const profileRoleBadge = document.getElementById('profileRoleBadge');
+      const profileHeroEmail = document.getElementById('profileHeroEmail');
+      const profileHeroKamar = document.getElementById('profileHeroKamar');
+      const profileEmailDisplay = document.getElementById('profileEmailDisplay');
+      const profileNamaInput = document.getElementById('profileNamaInput');
+      const profileKamarInput = document.getElementById('profileKamarInput');
+      const profilePasswordInput = document.getElementById('profilePasswordInput');
+      const togglePasswordBtn = document.getElementById('toggleProfilePasswordBtn');
+      const profileForm = document.getElementById('profileForm');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const profileSuccess = document.getElementById('profileSuccess');
+      const profileError = document.getElementById('profileError');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const openDeleteAccountBtn = document.getElementById('openDeleteAccountBtn');
+      const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+
+      function applyUserToUi(u) {
+        const initial = (u.nama || 'P').trim().charAt(0).toUpperCase() || 'P';
+        profileAvatar.textContent = initial;
+        profileHeroNama.textContent = u.nama || '-';
+        profileRoleBadge.textContent = u.role || 'PENGHUNI';
+        profileHeroEmail.textContent = u.email || '-';
+        profileHeroKamar.textContent = u.nomor_kamar ? `Kamar ${u.nomor_kamar}` : 'Nomor kamar belum diatur';
+        profileEmailDisplay.textContent = u.email || '-';
+        profileNamaInput.value = u.nama || '';
+        profileKamarInput.value = u.nomor_kamar || '';
+      }
+
+      function showSuccess(msg) {
+        profileError.classList.remove('visible');
+        profileSuccess.textContent = msg;
+        profileSuccess.classList.add('visible');
+      }
+
+      function showError(msg) {
+        profileSuccess.classList.remove('visible');
+        profileError.textContent = msg;
+        profileError.classList.add('visible');
+      }
+
+      applyUserToUi(currentUser);
+
+      try {
+        const freshUser = await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`);
+        currentUser = freshUser;
+        SarprasApp.saveUser(freshUser);
+        applyUserToUi(freshUser);
+      } catch (err) {
+        showError(err.message || 'Gagal memuat data profil terbaru.');
+      }
+
+      togglePasswordBtn.addEventListener('click', () => {
+        profilePasswordInput.type = profilePasswordInput.type === 'password' ? 'text' : 'password';
+      });
+
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        profileError.classList.remove('visible');
+        profileSuccess.classList.remove('visible');
+
+        const nama = profileNamaInput.value.trim();
+        const nomor_kamar = profileKamarInput.value.trim();
+        const password = profilePasswordInput.value;
+
+        if (!nama) {
+          showError('Nama lengkap wajib diisi.');
+          return;
+        }
+
+        const payload = { nama, nomor_kamar };
+        if (password && password.trim()) {
+          payload.password = password;
+        }
+
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.textContent = 'Menyimpan...';
+
+        try {
+          const updated = await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`, {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+          });
+          currentUser = updated;
+          SarprasApp.saveUser(updated);
+          applyUserToUi(updated);
+          profilePasswordInput.value = '';
+          showSuccess('Profil berhasil diperbarui.');
+        } catch (err) {
+          showError(err.message || 'Gagal memperbarui profil.');
+        } finally {
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.textContent = 'Simpan Perubahan';
+        }
+      });
+
+      logoutBtn.addEventListener('click', SarprasApp.logout);
+
+      openDeleteAccountBtn.addEventListener('click', () => {
+        SarprasApp.openSheet('deleteAccountSheet');
+      });
+
+      confirmDeleteAccountBtn.addEventListener('click', async () => {
+        confirmDeleteAccountBtn.disabled = true;
+        confirmDeleteAccountBtn.textContent = 'Menghapus...';
+        try {
+          await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`, {
+            method: 'DELETE'
+          });
+          SarprasApp.logout();
+        } catch (err) {
+          SarprasApp.closeSheet('deleteAccountSheet');
+          showError(err.message || 'Gagal menghapus akun.');
+          confirmDeleteAccountBtn.disabled = false;
+          confirmDeleteAccountBtn.textContent = 'Ya, Hapus Akun';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

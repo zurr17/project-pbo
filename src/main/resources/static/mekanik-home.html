@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beranda Teknisi — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 20.9992V12.9992C15 12.734 14.8946 12.4796 14.7071 12.2921C14.5196 12.1046 14.2652 11.9992 14 11.9992H10C9.73478 11.9992 9.48043 12.1046 9.29289 12.2921C9.10536 12.4796 9 12.734 9 12.9992V20.9992M3 9.99968C2.99993 9.70875 3.06333 9.4213 3.18579 9.1574C3.30824 8.89349 3.4868 8.65948 3.709 8.47168L10.709 2.47168C11.07 2.16659 11.5274 1.9992 12 1.9992C12.4726 1.9992 12.93 2.16659 13.291 2.47168L20.291 8.47168C20.5132 8.65948 20.6918 8.89349 20.8142 9.1574C20.9367 9.4213 21.0001 9.70875 21 9.99968V18.9997C21 19.5301 20.7893 20.0388 20.4142 20.4139C20.0391 20.789 19.5304 20.9997 19 20.9997H5C4.46957 20.9997 3.96086 20.789 3.58579 20.4139C3.21071 20.0388 3 19.5301 3 18.9997V9.99968Z" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+      <div class="app-bar-titles">
+        <div class="app-bar-title">SarprasKost</div>
+        <div class="app-bar-subtitle">Panel mekanik &bull; Kost Cendana</div>
+      </div>
+      <button type="button" id="topBellBtn" class="icon-btn" aria-label="Notifikasi tugas">
+        <svg width="19" height="19" viewBox="0 0 19 19" fill="none">
+          <path d="M8.12785 16.6256C8.26682 16.8663 8.4667 17.0662 8.70739 17.2052C8.94809 17.3441 9.22112 17.4173 9.49904 17.4173C9.77697 17.4173 10.05 17.3441 10.2907 17.2052C10.5314 17.0662 10.7313 16.8663 10.8702 16.6256M2.58184 12.1333C2.47842 12.2467 2.41017 12.3877 2.38539 12.5391C2.36061 12.6906 2.38037 12.8459 2.44227 12.9864C2.50417 13.1268 2.60554 13.2462 2.73405 13.33C2.86255 13.4139 3.01266 13.4586 3.1661 13.4587H15.833C15.9865 13.4588 16.1366 13.4142 16.2652 13.3305C16.3938 13.2468 16.4953 13.1276 16.5573 12.9872C16.6194 12.8469 16.6394 12.6916 16.6148 12.5401C16.5902 12.3887 16.5221 12.2476 16.4189 12.1341C15.3659 11.0487 14.2497 9.89511 14.2497 6.3331C14.2497 5.07322 13.7492 3.86494 12.8584 2.97406C11.9676 2.08319 10.7594 1.5827 9.49957 1.5827C8.23976 1.5827 7.03156 2.08319 6.14074 2.97406C5.24993 3.86494 4.74947 5.07322 4.74947 6.3331C4.74947 9.89511 3.63241 11.0487 2.58184 12.1333Z" stroke="#172554" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+      </button>
+    </header>
+
+    <section class="page-body has-bottom-nav">
+      <div class="greeting-block">
+        <span class="owner-badge-pill" style="align-self:flex-start;">Teknisi Kost</span>
+        <h1 id="greetingText" class="greeting-title">Selamat pagi</h1>
+        <p id="greetingSub" class="greeting-subtitle">Pantau tugas perbaikan fasilitas yang ditugaskan kepada Anda.</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="section-header">
+          <h2 class="section-title">Ringkasan tugas</h2>
+          <a href="mekanik-tugas.html" class="text-link">Lihat daftar</a>
+        </div>
+
+        <div class="owner-stats-grid">
+          <a href="mekanik-tugas.html" class="owner-stat-card navy">
+            <span id="statTotal" class="stat-value">0</span>
+            <span class="owner-stat-label">Total tugas</span>
+          </a>
+          <a href="mekanik-tugas.html?status=DIPROSES" class="owner-stat-card">
+            <span id="statMenunggu" class="stat-value">0</span>
+            <span class="owner-stat-label wait">Perlu dikerjakan</span>
+          </a>
+          <a href="mekanik-tugas.html?status=DIPROSES" class="owner-stat-card">
+            <span id="statDiproses" class="stat-value">0</span>
+            <span class="owner-stat-label proc">Sedang diproses</span>
+          </a>
+          <a href="mekanik-tugas.html?status=SELESAI" class="owner-stat-card">
+            <span id="statSelesai" class="stat-value">0</span>
+            <span class="owner-stat-label done">Selesai</span>
+          </a>
+        </div>
+      </div>
+
+      <a href="mekanik-tugas.html" class="nav-shortcut-card">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M13.5 6.5L15.5 8.5M18.42 4.92C19.2 5.7 19.2 6.96 18.42 7.74L9.16 17H6V13.84L15.26 4.58C16.04 3.8 17.3 3.8 18.08 4.58L18.42 4.92ZM3 19.5H19" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:600;color:#172554;">Daftar tugas perbaikan</div>
+          <div style="font-size:11px;color:#64748B;margin-top:3px;">Lihat instruksi pengelola &amp; perbarui progres pengerjaan</div>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+          <path d="M6.75 13.5L11.25 9L6.75 4.5" stroke="#64748B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="section-header">
+          <h2 class="section-title">Tugas aktif terbaru</h2>
+          <a href="mekanik-tugas.html" class="text-link">Lihat semua</a>
+        </div>
+        <div id="mekanikRecentList" class="report-list">
+          <div class="loading-state">Memuat daftar tugas teknisi...</div>
+        </div>
+      </div>
+
+      <div class="info-banner">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0;margin-top:2px;">
+          <path d="M9 12V9M9 6H9.0075M16.5 9C16.5 13.1421 13.1421 16.5 9 16.5C4.85786 16.5 1.5 13.1421 1.5 9C1.5 4.85786 4.85786 1.5 9 1.5C13.1421 1.5 16.5 4.85786 16.5 9Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" />
+        </svg>
+        <span>Ketuk kartu tugas untuk membaca detail kerusakan, instruksi pengelola, dan memperbarui status perbaikan.</span>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Navigasi mekanik">
+      <div class="bottom-nav-grid">
+        <a href="mekanik-home.html" class="bottom-nav-item active">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none">
+            <path d="M13.125 18.3743V11.3743C13.125 10.9 12.73 10.4993 12.25 10.4993H8.75C8.27 10.4993 7.875 10.9 7.875 11.3743V18.3743M2.625 8.74975C2.625 8.23 2.86 7.74 3.245 7.41L9.37 2.16C10.02 1.61 10.98 1.61 11.63 2.16L17.755 7.41C18.14 7.74 18.375 8.23 18.375 8.75V16.625C18.375 17.59 17.59 18.375 16.625 18.375H4.375C3.41 18.375 2.625 17.59 2.625 16.625V8.74975Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <span>Beranda</span>
+        </a>
+        <a href="mekanik-tugas.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none">
+            <path d="M13.9997 3.49947H15.7495C16.716 3.49947 17.4993 4.283 17.4993 5.24961V17.5006C17.4993 18.467 16.716 19.2507 15.7495 19.2507H5.25056C4.284 19.2507 3.50073 18.467 3.50073 17.5006V5.24961C3.50073 4.283 4.284 3.49947 5.25056 3.49947H7.00038M10.5 9.62496H13.9997M10.5 14.0003H13.9997M7.00038 9.62496H7.00913M7.00038 14.0003H7.00913M7.87529 1.74933H13.1248C13.608 1.74933 13.9997 2.14111 13.9997 2.6244V4.37454C13.9997 4.85783 13.608 5.24961 13.1248 5.24961H7.87529C7.39209 5.24961 7.00038 4.85783 7.00038 4.37454V2.6244C7.00038 2.14111 7.39209 1.74933 7.87529 1.74933Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <span>Tugas</span>
+        </a>
+        <button type="button" id="navNotifBtn" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 19 19" fill="none">
+            <path d="M8.12785 16.6256C8.26682 16.8663 8.4667 17.0662 8.70739 17.2052C8.94809 17.3441 9.22112 17.4173 9.49904 17.4173C9.77697 17.4173 10.05 17.3441 10.2907 17.2052C10.5314 17.0662 10.7313 16.8663 10.8702 16.6256M2.58184 12.1333C2.47842 12.2467 2.41017 12.3877 2.38539 12.5391C2.36061 12.6906 2.38037 12.8459 2.44227 12.9864C2.50417 13.1268 2.60554 13.2462 2.73405 13.33C2.86255 13.4139 3.01266 13.4586 3.1661 13.4587H15.833C15.9865 13.4588 16.1366 13.4142 16.2652 13.3305C16.3938 13.2468 16.4953 13.1276 16.5573 12.9872C16.6194 12.8469 16.6394 12.6916 16.6148 12.5401C16.5902 12.3887 16.5221 12.2476 16.4189 12.1341C15.3659 11.0487 14.2497 9.89511 14.2497 6.3331C14.2497 5.07322 13.7492 3.86494 12.8584 2.97406C11.9676 2.08319 10.7594 1.5827 9.49957 1.5827C8.23976 1.5827 7.03156 2.08319 6.14074 2.97406C5.24993 3.86494 4.74947 5.07322 4.74947 6.3331C4.74947 9.89511 3.63241 11.0487 2.58184 12.1333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <span>Notifikasi</span>
+        </button>
+        <button type="button" id="navAkunBtn" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none">
+            <path d="M10.5 11.375C12.916 11.375 14.8746 9.41625 14.8746 7C14.8746 4.58375 12.916 2.625 10.5 2.625C8.08403 2.625 6.12547 4.58375 6.12547 7C6.12547 9.41625 8.08403 11.375 10.5 11.375ZM10.5 11.375C14.37 11.375 17.5 14.51 17.5 18.375M10.5 11.375C6.63 11.375 3.5 14.51 3.5 18.375" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <span>Akun</span>
+        </button>
+      </div>
+    </nav>
+
+    <div id="notifSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Tugas Terbaru</h3>
+          <button type="button" class="text-link" data-close-sheet="notifSheet">Tutup</button>
+        </div>
+        <div id="notifList" class="report-list"></div>
+      </div>
+    </div>
+
+    <div id="akunSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Akun Teknisi</h3>
+          <button type="button" class="text-link" data-close-sheet="akunSheet">Tutup</button>
+        </div>
+        <div class="summary-mini-card">
+          <div class="kv-row">
+            <span class="kv-label">Nama</span>
+            <span id="akunNama" class="kv-value">-</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Email</span>
+            <span id="akunEmail" class="kv-value">-</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Bidang</span>
+            <span id="akunSpesialisasi" class="kv-value">-</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Peran</span>
+            <span id="akunRole" class="kv-value">MEKANIK</span>
+          </div>
+        </div>
+        <button type="button" id="logoutBtn" class="btn btn-danger-outline">Keluar dari Akun</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      let user = SarprasApp.requireMekanikAuth();
+      if (!user) return;
+
+      function applyMekanikHeader(u) {
+        document.getElementById('greetingText').textContent = `${SarprasApp.getGreetingByHour()}, ${u.nama}`;
+        if (u.nomor_kamar) {
+          document.getElementById('greetingSub').textContent = `${u.nomor_kamar} • Pantau dan selesaikan tugas perbaikan kost.`;
+        }
+      }
+
+      applyMekanikHeader(user);
+      SarprasApp.populateMekanikAccountSheet(user);
+      SarprasApp.attachSheetControls();
+
+      document.getElementById('topBellBtn').addEventListener('click', () => SarprasApp.openSheet('notifSheet'));
+      document.getElementById('navNotifBtn').addEventListener('click', () => SarprasApp.openSheet('notifSheet'));
+      document.getElementById('navAkunBtn').addEventListener('click', () => SarprasApp.openSheet('akunSheet'));
+
+      try {
+        const freshUser = await SarprasApp.requestJson(`/users/${encodeURIComponent(user.id)}`);
+        user = freshUser;
+        SarprasApp.saveUser(freshUser);
+        applyMekanikHeader(freshUser);
+        SarprasApp.populateMekanikAccountSheet(freshUser);
+      } catch {
+        // fallback ke sesi localStorage
+      }
+
+      const recentContainer = document.getElementById('mekanikRecentList');
+      try {
+        const data = await SarprasApp.fetchMekanikDashboard(user.id);
+        const { ringkasan, laporan } = data;
+        const menungguAtauAktif = (ringkasan.menunggu ?? 0) > 0
+          ? ringkasan.menunggu
+          : (ringkasan.diproses ?? 0);
+
+        document.getElementById('statTotal').textContent = ringkasan.total ?? 0;
+        document.getElementById('statMenunggu').textContent = menungguAtauAktif;
+        document.getElementById('statDiproses').textContent = ringkasan.diproses ?? 0;
+        document.getElementById('statSelesai').textContent = ringkasan.selesai ?? 0;
+
+        SarprasApp.populateMekanikNotifSheet(laporan);
+
+        if (!laporan || laporan.length === 0) {
+          recentContainer.innerHTML = '<div class="empty-state">Belum ada tugas perbaikan yang ditugaskan kepada Anda.</div>';
+        } else {
+          recentContainer.innerHTML = laporan.slice(0, 4).map(SarprasApp.renderMekanikTaskCard).join('');
+        }
+      } catch (err) {
+        recentContainer.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tolak Laporan — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a id="backToDetailBtn" href="owner-laporan.html" class="back-btn" aria-label="Kembali ke detail laporan">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Tolak laporan</h1>
+        <p id="pageKodeSub" class="app-bar-subtitle">Konfirmasi penolakan laporan</p>
+      </div>
+    </header>
+
+    <section class="page-body">
+      <div id="summaryCard" class="summary-mini-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span id="summaryKode" class="report-code">Memuat...</span>
+          <span id="summaryPenghuni" style="font-size:11px;color:#64748B;">-</span>
+        </div>
+        <div id="summaryTitle" style="font-size:14px;font-weight:600;color:#172554;">Memuat detail laporan...</div>
+        <div id="summaryLokasi" style="font-size:12px;color:#64748B;">-</div>
+      </div>
+
+      <form id="tolakForm" class="form-stack" novalidate>
+        <div id="formError" class="error-banner" role="alert"></div>
+
+        <div class="form-group">
+          <label class="form-label" for="kategoriPenolakanSelect">Alasan penolakan</label>
+          <div class="input-wrap">
+            <select id="kategoriPenolakanSelect" name="kategori_penolakan" class="input-control" required>
+              <option value="Laporan duplikat">Laporan duplikat</option>
+              <option value="Bukan tanggung jawab fasilitas kost">Bukan tanggung jawab fasilitas kost</option>
+              <option value="Informasi kerusakan kurang jelas">Informasi kerusakan kurang jelas</option>
+              <option value="Sudah selesai ditangani">Sudah selesai ditangani</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="alasanPenolakanInput">Catatan untuk penghuni</label>
+          <div class="input-wrap textarea-wrap">
+            <textarea
+              id="alasanPenolakanInput"
+              name="alasan_penolakan"
+              class="textarea-control"
+              placeholder="Tuliskan catatan atau penjelasan penolakan untuk penghuni..."
+              required
+            ></textarea>
+          </div>
+          <span class="form-hint">Catatan ini akan ditampilkan kepada penghuni pada detail laporan.</span>
+        </div>
+
+        <div class="info-banner danger">
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
+            <path d="M8.5 5.66667V8.97917M8.5 11.3333H8.50708M15.5833 8.5C15.5833 12.412 12.412 15.5833 8.5 15.5833C4.58798 15.5833 1.41667 12.412 1.41667 8.5C1.41667 4.58798 4.58798 1.41667 8.5 1.41667C12.412 1.41667 15.5833 4.58798 15.5833 8.5Z" stroke="#B91C1C" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          <span>Laporan yang ditolak akan berstatus <strong>Ditolak</strong> dan tidak diteruskan ke teknisi.</span>
+        </div>
+
+        <button type="submit" id="submitBtn" class="btn btn-danger">Tolak Laporan</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const user = SarprasApp.requireOwnerAuth();
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      const backToDetailBtn = document.getElementById('backToDetailBtn');
+      const kategoriPenolakanSelect = document.getElementById('kategoriPenolakanSelect');
+      const alasanPenolakanInput = document.getElementById('alasanPenolakanInput');
+      const tolakForm = document.getElementById('tolakForm');
+      const formError = document.getElementById('formError');
+      const submitBtn = document.getElementById('submitBtn');
+
+      function showError(msg) {
+        formError.textContent = msg;
+        formError.classList.add('visible');
+      }
+
+      function hideError() {
+        formError.textContent = '';
+        formError.classList.remove('visible');
+      }
+
+      if (!id) {
+        showError('ID laporan tidak ditemukan di URL.');
+        submitBtn.disabled = true;
+        return;
+      }
+
+      backToDetailBtn.href = `owner-detail-laporan.html?id=${encodeURIComponent(id)}`;
+
+      try {
+        const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
+        document.getElementById('pageKodeSub').textContent = laporan.kode_laporan;
+        document.getElementById('summaryKode').textContent = laporan.kode_laporan;
+        document.getElementById('summaryPenghuni').textContent = laporan.nama_penghuni
+          ? `${laporan.nama_penghuni}${laporan.nomor_kamar_penghuni ? ' • Kamar ' + laporan.nomor_kamar_penghuni : ''}`
+          : '-';
+        document.getElementById('summaryTitle').textContent = SarprasApp.deriveTitle(laporan);
+        document.getElementById('summaryLokasi').textContent = `${laporan.kategori_fasilitas} • ${laporan.lokasi_kamar}`;
+
+        if (laporan.kategori_penolakan) {
+          kategoriPenolakanSelect.value = laporan.kategori_penolakan;
+        }
+        if (laporan.alasan_penolakan) {
+          alasanPenolakanInput.value = laporan.alasan_penolakan;
+        }
+      } catch (err) {
+        showError(err.message || 'Gagal memuat detail laporan.');
+      }
+
+      tolakForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const kategoriPenolakan = kategoriPenolakanSelect.value.trim();
+        const alasanPenolakan = alasanPenolakanInput.value.trim();
+
+        if (!alasanPenolakan) {
+          showError('Catatan untuk penghuni wajib diisi.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Memproses penolakan...';
+
+        try {
+          await SarprasApp.requestJson(`/owner/laporan/${encodeURIComponent(id)}/tolak`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              kategori_penolakan: kategoriPenolakan,
+              alasan_penolakan: alasanPenolakan
+            })
+          });
+
+          window.location.href = `owner-konfirmasi.html?status=ditolak&id=${encodeURIComponent(id)}`;
+        } catch (err) {
+          showError(err.message || 'Gagal menolak laporan.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Tolak Laporan';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

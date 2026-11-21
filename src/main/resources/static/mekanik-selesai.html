@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tugas Selesai — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar" style="justify-content:center;">
+      <h1 class="app-bar-title" style="font-size:17px;">Status pekerjaan</h1>
+    </header>
+
+    <section class="success-body">
+      <div class="success-center">
+        <div class="success-ring">
+          <div class="success-circle">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </div>
+
+        <h2 id="selesaiHeading" style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Tugas Selesai</h2>
+        <p id="selesaiSubtitle" style="margin:0;font-size:13px;line-height:1.6;color:#64748B;max-width:310px;">
+          Pembaruan pekerjaan telah disimpan ke sistem dan penghuni dapat langsung melihat hasilnya.
+        </p>
+
+        <div class="success-ticket-card" style="margin-top:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div>
+              <div style="font-size:11px;color:#64748B;">Nomor Tiket Tugas</div>
+              <div id="selesaiKode" style="font-size:17px;font-weight:700;color:#172554;margin-top:3px;">LPR-...</div>
+            </div>
+            <span id="selesaiStatusBadge" class="status-badge status-selesai">
+              <span class="status-dot"></span>
+              <span>Selesai</span>
+            </span>
+          </div>
+
+          <div style="height:1px;background:#E2E8F0;"></div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div id="selesaiKategori" style="font-size:13px;font-weight:600;color:#172554;">-</div>
+            <div id="selesaiLokasi" style="font-size:12px;color:#64748B;">-</div>
+            <div id="selesaiWaktu" style="font-size:11px;color:#64748B;">-</div>
+          </div>
+
+          <div style="height:1px;background:#E2E8F0;"></div>
+
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <span style="font-size:11px;color:#64748B;">Catatan Teknisi</span>
+            <span id="selesaiCatatan" style="font-size:12px;color:#172554;line-height:1.5;">-</span>
+          </div>
+
+          <div id="selesaiPhotoWrap" style="display:none;flex-direction:column;gap:6px;margin-top:4px;">
+            <span style="font-size:11px;color:#64748B;">Foto Bukti Penyelesaian</span>
+            <div id="selesaiPhotoBox" class="photo-box" style="height:140px;">
+              <img id="selesaiPhotoImg" class="photo-img" src="" alt="Foto bukti tugas selesai" />
+              <div class="photo-placeholder-label">
+                <span>Tidak ada foto terlampir</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-banner" style="width:100%;text-align:left;">
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
+            <path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+          <span>Penghuni dan pengelola kost kini dapat memeriksa catatan perbaikan serta foto bukti penyelesaian.</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="mekanik-tugas.html" class="btn btn-primary">Lihat Daftar Tugas</a>
+        <a href="mekanik-home.html" class="btn btn-outline">Kembali ke Beranda</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const user = SarprasApp.requireMekanikAuth();
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (!id) return;
+
+      try {
+        const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
+        const statusUpper = (laporan.status || 'SELESAI').toUpperCase();
+        const meta = SarprasApp.getStatusMeta(statusUpper);
+
+        if (statusUpper === 'DIPROSES') {
+          document.getElementById('selesaiHeading').textContent = 'Progres Tugas Disimpan';
+          document.getElementById('selesaiSubtitle').textContent = 'Catatan progres perbaikan telah tersimpan. Anda dapat melanjutkannya lagi nanti.';
+        }
+
+        document.getElementById('selesaiKode').textContent = laporan.kode_laporan;
+        const badge = document.getElementById('selesaiStatusBadge');
+        badge.className = `status-badge ${meta.className}`;
+        badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(meta.label)}</span>`;
+
+        document.getElementById('selesaiKategori').textContent = `${laporan.kategori_fasilitas} — ${SarprasApp.deriveTitle(laporan)}`;
+        document.getElementById('selesaiLokasi').textContent = laporan.lokasi_kamar || '-';
+        const timeStr = laporan.tanggal_selesai || laporan.tanggal_diproses || laporan.tanggal_lapor;
+        document.getElementById('selesaiWaktu').textContent = statusUpper === 'SELESAI'
+          ? `Diselesaikan pada ${SarprasApp.formatDateTimeIndo(timeStr)}`
+          : `Diperbarui pada ${SarprasApp.formatDateTimeIndo(timeStr)}`;
+
+        document.getElementById('selesaiCatatan').textContent =
+          laporan.catatan_mekanik || laporan.catatan_penanganan || 'Perbaikan telah dicatat.';
+
+        if (laporan.foto_selesai_url) {
+          const wrap = document.getElementById('selesaiPhotoWrap');
+          const box = document.getElementById('selesaiPhotoBox');
+          const img = document.getElementById('selesaiPhotoImg');
+          wrap.style.display = 'flex';
+          img.src = laporan.foto_selesai_url;
+          box.classList.add('has-image');
+          img.onerror = () => {
+            img.setAttribute('src', '');
+            box.classList.remove('has-image');
+          };
+        }
+      } catch {
+        // Biarkan tampilan default jika detail gagal dimuat
+      }
+    })();
+  </script>
+</body>
+</html>
