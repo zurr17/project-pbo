@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Masuk — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <section class="login-body">
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <div class="login-brand">
+          <div class="brand-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 20.9992V12.9992C15 12.734 14.8946 12.4796 14.7071 12.2921C14.5196 12.1046 14.2652 11.9992 14 11.9992H10C9.73478 11.9992 9.48043 12.1046 9.29289 12.2921C9.10536 12.4796 9 12.734 9 12.9992V20.9992M3 9.99968C2.99993 9.70875 3.06333 9.4213 3.18579 9.1574C3.30824 8.89349 3.4868 8.65948 3.709 8.47168L10.709 2.47168C11.07 2.16659 11.5274 1.9992 12 1.9992C12.4726 1.9992 12.93 2.16659 13.291 2.47168L20.291 8.47168C20.5132 8.65948 20.6918 8.89349 20.8142 9.1574C20.9367 9.4213 21.0001 9.70875 21 9.99968V18.9997C21 19.5301 20.7893 20.0388 20.4142 20.4139C20.0391 20.789 19.5304 20.9997 19 20.9997H5C4.46957 20.9997 3.96086 20.789 3.58579 20.4139C3.21071 20.0388 3 19.5301 3 18.9997V9.99968Z" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="login-brand-name">SarprasKost</span>
+        </div>
+
+        <div class="login-intro">
+          <h1 class="login-heading">Selamat datang<br />kembali.</h1>
+          <p class="login-sub">Masuk untuk melaporkan kerusakan dan memantau perbaikan fasilitas kost Anda.</p>
+        </div>
+
+        <form id="loginForm" class="form-stack" novalidate>
+          <div id="loginError" class="error-banner" role="alert"></div>
+
+          <div class="form-group">
+            <label class="form-label" for="emailInput">Email atau nomor kamar</label>
+            <div class="input-wrap">
+              <input
+                id="emailInput"
+                name="email"
+                type="text"
+                class="input-control"
+                placeholder="penghuni@kost.com atau A-12"
+                autocomplete="username"
+                required
+              />
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path d="M9.00001 9.75C11.0709 9.75 12.7496 8.07107 12.7496 6C12.7496 3.92893 11.0709 2.25 9.00001 2.25C6.92915 2.25 5.25039 3.92893 5.25039 6C5.25039 8.07107 6.92915 9.75 9.00001 9.75ZM9.00001 9.75C10.5912 9.75 12.1171 10.3821 13.2422 11.5074C14.3673 12.6326 14.9994 14.1587 14.9994 15.75M9.00001 9.75C7.40887 9.75 5.8829 10.3821 4.75779 11.5074C3.63269 12.6326 3.00061 14.1587 3.00061 15.75" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="form-hint">Gunakan akun yang diberikan pengelola kost.</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="passwordInput">Kata sandi</label>
+            <div class="input-wrap">
+              <input
+                id="passwordInput"
+                name="password"
+                type="password"
+                class="input-control"
+                placeholder="Masukkan kata sandi"
+                autocomplete="current-password"
+                required
+              />
+              <button type="button" id="togglePasswordBtn" class="input-icon-btn" aria-label="Tampilkan kata sandi">
+                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M8.05008 3.80693C9.79709 3.59872 11.5642 3.96806 13.0817 4.85855C14.5991 5.74905 15.7834 7.11175 16.4537 8.73858C16.5162 8.90698 16.5162 9.09222 16.4537 9.26062C16.1781 9.92892 15.8138 10.5571 15.3707 11.1283M10.5631 10.6186C10.1387 11.0285 9.5704 11.2553 8.98047 11.2502C8.39053 11.2451 7.82621 11.0084 7.40905 10.5912C6.99189 10.174 6.75526 9.60964 6.75013 9.01965C6.74501 8.42966 6.97179 7.86126 7.38164 7.43688M13.1089 13.1244C12.114 13.7138 11.004 14.0822 9.85417 14.2048C8.70436 14.3273 7.54165 14.2011 6.44492 13.8346C5.3482 13.4682 4.34312 12.8701 3.4979 12.0809C2.65267 11.2917 1.98708 10.33 1.54627 9.26085C1.48376 9.09245 1.48376 8.90721 1.54627 8.73881C2.21123 7.12607 3.38125 5.77251 4.88072 4.88125M1.50012 1.49939L16.4999 16.5006" stroke="#64748B" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="button" id="forgotPassBtn" class="text-link">Lupa kata sandi?</button>
+          </div>
+
+          <button type="submit" id="loginBtn" class="btn btn-primary">Masuk</button>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;color:#64748B;font-size:11px;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6.00024 7.99971L7.33344 9.33308L9.99984 6.66633M13.3328 8.6667C13.3328 12.0001 10.9997 13.6669 8.22668 14.6336C8.08147 14.6828 7.92374 14.6804 7.78006 14.6269C5.00034 13.6669 2.66724 12.0001 2.66724 8.6667V3.99988C2.66724 3.82306 2.73747 3.65349 2.86248 3.52846C2.98749 3.40343 3.15704 3.33319 3.33384 3.33319C4.66704 3.33319 6.33354 2.53316 7.49342 1.5198C7.63464 1.39913 7.81429 1.33282 8.00004 1.33282C8.18578 1.33282 8.36543 1.39913 8.50665 1.5198C9.6732 2.53983 11.333 3.33319 12.6662 3.33319C12.843 3.33319 13.0126 3.40343 13.1376 3.52846C13.2626 3.65349 13.3328 3.82306 13.3328 3.99988V8.6667Z" stroke="#64748B" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <span>Akses aman untuk penghuni dan pengelola</span>
+          </div>
+        </form>
+      </div>
+
+      <div class="helper-card">
+        <div class="helper-card-title">Belum memiliki akun?</div>
+        <div class="helper-card-text">Hubungi pengelola Kost Cendana untuk mendapatkan email dan kata sandi Anda.</div>
+        <button type="button" id="fillDemoBtn" class="demo-chip-btn">Isi Akun Demo (penghuni@kost.com / 123)</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (() => {
+      const loginForm = document.getElementById('loginForm');
+      const emailInput = document.getElementById('emailInput');
+      const passwordInput = document.getElementById('passwordInput');
+      const loginError = document.getElementById('loginError');
+      const loginBtn = document.getElementById('loginBtn');
+      const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+      const fillDemoBtn = document.getElementById('fillDemoBtn');
+      const forgotPassBtn = document.getElementById('forgotPassBtn');
+
+      function showError(msg) {
+        loginError.textContent = msg;
+        loginError.classList.add('visible');
+      }
+
+      function hideError() {
+        loginError.textContent = '';
+        loginError.classList.remove('visible');
+      }
+
+      togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+      });
+
+      fillDemoBtn.addEventListener('click', () => {
+        emailInput.value = 'penghuni@kost.com';
+        passwordInput.value = '123';
+        hideError();
+      });
+
+      forgotPassBtn.addEventListener('click', () => {
+        showError('Silakan hubungi pengelola Kost Cendana (08.00–17.00 WIB) untuk mereset kata sandi akun Anda.');
+      });
+
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideError();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+          showError('Email/nomor kamar dan kata sandi wajib diisi.');
+          return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Memproses...';
+
+        try {
+          const response = await fetch(`${SarprasApp.API_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'Gagal masuk. Periksa kembali kredensial Anda.');
+          }
+
+          SarprasApp.saveUser(data);
+          window.location.href = 'home.html';
+        } catch (err) {
+          showError(err.message || 'Terjadi kesalahan saat menghubungi server.');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Masuk';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

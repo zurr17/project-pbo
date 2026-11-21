@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan Terkirim — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar" style="justify-content:center;">
+      <h1 class="app-bar-title" style="font-size:17px;">Laporan terkirim</h1>
+    </header>
+
+    <section class="success-body">
+      <div class="success-center">
+        <div class="success-ring">
+          <div class="success-circle">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+
+        <h2 style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Laporan Berhasil Dikirim</h2>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;max-width:300px;">
+          Laporan kerusakan Anda sudah tercatat di sistem dan akan segera diverifikasi oleh pengelola kost.
+        </p>
+
+        <div class="success-ticket-card" style="margin-top:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div>
+              <div style="font-size:11px;color:#64748B;">Nomor Tiket Laporan</div>
+              <div id="successKode" style="font-size:17px;font-weight:700;color:#172554;margin-top:3px;">LPR-...</div>
+            </div>
+            <span id="successStatusBadge" class="status-badge status-menunggu">
+              <span class="status-dot"></span>
+              <span>Menunggu</span>
+            </span>
+          </div>
+
+          <div style="height:1px;background:#E2E8F0;"></div>
+
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div id="successKategori" style="font-size:13px;font-weight:600;color:#172554;">-</div>
+            <div id="successLokasi" style="font-size:12px;color:#64748B;">-</div>
+          </div>
+        </div>
+
+        <div class="info-banner" style="width:100%;text-align:left;">
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span>Perubahan status perbaikan dapat dipantau kapan saja melalui halaman Riwayat.</span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a id="detailLinkBtn" href="riwayat.html" class="btn btn-primary">Lihat Detail Laporan</a>
+        <a href="home.html" class="btn btn-outline">Kembali ke Beranda</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const user = SarprasApp.requireAuth();
+      if (!user) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      let laporan = null;
+      try {
+        const cached = sessionStorage.getItem('last_created_laporan');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (!id || String(parsed.id) === String(id)) {
+            laporan = parsed;
+          }
+        }
+      } catch {
+        // ignore cache error
+      }
+
+      if (id && !laporan) {
+        try {
+          const res = await fetch(`${SarprasApp.API_BASE}/laporan/${encodeURIComponent(id)}`);
+          if (res.ok) {
+            laporan = await res.json();
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (laporan) {
+        document.getElementById('successKode').textContent = laporan.kode_laporan;
+        document.getElementById('successKategori').textContent = laporan.kategori_fasilitas;
+        document.getElementById('successLokasi').textContent = `${laporan.lokasi_kamar} • ${SarprasApp.formatDateIndo(laporan.tanggal_lapor)}`;
+
+        const meta = SarprasApp.getStatusMeta(laporan.status);
+        const badge = document.getElementById('successStatusBadge');
+        badge.className = `status-badge ${meta.className}`;
+        badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(meta.label)}</span>`;
+
+        document.getElementById('detailLinkBtn').href = `detail-laporan.html?id=${encodeURIComponent(laporan.id)}`;
+      } else if (id) {
+        document.getElementById('detailLinkBtn').href = `detail-laporan.html?id=${encodeURIComponent(id)}`;
+      }
+    })();
+  </script>
+</body>
+</html>

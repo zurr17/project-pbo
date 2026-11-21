@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Riwayat Laporan — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a href="home.html" class="back-btn" aria-label="Kembali ke beranda">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Riwayat laporan</h1>
+        <p class="app-bar-subtitle">Semua laporan dan perkembangannya</p>
+      </div>
+    </header>
+
+    <section class="page-body has-bottom-nav">
+      <div class="search-box">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M15.7501 15.7501L12.4951 12.4951M14.25 8.25C14.25 11.5637 11.5637 14.25 8.25 14.25C4.93629 14.25 2.25 11.5637 2.25 8.25C2.25 4.93629 4.93629 2.25 8.25 2.25C11.5637 2.25 14.25 4.93629 14.25 8.25Z" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input
+          id="searchInput"
+          type="search"
+          class="search-input"
+          placeholder="Cari nomor tiket atau kerusakan"
+          aria-label="Cari nomor tiket atau kerusakan"
+        />
+      </div>
+
+      <div class="filter-tabs" role="tablist" aria-label="Filter status laporan">
+        <button type="button" class="filter-tab active" data-status="SEMUA">Semua</button>
+        <button type="button" class="filter-tab" data-status="MENUNGGU">Menunggu</button>
+        <button type="button" class="filter-tab" data-status="DIPROSES">Diproses</button>
+        <button type="button" class="filter-tab" data-status="SELESAI">Selesai</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="section-header">
+          <span id="countLabel" style="font-size:13px;font-weight:600;color:#172554;">0 laporan</span>
+          <span style="font-size:11px;color:#64748B;">Terbaru lebih dulu</span>
+        </div>
+
+        <div id="riwayatList" class="report-list">
+          <div class="loading-state">Memuat riwayat laporan...</div>
+        </div>
+      </div>
+
+      <div class="info-banner muted">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M7.27269 14.8755C7.53 15.32 8 15.5839 8.49962 15.5839C9 15.5839 9.47 15.32 9.72655 14.8755M15.5838 5.66644C15.5838 4.03713 15.0171 2.62034 14.167 1.41608M2.8328 1.41608C1.98273 2.62034 1.41602 4.03713 1.41602 5.66644M2.31018 10.8561C1.91 11.29 2.22 12.042 2.83297 12.042H14.1672C14.78 12.042 15.09 11.29 14.6914 10.8568C13.7493 9.88562 12.7504 8.8535 12.7504 5.66644C12.7504 3.32 10.85 1.41608 8.50009 1.41608C6.15 1.41608 4.24975 3.32 4.24975 5.66644C4.24975 8.8535 3.25021 9.88562 2.31018 10.8561Z" stroke="#64748B" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <span>Perubahan status akan muncul di sini dan dikirim melalui notifikasi.</span>
+      </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Navigasi utama">
+      <div class="bottom-nav-grid">
+        <a href="home.html" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.125 18.3743V11.3743C13.125 10.9 12.73 10.4993 12.25 10.4993H8.75C8.27 10.4993 7.875 10.9 7.875 11.3743V18.3743M2.625 8.74975C2.625 8.23 2.86 7.74 3.245 7.41L9.37 2.16C10.02 1.61 10.98 1.61 11.63 2.16L17.755 7.41C18.14 7.74 18.375 8.23 18.375 8.75V16.625C18.375 17.59 17.59 18.375 16.625 18.375H4.375C3.41 18.375 2.625 17.59 2.625 16.625V8.74975Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Beranda</span>
+        </a>
+        <a href="riwayat.html" class="bottom-nav-item active">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M13.9997 3.49947H15.7495C16.716 3.49947 17.4993 4.283 17.4993 5.24961V17.5006C17.4993 18.467 16.716 19.2507 15.7495 19.2507H5.25056C4.284 19.2507 3.50073 18.467 3.50073 17.5006V5.24961C3.50073 4.283 4.284 3.49947 5.25056 3.49947H7.00038M10.5 9.62496H13.9997M10.5 14.0003H13.9997M7.00038 9.62496H7.00913M7.00038 14.0003H7.00913M7.87529 1.74933H13.1248C13.608 1.74933 13.9997 2.14111 13.9997 2.6244V4.37454C13.9997 4.85783 13.608 5.24961 13.1248 5.24961H7.87529C7.39209 5.24961 7.00038 4.85783 7.00038 4.37454V2.6244C7.00038 2.14111 7.39209 1.74933 7.87529 1.74933Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Riwayat</span>
+        </a>
+        <button type="button" id="navNotifBtn" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M8.98341 18.3757C9.3 18.92 9.88 19.2507 10.4989 19.2507C11.12 19.2507 11.7 18.92 12.0145 18.3757M2.85362 13.4106C2.36 13.95 2.75 14.875 3.49938 14.8754H17.4997C18.25 14.875 18.64 13.95 18.1472 13.4114C16.9834 12.2117 15.7496 10.9367 15.7496 6.99977C15.7496 4.1 13.4 1.74933 10.4995 1.74933C7.6 1.74933 5.24941 4.1 5.24941 6.99977C5.24941 10.9367 4.01476 12.2117 2.85362 13.4106Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Notifikasi</span>
+        </button>
+        <button type="button" id="navAkunBtn" class="bottom-nav-item">
+          <svg width="21" height="21" viewBox="0 0 21 21" fill="none"><path d="M10.5 11.375C12.916 11.375 14.8746 9.41625 14.8746 7C14.8746 4.58375 12.916 2.625 10.5 2.625C8.08403 2.625 6.12547 4.58375 6.12547 7C6.12547 9.41625 8.08403 11.375 10.5 11.375ZM10.5 11.375C14.37 11.375 17.5 14.51 17.5 18.375M10.5 11.375C6.63 11.375 3.5 14.51 3.5 18.375" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>Akun</span>
+        </button>
+      </div>
+    </nav>
+
+    <div id="notifSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Pembaruan Laporan</h3>
+          <button type="button" class="text-link" data-close-sheet="notifSheet">Tutup</button>
+        </div>
+        <div id="notifList" class="report-list"></div>
+      </div>
+    </div>
+
+    <div id="akunSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
+      <div class="sheet-panel">
+        <div class="sheet-handle"></div>
+        <div class="section-header">
+          <h3 class="section-title">Profil Penghuni</h3>
+          <button type="button" class="text-link" data-close-sheet="akunSheet">Tutup</button>
+        </div>
+        <div class="helper-card">
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:#64748B;">Nama</span>
+            <strong id="akunNama" style="color:#172554;">-</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:#64748B;">Email</span>
+            <strong id="akunEmail" style="color:#172554;">-</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:#64748B;">Nomor Kamar</span>
+            <strong id="akunKamar" style="color:#172554;">-</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:#64748B;">Peran</span>
+            <strong id="akunRole" style="color:#2563EB;">-</strong>
+          </div>
+        </div>
+        <button type="button" id="logoutBtn" class="btn btn-outline" style="color:#B91C1C;border-color:#FECACA;">
+          Keluar dari Akun
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (() => {
+      const user = SarprasApp.requireAuth();
+      if (!user) return;
+
+      SarprasApp.attachSheetControls();
+      SarprasApp.populateAccountSheet(user);
+      document.getElementById('navNotifBtn').addEventListener('click', () => SarprasApp.openSheet('notifSheet'));
+      document.getElementById('navAkunBtn').addEventListener('click', () => SarprasApp.openSheet('akunSheet'));
+
+      const searchInput = document.getElementById('searchInput');
+      const countLabel = document.getElementById('countLabel');
+      const riwayatList = document.getElementById('riwayatList');
+      const tabButtons = document.querySelectorAll('.filter-tab');
+
+      const urlParams = new URLSearchParams(window.location.search);
+      let activeStatus = (urlParams.get('status') || 'SEMUA').toUpperCase();
+      if (!['SEMUA', 'MENUNGGU', 'DIPROSES', 'SELESAI'].includes(activeStatus)) {
+        activeStatus = 'SEMUA';
+      }
+
+      function syncTabButtons() {
+        tabButtons.forEach((btn) => {
+          btn.classList.toggle('active', btn.getAttribute('data-status') === activeStatus);
+        });
+      }
+
+      let notifSeeded = false;
+      async function loadLaporan() {
+        riwayatList.innerHTML = '<div class="loading-state">Memuat data laporan...</div>';
+        try {
+          const data = await SarprasApp.fetchPenghuniLaporan(user.id, activeStatus, searchInput.value);
+          const list = data.laporan || [];
+          countLabel.textContent = `${list.length} laporan`;
+
+          if (!notifSeeded && activeStatus === 'SEMUA' && !searchInput.value.trim()) {
+            SarprasApp.populateNotifSheet(list);
+            notifSeeded = true;
+          }
+
+          if (list.length === 0) {
+            riwayatList.innerHTML = '<div class="empty-state">Tidak ada laporan yang sesuai dengan filter atau pencarian Anda.</div>';
+          } else {
+            riwayatList.innerHTML = list.map(SarprasApp.renderReportCard).join('');
+          }
+        } catch (err) {
+          riwayatList.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
+        }
+      }
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeStatus = btn.getAttribute('data-status');
+          syncTabButtons();
+          loadLaporan();
+        });
+      });
+
+      let debounceTimer = null;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(loadLaporan, 240);
+      });
+
+      syncTabButtons();
+      loadLaporan();
+      if (activeStatus !== 'SEMUA') {
+        SarprasApp.fetchPenghuniLaporan(user.id).then((d) => {
+          SarprasApp.populateNotifSheet(d.laporan || []);
+          notifSeeded = true;
+        }).catch(() => {});
+      }
+    })();
+  </script>
+</body>
+</html>
