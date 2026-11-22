@@ -9,7 +9,7 @@
 <body>
   <main class="mobile-shell">
     <header class="app-bar" style="justify-content:center;">
-      <h1 id="topBarTitle" class="app-bar-title" style="font-size:17px;">Konfirmasi laporan</h1>
+      <h1 id="topBarTitle" class="app-bar-title" style="font-size:17px;">Konfirmasi tindakan</h1>
     </header>
 
     <section class="success-body">
@@ -22,9 +22,9 @@
           </div>
         </div>
 
-        <h2 id="confirmHeading" style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Laporan Disetujui</h2>
+        <h2 id="confirmHeading" style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Laporan Diproses</h2>
         <p id="confirmSubtitle" style="margin:0;font-size:13px;line-height:1.6;color:#64748B;max-width:310px;">
-          Laporan telah diverifikasi dan teknisi sudah ditugaskan untuk menindaklanjuti perbaikan.
+          Status laporan telah diperbarui dan notifikasi telah dikirim ke penghuni.
         </p>
 
         <div class="success-ticket-card" style="margin-top:8px;">
@@ -33,7 +33,7 @@
               <div style="font-size:11px;color:#64748B;">Nomor Tiket Laporan</div>
               <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
                 <div id="confirmKode" style="font-size:17px;font-weight:700;color:#172554;">LPR-...</div>
-                <button type="button" id="copyKodeBtn" class="demo-chip-btn" style="margin-top:0;display:inline-flex;align-items:center;gap:4px;" aria-label="Salin kode laporan">
+                <button type="button" id="copyKodeBtn" class="demo-chip-btn" style="margin-top:0;display:inline-flex;align-items:center;gap:4px;" aria-label="Salin kode tiket">
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
                     <path d="M5.33333 5.33333V3.2C5.33333 2.45326 5.33333 2.07989 5.47866 1.79468C5.60649 1.5438 5.81047 1.33982 6.06135 1.21199C6.34656 1.06667 6.71993 1.06667 7.46667 1.06667H12.8C13.5467 1.06667 13.9201 1.06667 14.2053 1.21199C14.4562 1.33982 14.6602 1.5438 14.788 1.79468C14.9333 2.07989 14.9333 2.45326 14.9333 3.2V8.53333C14.9333 9.28007 14.9333 9.65344 14.788 9.93865C14.6602 10.1895 14.4562 10.3935 14.2053 10.5213C13.9201 10.6667 13.5467 10.6667 12.8 10.6667H10.6667M3.2 14.9333H8.53333C9.28007 14.9333 9.65344 14.9333 9.93865 14.788C10.1895 14.6602 10.3935 14.4562 10.5213 14.2053C10.6667 13.9201 10.6667 13.5467 10.6667 12.8V7.46667C10.6667 6.71993 10.6667 6.34656 10.5213 6.06135C10.3935 5.81047 10.1895 5.60649 9.93865 5.47866C9.65344 5.33333 9.28007 5.33333 8.53333 5.33333H3.2C2.45326 5.33333 2.07989 5.33333 1.79468 5.47866C1.5438 5.60649 1.33982 5.81047 1.21199 6.06135C1.06667 6.34656 1.06667 6.71993 1.06667 7.46667V12.8C1.06667 13.5467 1.06667 13.9201 1.21199 14.2053C1.33982 14.4562 1.5438 14.6602 1.79468 14.788C2.07989 14.9333 2.45326 14.9333 3.2 14.9333Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
@@ -50,7 +50,7 @@
           <div style="height:1px;background:#E2E8F0;"></div>
 
           <div id="confirmMetaBlock" style="display:flex;flex-direction:column;gap:6px;">
-            <div id="confirmKategori" style="font-size:13px;font-weight:600;color:#172554;">-</div>
+            <div id="confirmJudul" style="font-size:13px;font-weight:600;color:#172554;">-</div>
             <div id="confirmLokasi" style="font-size:12px;color:#64748B;">-</div>
             <div id="confirmWaktu" style="font-size:11px;color:#64748B;">-</div>
           </div>
@@ -64,12 +64,12 @@
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
             <path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
           </svg>
-          <span id="confirmInfoText">Penghuni dapat langsung memantau pembaruan status pada halaman riwayat laporannya.</span>
+          <span id="confirmInfoText">Penghuni dapat memantau pembaruan status dan riwayat penanganan di aplikasinya.</span>
         </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <a href="owner-laporan.html" class="btn btn-primary">Kembali ke Kelola Laporan</a>
+        <a href="owner-laporan.html" class="btn btn-primary">Kembali ke Daftar Laporan</a>
         <a href="owner-home.html" class="btn btn-outline">Kembali ke Beranda</a>
       </div>
     </section>
@@ -86,7 +86,10 @@
       let statusMode = (params.get('status') || '').toLowerCase();
 
       function applyViewMode(mode, laporan) {
-        const isRejected = mode === 'ditolak' || (laporan && (laporan.status || '').toUpperCase() === 'DITOLAK');
+        const ticketStatus = laporan ? (laporan.status_tiket || '').toUpperCase() : '';
+        const isRejected = mode === 'ditolak' || ticketStatus === 'DITOLAK';
+        const isSelesai = !isRejected && (mode === 'selesai' || ticketStatus === 'SELESAI');
+
         const ring = document.getElementById('confirmRing');
         const circle = document.getElementById('confirmCircle');
         const icon = document.getElementById('confirmIcon');
@@ -96,44 +99,48 @@
         const infoText = document.getElementById('confirmInfoText');
 
         if (isRejected) {
-          document.getElementById('topBarTitle').textContent = 'Laporan ditolak';
+          document.getElementById('topBarTitle').textContent = 'Penolakan berhasil';
           ring.className = 'confirm-ring-danger';
           circle.className = 'confirm-circle-danger';
           icon.innerHTML = '<path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />';
           heading.textContent = 'Laporan Ditolak';
           subtitle.textContent = 'Penolakan laporan telah disimpan dan alasan penolakan dikirim ke penghuni.';
           banner.className = 'info-banner danger';
-          infoText.textContent = 'Status laporan kini Ditolak. Penghuni dapat melihat kategori dan alasan penolakan pada detail laporan.';
+          infoText.textContent = 'Status laporan kini Ditolak. Penghuni dapat melihat alasan penolakan pada detail laporan.';
+        } else if (isSelesai) {
+          document.getElementById('topBarTitle').textContent = 'Perbaikan selesai';
+          ring.className = 'success-ring';
+          circle.className = 'success-circle';
+          icon.innerHTML = '<path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />';
+          heading.textContent = 'Laporan Selesai';
+          subtitle.textContent = 'Perbaikan berhasil diselesaikan, kondisi aset diperbarui, dan notifikasi dikirim ke penghuni.';
+          banner.className = 'info-banner';
+          infoText.textContent = 'Status laporan kini Selesai. Penghuni dapat melihat bukti foto dan rincian biaya perbaikan.';
         } else {
-          document.getElementById('topBarTitle').textContent = 'Laporan disetujui';
+          document.getElementById('topBarTitle').textContent = 'Persetujuan berhasil';
           ring.className = 'success-ring';
           circle.className = 'success-circle';
           icon.innerHTML = '<path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />';
           heading.textContent = 'Laporan Disetujui';
-          subtitle.textContent = 'Laporan telah diverifikasi dan teknisi sudah ditugaskan untuk menindaklanjuti perbaikan.';
+          subtitle.textContent = 'Laporan telah diverifikasi dan masuk ke tahap penanganan oleh pengelola.';
           banner.className = 'info-banner';
-          infoText.textContent = 'Status laporan kini Diproses. Penghuni dapat memantau progres penanganan di aplikasi.';
+          infoText.textContent = 'Status laporan kini Diproses. Anda dapat memperbarui dengan bukti selesai saat perbaikan rampung.';
         }
       }
 
       applyViewMode(statusMode, null);
 
-      if (!id) {
-        return;
-      }
+      if (!id) return;
 
       try {
         const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
-        if (!statusMode) {
-          statusMode = (laporan.status || '').toUpperCase() === 'DITOLAK' ? 'ditolak' : 'disetujui';
-        }
         applyViewMode(statusMode, laporan);
 
-        document.getElementById('confirmKode').textContent = laporan.kode_laporan;
+        document.getElementById('confirmKode').textContent = laporan.kode_tiket;
         const copyBtn = document.getElementById('copyKodeBtn');
         const copyText = document.getElementById('copyKodeText');
         copyBtn.addEventListener('click', async () => {
-          const code = laporan.kode_laporan || '';
+          const code = laporan.kode_tiket || '';
           if (!code) return;
           try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -147,59 +154,35 @@
               document.body.removeChild(tmp);
             }
             copyText.textContent = 'Disalin!';
-            setTimeout(() => {
-              copyText.textContent = 'Salin';
-            }, 1800);
+            setTimeout(() => { copyText.textContent = 'Salin'; }, 1800);
           } catch {
             copyText.textContent = 'Gagal';
           }
         });
 
-        document.getElementById('confirmKategori').textContent = `${laporan.kategori_fasilitas} — ${SarprasApp.deriveTitle(laporan)}`;
-        const resident = laporan.nama_penghuni
-          ? `${laporan.nama_penghuni}${laporan.nomor_kamar_penghuni ? ' (Kamar ' + laporan.nomor_kamar_penghuni + ')' : ''}`
-          : '';
-        document.getElementById('confirmLokasi').textContent = resident
-          ? `${resident} • ${laporan.lokasi_kamar}`
-          : laporan.lokasi_kamar;
-        const timeRef = laporan.tanggal_diproses || laporan.tanggal_lapor;
-        document.getElementById('confirmWaktu').textContent = `Diperbarui: ${SarprasApp.formatDateTimeIndo(timeRef)} WIB`;
+        document.getElementById('confirmJudul').textContent = laporan.judul_laporan;
+        document.getElementById('confirmLokasi').textContent =
+          `${laporan.nama_pelapor} (Kamar ${laporan.nomor_kamar}) • ${laporan.nama_fasilitas}`;
+        document.getElementById('confirmWaktu').textContent =
+          `Diperbarui: ${SarprasApp.formatDateTimeIndo(laporan.waktu_update_terakhir || laporan.tgl_lapor)} WIB`;
 
-        const meta = SarprasApp.getStatusMeta(laporan.status);
+        const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('confirmStatusBadge');
         badge.className = `status-badge ${meta.className}`;
         badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(meta.label)}</span>`;
 
-        const detailRows = document.getElementById('confirmDetailRows');
-        if ((laporan.status || '').toUpperCase() === 'DITOLAK' || statusMode === 'ditolak') {
-          detailRows.innerHTML = `
-            <div class="kv-row">
-              <span class="kv-label">Kategori Penolakan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.kategori_penolakan || '-')}</span>
-            </div>
-            <div class="kv-row">
-              <span class="kv-label">Alasan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.alasan_penolakan || '-')}</span>
-            </div>
-          `;
-        } else {
-          detailRows.innerHTML = `
-            <div class="kv-row">
-              <span class="kv-label">Teknisi Ditugaskan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.nama_mekanik || '-')}</span>
-            </div>
-            <div class="kv-row">
-              <span class="kv-label">Prioritas</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.prioritas || '-')}</span>
-            </div>
-            ${laporan.catatan_owner ? `
-              <div class="kv-row">
-                <span class="kv-label">Catatan Pengelola</span>
-                <span class="kv-value">${SarprasApp.escapeHtml(laporan.catatan_owner)}</span>
-              </div>
-            ` : ''}
-          `;
+        const kMeta = SarprasApp.getKondisiMeta(laporan.kondisi_fasilitas);
+        const rowsHtml = [
+          `<div class="kv-row"><span class="kv-label">Catatan Penanganan</span><span class="kv-value">${SarprasApp.escapeHtml(laporan.catatan_terakhir || '-')}</span></div>`,
+          `<div class="kv-row"><span class="kv-label">Kondisi Aset</span><span class="status-badge ${kMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(kMeta.label)}</span></div>`
+        ];
+        if (laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0) {
+          rowsHtml.push(`<div class="kv-row"><span class="kv-label">Biaya Perbaikan</span><span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span></div>`);
         }
+        if (laporan.foto_sesudah_url) {
+          rowsHtml.push(`<div class="photo-box has-image" style="height:130px;margin-top:4px;"><img class="photo-img" src="${SarprasApp.escapeHtml(laporan.foto_sesudah_url)}" alt="Bukti selesai" /></div>`);
+        }
+        document.getElementById('confirmDetailRows').innerHTML = rowsHtml.join('');
       } catch (err) {
         document.getElementById('confirmDetailRows').innerHTML =
           `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;

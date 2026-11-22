@@ -7,7 +7,7 @@ const SarprasApp = (() => {
       const raw = localStorage.getItem(USER_STORAGE_KEY);
       if (!raw) return null;
       const user = JSON.parse(raw);
-      return user && user.id ? user : null;
+      return user && user.id_pengguna ? user : null;
     } catch {
       return null;
     }
@@ -25,7 +25,6 @@ const SarprasApp = (() => {
   function getDashboardUrlByRole(role) {
     const normalized = (role || '').toUpperCase();
     if (normalized === 'OWNER') return 'owner-home.html';
-    if (normalized === 'MEKANIK') return 'mekanik-home.html';
     return 'home.html';
   }
 
@@ -38,26 +37,20 @@ const SarprasApp = (() => {
     return user;
   }
 
-  function requireOwnerAuth() {
-    const user = getCurrentUser();
-    if (!user) {
-      window.location.href = 'login.html';
-      return null;
-    }
-    if ((user.role || '').toUpperCase() !== 'OWNER') {
+  function requirePenghuniAuth() {
+    const user = requireAuth();
+    if (!user) return null;
+    if ((user.role || '').toUpperCase() !== 'PENGHUNI') {
       window.location.href = getDashboardUrlByRole(user.role);
       return null;
     }
     return user;
   }
 
-  function requireMekanikAuth() {
-    const user = getCurrentUser();
-    if (!user) {
-      window.location.href = 'login.html';
-      return null;
-    }
-    if ((user.role || '').toUpperCase() !== 'MEKANIK') {
+  function requireOwnerAuth() {
+    const user = requireAuth();
+    if (!user) return null;
+    if ((user.role || '').toUpperCase() !== 'OWNER') {
       window.location.href = getDashboardUrlByRole(user.role);
       return null;
     }
@@ -106,12 +99,11 @@ const SarprasApp = (() => {
     return `${datePart}, ${hours}.${mins}`;
   }
 
-  function deriveTitle(laporan) {
-    const desc = (laporan.deskripsi || '').trim();
-    if (!desc) return laporan.kategori_fasilitas || 'Laporan Kerusakan';
-    const dotIdx = desc.indexOf('.');
-    const firstSentence = dotIdx > 0 && dotIdx <= 56 ? desc.slice(0, dotIdx) : desc;
-    return firstSentence.length > 56 ? firstSentence.slice(0, 53) + '...' : firstSentence;
+  function formatRupiah(value) {
+    if (value === null || value === undefined || value === '') return '-';
+    const num = Number(value);
+    if (Number.isNaN(num)) return '-';
+    return 'Rp ' + num.toLocaleString('id-ID');
   }
 
   function getStatusMeta(status) {
@@ -128,6 +120,30 @@ const SarprasApp = (() => {
     }
   }
 
+  function getKondisiMeta(kondisi) {
+    switch ((kondisi || '').toUpperCase()) {
+      case 'PERLU_PERAWATAN':
+        return { label: 'Perlu Perawatan', className: 'status-menunggu' };
+      case 'RUSAK':
+        return { label: 'Rusak', className: 'status-ditolak' };
+      case 'BAIK':
+      default:
+        return { label: 'Baik', className: 'status-selesai' };
+    }
+  }
+
+  function getStatusHunianMeta(status) {
+    switch ((status || '').toUpperCase()) {
+      case 'TERISI':
+        return { label: 'Terisi', className: 'status-diproses' };
+      case 'PERBAIKAN':
+        return { label: 'Perbaikan', className: 'status-menunggu' };
+      case 'KOSONG':
+      default:
+        return { label: 'Kosong', className: 'status-selesai' };
+    }
+  }
+
   function getCategoryIconSvg(kategori) {
     const k = (kategori || '').toLowerCase();
     if (k.includes('air') || k.includes('sanitasi') || k.includes('kamar mandi')) {
@@ -135,7 +151,7 @@ const SarprasApp = (() => {
         <path d="M10.4665 5.49932C11.0397 4.5836 11.446 3.57353 11.6665 2.51599C12.0832 4.59932 13.3332 6.59932 14.9999 7.93266C16.6665 9.26599 17.4999 10.8493 17.4999 12.516C17.5046 13.6679 17.1673 14.7953 16.5305 15.7552C15.8938 16.7152 14.9864 17.4645 13.9233 17.9081C12.8602 18.3517 11.6894 18.4697 10.5592 18.2471C9.42898 18.0244 8.39031 17.4713 7.57487 16.6577M5.83333 13.5829C7.66667 13.5829 9.16667 12.0579 9.16667 10.2079C9.16667 9.24122 8.69167 8.32455 7.74167 7.54955C6.79167 6.77455 6.075 5.62455 5.83333 4.41622C5.59167 5.62455 4.88333 6.78289 3.925 7.54955C2.96667 8.31622 2.5 9.24955 2.5 10.2079C2.5 12.0579 4 13.5829 5.83333 13.5829Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>`;
     }
-    if (k.includes('listrik') || k.includes('lampu') || k.includes('pencahayaan')) {
+    if (k.includes('elektronik') || k.includes('listrik') || k.includes('lampu') || k.includes('ac')) {
       return `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12.5 11.6668C12.6667 10.8334 13.0833 10.25 13.75 9.58328C14.5833 8.83322 15 7.7498 15 6.66638C15 5.3402 14.4732 4.06833 13.5355 3.13057C12.5979 2.19281 11.3261 1.66599 10 1.66599C8.67392 1.66599 7.40215 2.19281 6.46447 3.13057C5.52678 4.06833 5 5.3402 5 6.66638C5 7.49978 5.16667 8.49986 6.25 9.58328C6.83333 10.1667 7.33333 10.8334 7.5 11.6668M7.5 15.0004H12.5M8.33333 18.334H11.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>`;
@@ -151,13 +167,13 @@ const SarprasApp = (() => {
   }
 
   function renderReportCard(laporan) {
-    const statusMeta = getStatusMeta(laporan.status);
-    const title = deriveTitle(laporan);
-    const tanggal = formatDateIndo(laporan.tanggal_lapor);
+    const statusMeta = getStatusMeta(laporan.status_tiket);
+    const tanggal = formatDateIndo(laporan.tgl_lapor);
+    const assetLine = `${laporan.nama_fasilitas || '-'} (${laporan.nama_kategori || '-'})`;
     return `
-      <a class="report-card" href="detail-laporan.html?id=${encodeURIComponent(laporan.id)}">
+      <a class="report-card" href="detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
         <div class="report-card-top">
-          <span class="report-code">${escapeHtml(laporan.kode_laporan)}</span>
+          <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
           <span class="status-badge ${statusMeta.className}">
             <span class="status-dot"></span>
             ${escapeHtml(statusMeta.label)}
@@ -165,11 +181,11 @@ const SarprasApp = (() => {
         </div>
         <div class="report-card-body">
           <div class="report-cat-icon">
-            ${getCategoryIconSvg(laporan.kategori_fasilitas)}
+            ${getCategoryIconSvg(laporan.nama_kategori)}
           </div>
           <div class="report-card-text">
-            <div class="report-title">${escapeHtml(title)}</div>
-            <div class="report-sub">${escapeHtml(laporan.lokasi_kamar)} &bull; ${escapeHtml(tanggal)}</div>
+            <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
+            <div class="report-sub">${escapeHtml(assetLine)} &bull; ${escapeHtml(tanggal)}</div>
           </div>
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -177,6 +193,102 @@ const SarprasApp = (() => {
         </div>
       </a>
     `;
+  }
+
+  function renderOwnerReportCard(laporan) {
+    const statusMeta = getStatusMeta(laporan.status_tiket);
+    const tanggal = formatDateIndo(laporan.tgl_lapor);
+    const pelapor = laporan.nama_pelapor
+      ? `${laporan.nama_pelapor} (Kamar ${laporan.nomor_kamar || '-'})`
+      : `Kamar ${laporan.nomor_kamar || '-'}`;
+    const biayaBadge = laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0
+      ? `<span class="priority-pill">${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`
+      : '';
+
+    return `
+      <a class="report-card" href="owner-detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
+        <div class="report-card-top">
+          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+            <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
+            ${biayaBadge}
+          </div>
+          <span class="status-badge ${statusMeta.className}">
+            <span class="status-dot"></span>
+            ${escapeHtml(statusMeta.label)}
+          </span>
+        </div>
+        <div class="report-card-body">
+          <div class="report-cat-icon">
+            ${getCategoryIconSvg(laporan.nama_kategori)}
+          </div>
+          <div class="report-card-text">
+            <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
+            <div class="report-sub">${escapeHtml(pelapor)} &bull; ${escapeHtml(tanggal)}</div>
+            <div class="report-sub" style="color:#2563EB;font-weight:500;">${escapeHtml(laporan.nama_fasilitas || '-')} (${escapeHtml(laporan.kode_aset || '-')})</div>
+          </div>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </a>
+    `;
+  }
+
+  function renderRiwayatTimeline(riwayatList, emptyText = 'Belum ada riwayat penanganan.') {
+    if (!riwayatList || riwayatList.length === 0) {
+      return `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
+    }
+    const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.99969 3L4.50024 8.4996L2.00049 5.99978" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const closeSvg = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3L9 9" stroke="#B91C1C" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+    return riwayatList.map((entry, index) => {
+      const isLast = index === riwayatList.length - 1;
+      const statusUpper = (entry.status_baru || 'MENUNGGU').toUpperCase();
+      let dotState = 'done';
+      let dotContent = checkSvg;
+      if (statusUpper === 'DITOLAK') {
+        dotState = 'rejected';
+        dotContent = closeSvg;
+      } else if (isLast && statusUpper !== 'SELESAI') {
+        dotState = 'active';
+        dotContent = '';
+      }
+
+      const statusLabelMap = {
+        MENUNGGU: 'Laporan Dibuat (Menunggu)',
+        DIPROSES: 'Diproses Pengelola',
+        SELESAI: 'Perbaikan Selesai',
+        DITOLAK: 'Laporan Ditolak'
+      };
+      const labelText = statusLabelMap[statusUpper] || statusUpper;
+      const biayaHtml = entry.biaya_perbaikan && Number(entry.biaya_perbaikan) > 0
+        ? `<span class="timeline-cost-pill">Biaya: ${escapeHtml(formatRupiah(entry.biaya_perbaikan))}</span>`
+        : '';
+      const photoHtml = entry.foto_sesudah_url
+        ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" /></div>`
+        : '';
+
+      return `
+        <div class="timeline-item">
+          <div class="timeline-rail">
+            <div class="timeline-dot ${dotState}">${dotContent}</div>
+            ${isLast ? '' : '<div class="timeline-line" style="min-height:28px;height:100%;"></div>'}
+          </div>
+          <div class="timeline-content" style="${isLast ? 'padding-bottom:0;' : ''}">
+            <div class="timeline-top-row">
+              <span class="timeline-label ${isLast ? 'bold' : ''}">${escapeHtml(labelText)}</span>
+              <span class="timeline-time">${escapeHtml(formatDateTimeIndo(entry.waktu_update))}</span>
+            </div>
+            ${entry.catatan_penanganan ? `<div class="timeline-note">${escapeHtml(entry.catatan_penanganan)}</div>` : ''}
+            <div class="timeline-meta">
+              <span>Oleh: ${escapeHtml(entry.nama_pengguna || '-')} (${escapeHtml(entry.role_pengguna || '-')})</span>
+              ${biayaHtml}
+            </div>
+            ${photoHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
   }
 
   function attachSheetControls() {
@@ -205,18 +317,6 @@ const SarprasApp = (() => {
     if (el) el.classList.remove('open');
   }
 
-  function getKondisiMeta(kondisi) {
-    switch ((kondisi || '').toUpperCase()) {
-      case 'PERLU_PERAWATAN':
-        return { label: 'Perlu Perawatan', className: 'status-menunggu' };
-      case 'RUSAK':
-        return { label: 'Rusak', className: 'status-ditolak' };
-      case 'BAIK':
-      default:
-        return { label: 'Baik', className: 'status-selesai' };
-    }
-  }
-
   async function requestJson(path, options = {}) {
     const headers = { ...(options.headers || {}) };
     if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
@@ -238,57 +338,66 @@ const SarprasApp = (() => {
     return data;
   }
 
-  function populateAccountSheet(user) {
+  function populateOwnerAccountSheet(user) {
     const nameEl = document.getElementById('akunNama');
     const emailEl = document.getElementById('akunEmail');
-    const kamarEl = document.getElementById('akunKamar');
+    const hpEl = document.getElementById('akunNoHp');
     const roleEl = document.getElementById('akunRole');
-    if (nameEl) nameEl.textContent = user.nama || '-';
+    if (nameEl) nameEl.textContent = user.nama_lengkap || '-';
     if (emailEl) emailEl.textContent = user.email || '-';
-    if (kamarEl) kamarEl.textContent = user.nomor_kamar ? `Kamar ${user.nomor_kamar}` : '-';
-    if (roleEl) roleEl.textContent = user.role || 'PENGHUNI';
+    if (hpEl) hpEl.textContent = user.no_hp || '-';
+    if (roleEl) roleEl.textContent = user.role || 'OWNER';
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', logout);
+      logoutBtn.onclick = logout;
     }
   }
 
-  function populateNotifSheet(reports) {
-    const container = document.getElementById('notifList');
-    if (!container) return;
-    if (!reports || reports.length === 0) {
-      container.innerHTML = '<div class="empty-state">Belum ada pembaruan laporan.</div>';
-      return;
+  async function updateBellUnreadBadge(idPengguna, badgeElId = 'bellUnreadBadge') {
+    const badge = document.getElementById(badgeElId);
+    if (!badge || !idPengguna) return;
+    try {
+      const data = await requestJson(`/notifikasi/${encodeURIComponent(idPengguna)}/unread-count`);
+      const count = Number(data.unread || 0);
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.classList.add('visible');
+      } else {
+        badge.textContent = '';
+        badge.classList.remove('visible');
+      }
+    } catch {
+      // ignore badge fetch errors
     }
-    container.innerHTML = reports.slice(0, 4).map((item) => {
-      const meta = getStatusMeta(item.status);
-      const timeRef = item.tanggal_selesai || item.tanggal_diproses || item.tanggal_lapor;
-      return `
-        <a href="detail-laporan.html?id=${encodeURIComponent(item.id)}" class="report-card" style="padding:12px;">
-          <div class="report-card-top">
-            <span class="report-code">${escapeHtml(item.kode_laporan)}</span>
-            <span class="status-badge ${meta.className}"><span class="status-dot"></span>${escapeHtml(meta.label)}</span>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:#172554;">${escapeHtml(deriveTitle(item))}</div>
-          <div style="font-size:11px;color:#64748B;">${escapeHtml(item.catatan_penanganan || 'Menunggu verifikasi pengelola kost.')} &bull; ${escapeHtml(formatDateTimeIndo(timeRef))}</div>
-        </a>
-      `;
-    }).join('');
   }
 
-  async function fetchPenghuniLaporan(penghuniId, status = '', query = '') {
+  async function fetchKamar() {
+    return requestJson('/kamar');
+  }
+
+  async function fetchKategori() {
+    return requestJson('/kategori');
+  }
+
+  async function fetchFasilitas(kamarId = '', kategoriId = '') {
+    const params = new URLSearchParams();
+    if (kamarId) params.set('kamarId', kamarId);
+    if (kategoriId) params.set('kategoriId', kategoriId);
+    const qs = params.toString();
+    return requestJson(`/fasilitas${qs ? '?' + qs : ''}`);
+  }
+
+  async function fetchFasilitasByPenghuni(idPengguna) {
+    return requestJson(`/fasilitas/penghuni/${encodeURIComponent(idPengguna)}`);
+  }
+
+  async function fetchPenghuniLaporan(idPengguna, status = '', query = '') {
     const params = new URLSearchParams();
     if (status && status !== 'SEMUA') params.set('status', status);
     if (query && query.trim()) params.set('q', query.trim());
     const qs = params.toString();
-    const url = `${API_BASE}/laporan/penghuni/${encodeURIComponent(penghuniId)}${qs ? '?' + qs : ''}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.message || 'Gagal memuat data laporan.');
-    }
-    return data;
+    return requestJson(`/laporan/penghuni/${encodeURIComponent(idPengguna)}${qs ? '?' + qs : ''}`);
   }
 
   async function fetchOwnerDashboard() {
@@ -303,141 +412,16 @@ const SarprasApp = (() => {
     return requestJson(`/owner/laporan${qs ? '?' + qs : ''}`);
   }
 
-  async function fetchMekanikList() {
-    return requestJson('/users/mekanik');
+  async function fetchNotifikasi(idPengguna) {
+    return requestJson(`/notifikasi/${encodeURIComponent(idPengguna)}`);
   }
 
-  async function fetchMekanikDashboard(mekanikId) {
-    return requestJson(`/mekanik/${encodeURIComponent(mekanikId)}/dashboard`);
+  async function markNotifikasiRead(idNotif) {
+    return requestJson(`/notifikasi/${encodeURIComponent(idNotif)}/baca`, { method: 'PUT' });
   }
 
-  async function fetchMekanikTugas(mekanikId, status = '', query = '') {
-    const params = new URLSearchParams();
-    if (status && status !== 'SEMUA') params.set('status', status);
-    if (query && query.trim()) params.set('q', query.trim());
-    const qs = params.toString();
-    return requestJson(`/mekanik/${encodeURIComponent(mekanikId)}/tugas${qs ? '?' + qs : ''}`);
-  }
-
-  function getPriorityMeta(prioritas) {
-    const p = (prioritas || '').trim().toLowerCase();
-    if (p === 'darurat' || p === 'mendesak' || p === 'tinggi') {
-      return { label: prioritas, className: 'high' };
-    }
-    if (p === 'sedang') {
-      return { label: prioritas, className: 'medium' };
-    }
-    return { label: prioritas || 'Rendah', className: 'low' };
-  }
-
-  function renderAssignedReportCard(laporan, detailPage, extraLineHtml) {
-    const statusMeta = getStatusMeta(laporan.status);
-    const title = deriveTitle(laporan);
-    const tanggal = formatDateIndo(laporan.tanggal_lapor);
-    const residentLabel = laporan.nama_penghuni
-      ? `${laporan.nama_penghuni}${laporan.nomor_kamar_penghuni ? ' (Kamar ' + laporan.nomor_kamar_penghuni + ')' : ''}`
-      : laporan.lokasi_kamar;
-    const priorityHtml = laporan.prioritas
-      ? `<span class="priority-pill ${getPriorityMeta(laporan.prioritas).className}">${escapeHtml(laporan.prioritas)}</span>`
-      : '';
-
-    return `
-      <a class="report-card" href="${detailPage}?id=${encodeURIComponent(laporan.id)}">
-        <div class="report-card-top">
-          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-            <span class="report-code">${escapeHtml(laporan.kode_laporan)}</span>
-            ${priorityHtml}
-          </div>
-          <span class="status-badge ${statusMeta.className}">
-            <span class="status-dot"></span>
-            ${escapeHtml(statusMeta.label)}
-          </span>
-        </div>
-        <div class="report-card-body">
-          <div class="report-cat-icon">
-            ${getCategoryIconSvg(laporan.kategori_fasilitas)}
-          </div>
-          <div class="report-card-text">
-            <div class="report-title">${escapeHtml(title)}</div>
-            <div class="report-sub">${escapeHtml(residentLabel)} &bull; ${escapeHtml(tanggal)}</div>
-            ${extraLineHtml || ''}
-          </div>
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </a>
-    `;
-  }
-
-  function renderOwnerReportCard(laporan) {
-    const mechanicLine = laporan.nama_mekanik
-      ? `<div class="report-sub" style="color:#2563EB;font-weight:500;">Teknisi: ${escapeHtml(laporan.nama_mekanik)}</div>`
-      : '';
-    return renderAssignedReportCard(laporan, 'owner-detail-laporan.html', mechanicLine);
-  }
-
-  function renderMekanikTaskCard(laporan) {
-    const locationLine = laporan.lokasi_kamar
-      ? `<div class="report-sub" style="color:#2563EB;font-weight:500;">Lokasi: ${escapeHtml(laporan.lokasi_kamar)}</div>`
-      : '';
-    return renderAssignedReportCard(laporan, 'mekanik-detail-tugas.html', locationLine);
-  }
-
-  function populateRoleNotifSheet(reports, detailPage, emptyText) {
-    const container = document.getElementById('notifList');
-    if (!container) return;
-    if (!reports || reports.length === 0) {
-      container.innerHTML = `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
-      return;
-    }
-    container.innerHTML = reports.slice(0, 5).map((item) => {
-      const meta = getStatusMeta(item.status);
-      const timeRef = item.tanggal_selesai || item.tanggal_diproses || item.tanggal_lapor;
-      const roomInfo = item.nomor_kamar_penghuni ? `Kamar ${item.nomor_kamar_penghuni}` : item.lokasi_kamar;
-      return `
-        <a href="${detailPage}?id=${encodeURIComponent(item.id)}" class="report-card" style="padding:12px;">
-          <div class="report-card-top">
-            <span class="report-code">${escapeHtml(item.kode_laporan)}</span>
-            <span class="status-badge ${meta.className}"><span class="status-dot"></span>${escapeHtml(meta.label)}</span>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:#172554;">${escapeHtml(deriveTitle(item))}</div>
-          <div style="font-size:11px;color:#64748B;">${escapeHtml(item.nama_penghuni || 'Penghuni')} &bull; ${escapeHtml(roomInfo || '-')} &bull; ${escapeHtml(formatDateTimeIndo(timeRef))}</div>
-        </a>
-      `;
-    }).join('');
-  }
-
-  function populateOwnerNotifSheet(reports) {
-    populateRoleNotifSheet(reports, 'owner-detail-laporan.html', 'Belum ada laporan masuk.');
-  }
-
-  function populateMekanikNotifSheet(reports) {
-    populateRoleNotifSheet(reports, 'mekanik-detail-tugas.html', 'Belum ada tugas yang ditugaskan.');
-  }
-
-  function populateRoleAccountSheet(user, defaultRoleLabel) {
-    const nameEl = document.getElementById('akunNama');
-    const emailEl = document.getElementById('akunEmail');
-    const roleEl = document.getElementById('akunRole');
-    const specEl = document.getElementById('akunSpesialisasi');
-    if (nameEl) nameEl.textContent = user.nama || '-';
-    if (emailEl) emailEl.textContent = user.email || '-';
-    if (roleEl) roleEl.textContent = user.role || defaultRoleLabel;
-    if (specEl) specEl.textContent = user.nomor_kamar || 'Teknisi Kost Cendana';
-
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-      logoutBtn.onclick = logout;
-    }
-  }
-
-  function populateOwnerAccountSheet(user) {
-    populateRoleAccountSheet(user, 'OWNER');
-  }
-
-  function populateMekanikAccountSheet(user) {
-    populateRoleAccountSheet(user, 'MEKANIK');
+  async function markAllNotifikasiRead(idPengguna) {
+    return requestJson(`/notifikasi/baca-semua/${encodeURIComponent(idPengguna)}`, { method: 'PUT' });
   }
 
   return {
@@ -447,35 +431,35 @@ const SarprasApp = (() => {
     logout,
     getDashboardUrlByRole,
     requireAuth,
+    requirePenghuniAuth,
     requireOwnerAuth,
-    requireMekanikAuth,
     escapeHtml,
     getGreetingByHour,
     formatDateIndo,
     formatDateTimeIndo,
-    deriveTitle,
+    formatRupiah,
     getStatusMeta,
+    getKondisiMeta,
+    getStatusHunianMeta,
     getCategoryIconSvg,
     renderReportCard,
+    renderOwnerReportCard,
+    renderRiwayatTimeline,
     attachSheetControls,
     openSheet,
     closeSheet,
-    getKondisiMeta,
     requestJson,
-    populateAccountSheet,
-    populateNotifSheet,
+    populateOwnerAccountSheet,
+    updateBellUnreadBadge,
+    fetchKamar,
+    fetchKategori,
+    fetchFasilitas,
+    fetchFasilitasByPenghuni,
     fetchPenghuniLaporan,
     fetchOwnerDashboard,
     fetchOwnerLaporan,
-    fetchMekanikList,
-    fetchMekanikDashboard,
-    fetchMekanikTugas,
-    getPriorityMeta,
-    renderOwnerReportCard,
-    renderMekanikTaskCard,
-    populateOwnerNotifSheet,
-    populateMekanikNotifSheet,
-    populateOwnerAccountSheet,
-    populateMekanikAccountSheet
+    fetchNotifikasi,
+    markNotifikasiRead,
+    markAllNotifikasiRead
   };
 })();

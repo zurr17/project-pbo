@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifikasi — SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="mobile-shell">
+    <header class="app-bar">
+      <a id="backBtn" href="home.html" class="back-btn" aria-label="Kembali">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </a>
+      <div class="app-bar-titles">
+        <h1 class="app-bar-title">Notifikasi</h1>
+        <p id="notifSubtitle" class="app-bar-subtitle">Pembaruan status laporan</p>
+      </div>
+      <button type="button" id="markAllBtn" class="text-link">Tandai semua dibaca</button>
+    </header>
+
+    <section class="page-body">
+      <div id="notifError" class="error-banner" role="alert"></div>
+      <div id="notifList" class="report-list">
+        <div class="loading-state">Memuat notifikasi...</div>
+      </div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      const user = SarprasApp.requireAuth();
+      if (!user) return;
+
+      const isOwner = (user.role || '').toUpperCase() === 'OWNER';
+      document.getElementById('backBtn').href = isOwner ? 'owner-home.html' : 'home.html';
+      const detailPage = isOwner ? 'owner-detail-laporan.html' : 'detail-laporan.html';
+
+      const notifListEl = document.getElementById('notifList');
+      const notifError = document.getElementById('notifError');
+      const notifSubtitle = document.getElementById('notifSubtitle');
+      const markAllBtn = document.getElementById('markAllBtn');
+
+      async function loadNotifs() {
+        notifError.classList.remove('visible');
+        notifListEl.innerHTML = '<div class="loading-state">Memuat notifikasi...</div>';
+        try {
+          const items = await SarprasApp.fetchNotifikasi(user.id_pengguna);
+          const unreadCount = (items || []).filter((n) => !n.is_read).length;
+          notifSubtitle.textContent = unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : 'Semua notifikasi sudah dibaca';
+          markAllBtn.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+
+          if (!items || items.length === 0) {
+            notifListEl.innerHTML = '<div class="empty-state">Belum ada notifikasi yang masuk.</div>';
+            return;
+          }
+
+          notifListEl.innerHTML = items.map((item) => {
+            const statusMeta = SarprasApp.getStatusMeta(item.status_tiket);
+            return `
+              <article class="notif-card ${item.is_read ? '' : 'unread'}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
+                <div class="report-card-top">
+                  <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    ${!item.is_read ? '<span class="priority-pill high">Baru</span>' : ''}
+                    <span class="status-badge ${statusMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(statusMeta.label)}</span>
+                  </div>
+                </div>
+                <div style="font-size:14px;font-weight:600;color:#172554;">${SarprasApp.escapeHtml(item.judul_notif)}</div>
+                <div style="font-size:12px;line-height:1.5;color:#475569;">${SarprasApp.escapeHtml(item.pesan_notif)}</div>
+                <div style="font-size:11px;color:#64748B;">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(item.waktu_kirim))} WIB</div>
+              </article>
+            `;
+          }).join('');
+        } catch (err) {
+          notifListEl.innerHTML = '';
+          notifError.textContent = err.message || 'Gagal memuat notifikasi.';
+          notifError.classList.add('visible');
+        }
+      }
+
+      notifListEl.addEventListener('click', async (e) => {
+        const card = e.target.closest('[data-notif-id]');
+        if (!card) return;
+        const notifId = card.getAttribute('data-notif-id');
+        const laporanId = card.getAttribute('data-laporan-id');
+        try {
+          await SarprasApp.markNotifikasiRead(notifId);
+        } catch {
+          // navigate even if mark-read request fails
+        }
+        window.location.href = `${detailPage}?id=${encodeURIComponent(laporanId)}`;
+      });
+
+      markAllBtn.addEventListener('click', async () => {
+        markAllBtn.disabled = true;
+        try {
+          await SarprasApp.markAllNotifikasiRead(user.id_pengguna);
+          await loadNotifs();
+        } catch (err) {
+          notifError.textContent = err.message || 'Gagal menandai semua notifikasi.';
+          notifError.classList.add('visible');
+        } finally {
+          markAllBtn.disabled = false;
+        }
+      });
+
+      loadNotifs();
+    })();
+  </script>
+</body>
+</html>

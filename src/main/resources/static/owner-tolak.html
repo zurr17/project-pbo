@@ -47,24 +47,24 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="alasanPenolakanInput">Catatan untuk penghuni</label>
+          <label class="form-label" for="alasanPenolakanInput">Catatan penolakan untuk penghuni</label>
           <div class="input-wrap textarea-wrap">
             <textarea
               id="alasanPenolakanInput"
               name="alasan_penolakan"
               class="textarea-control"
-              placeholder="Tuliskan catatan atau penjelasan penolakan untuk penghuni..."
+              placeholder="Tuliskan penjelasan detail alasan penolakan untuk penghuni..."
               required
             ></textarea>
           </div>
-          <span class="form-hint">Catatan ini akan ditampilkan kepada penghuni pada detail laporan.</span>
+          <span class="form-hint">Catatan ini tercatat di riwayat penanganan dan dikirim via notifikasi ke penghuni.</span>
         </div>
 
         <div class="info-banner danger">
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
             <path d="M8.5 5.66667V8.97917M8.5 11.3333H8.50708M15.5833 8.5C15.5833 12.412 12.412 15.5833 8.5 15.5833C4.58798 15.5833 1.41667 12.412 1.41667 8.5C1.41667 4.58798 4.58798 1.41667 8.5 1.41667C12.412 1.41667 15.5833 4.58798 15.5833 8.5Z" stroke="#B91C1C" stroke-width="1.4" stroke-linecap="round" />
           </svg>
-          <span>Laporan yang ditolak akan berstatus <strong>Ditolak</strong> dan tidak diteruskan ke teknisi.</span>
+          <span>Laporan yang ditolak akan berstatus <strong>Ditolak</strong> dan penghuni akan menerima pemberitahuan.</span>
         </div>
 
         <button type="submit" id="submitBtn" class="btn btn-danger">Tolak Laporan</button>
@@ -108,20 +108,13 @@
 
       try {
         const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
-        document.getElementById('pageKodeSub').textContent = laporan.kode_laporan;
-        document.getElementById('summaryKode').textContent = laporan.kode_laporan;
-        document.getElementById('summaryPenghuni').textContent = laporan.nama_penghuni
-          ? `${laporan.nama_penghuni}${laporan.nomor_kamar_penghuni ? ' • Kamar ' + laporan.nomor_kamar_penghuni : ''}`
-          : '-';
-        document.getElementById('summaryTitle').textContent = SarprasApp.deriveTitle(laporan);
-        document.getElementById('summaryLokasi').textContent = `${laporan.kategori_fasilitas} • ${laporan.lokasi_kamar}`;
-
-        if (laporan.kategori_penolakan) {
-          kategoriPenolakanSelect.value = laporan.kategori_penolakan;
-        }
-        if (laporan.alasan_penolakan) {
-          alasanPenolakanInput.value = laporan.alasan_penolakan;
-        }
+        document.getElementById('pageKodeSub').textContent = laporan.kode_tiket;
+        document.getElementById('summaryKode').textContent = laporan.kode_tiket;
+        document.getElementById('summaryPenghuni').textContent =
+          `${laporan.nama_pelapor} • Kamar ${laporan.nomor_kamar}`;
+        document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
+        document.getElementById('summaryLokasi').textContent =
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`;
       } catch (err) {
         showError(err.message || 'Gagal memuat detail laporan.');
       }
@@ -130,11 +123,11 @@
         e.preventDefault();
         hideError();
 
-        const kategoriPenolakan = kategoriPenolakanSelect.value.trim();
-        const alasanPenolakan = alasanPenolakanInput.value.trim();
+        const kategori_penolakan = kategoriPenolakanSelect.value.trim();
+        const alasan_penolakan = alasanPenolakanInput.value.trim();
 
-        if (!alasanPenolakan) {
-          showError('Catatan untuk penghuni wajib diisi.');
+        if (!alasan_penolakan) {
+          showError('Catatan penolakan untuk penghuni wajib diisi.');
           return;
         }
 
@@ -145,8 +138,9 @@
           await SarprasApp.requestJson(`/owner/laporan/${encodeURIComponent(id)}/tolak`, {
             method: 'PUT',
             body: JSON.stringify({
-              kategori_penolakan: kategoriPenolakan,
-              alasan_penolakan: alasanPenolakan
+              id_pengguna: user.id_pengguna,
+              kategori_penolakan,
+              alasan_penolakan
             })
           });
 

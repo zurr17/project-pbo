@@ -1,6 +1,8 @@
 package com.sarpraskost.app.repository;
 
 import com.sarpraskost.app.entity.LaporanKerusakan;
+import com.sarpraskost.app.entity.StatusTiket;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -10,23 +12,22 @@ import org.springframework.data.repository.query.Param;
 
 public interface LaporanKerusakanRepository extends JpaRepository<LaporanKerusakan, Long> {
 
-    @EntityGraph(attributePaths = "penghuni")
-    List<LaporanKerusakan> findByPenghuniIdOrderByTanggalLaporDescIdDesc(Long penghuniId);
+    @EntityGraph(attributePaths = {"pengguna", "pengguna.kamar", "fasilitas", "fasilitas.kamar", "fasilitas.kategori"})
+    List<LaporanKerusakan> findByPenggunaIdPenggunaOrderByTglLaporDescIdLaporanDesc(Long idPengguna);
 
-    @EntityGraph(attributePaths = "penghuni")
-    List<LaporanKerusakan> findAllByOrderByTanggalLaporDescIdDesc();
+    @EntityGraph(attributePaths = {"pengguna", "pengguna.kamar", "fasilitas", "fasilitas.kamar", "fasilitas.kategori"})
+    List<LaporanKerusakan> findAllByOrderByTglLaporDescIdLaporanDesc();
 
-    @EntityGraph(attributePaths = "penghuni")
-    List<LaporanKerusakan> findByMekanikIdOrderByTanggalLaporDescIdDesc(Long mekanikId);
-
-    long countByMekanikId(Long mekanikId);
-
-    @Query("SELECT l FROM LaporanKerusakan l JOIN FETCH l.penghuni WHERE l.id = :id")
+    @Query("SELECT l FROM LaporanKerusakan l JOIN FETCH l.pengguna p LEFT JOIN FETCH p.kamar JOIN FETCH l.fasilitas f JOIN FETCH f.kamar JOIN FETCH f.kategori WHERE l.idLaporan = :id")
     Optional<LaporanKerusakan> findDetailById(@Param("id") Long id);
 
-    List<LaporanKerusakan> findByKodeLaporanStartingWith(String prefix);
+    List<LaporanKerusakan> findByKodeTiketStartingWith(String prefix);
 
-    long countByPenghuniId(Long penghuniId);
+    long countByPenggunaIdPengguna(Long idPengguna);
 
-    void deleteByPenghuniId(Long penghuniId);
+    long countByFasilitasIdFasilitas(Long idFasilitas);
+
+    long countByFasilitasIdFasilitasAndStatusTiketIn(Long idFasilitas, Collection<StatusTiket> statuses);
+
+    List<LaporanKerusakan> findByPenggunaIdPengguna(Long idPengguna);
 }

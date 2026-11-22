@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record UpdateLaporanRequest(
-    @JsonProperty("kategori_fasilitas") @JsonAlias("kategoriFasilitas") String kategoriFasilitas,
-    @JsonProperty("lokasi_kamar") @JsonAlias("lokasiKamar") String lokasiKamar,
-    String deskripsi
+    @JsonProperty("id_fasilitas") @JsonAlias("idFasilitas") Long idFasilitas,
+    @JsonProperty("judul_laporan") @JsonAlias("judulLaporan") String judulLaporan,
+    @JsonProperty("deskripsi_kerusakan") @JsonAlias({"deskripsi", "deskripsiKerusakan"}) String deskripsiKerusakan
 ) {
 }
-

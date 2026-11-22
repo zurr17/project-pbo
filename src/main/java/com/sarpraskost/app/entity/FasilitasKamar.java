@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "fasilitas_kamar")
@@ -18,11 +19,19 @@ public class FasilitasKamar {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "id_fasilitas")
+    private Long idFasilitas;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "penghuni_id", nullable = false)
-    private User penghuni;
+    @JoinColumn(name = "id_kamar", nullable = false)
+    private Kamar kamar;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_kategori", nullable = false)
+    private KategoriFasilitas kategori;
+
+    @Column(name = "kode_aset", nullable = false, unique = true, length = 50)
+    private String kodeAset;
 
     @Column(name = "nama_fasilitas", nullable = false, length = 120)
     private String namaFasilitas;
@@ -31,43 +40,63 @@ public class FasilitasKamar {
     private String merkTipe;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(name = "kondisi", nullable = false, length = 30)
     private KondisiFasilitas kondisi;
 
-    @Column(columnDefinition = "TEXT")
-    private String keterangan;
+    @Column(name = "tgl_pasang")
+    private LocalDate tglPasang;
 
     public FasilitasKamar() {
     }
 
     public FasilitasKamar(
-        User penghuni,
+        Kamar kamar,
+        KategoriFasilitas kategori,
+        String kodeAset,
         String namaFasilitas,
         String merkTipe,
         KondisiFasilitas kondisi,
-        String keterangan
+        LocalDate tglPasang
     ) {
-        this.penghuni = penghuni;
+        this.kamar = kamar;
+        this.kategori = kategori;
+        this.kodeAset = kodeAset;
         this.namaFasilitas = namaFasilitas;
         this.merkTipe = merkTipe;
         this.kondisi = kondisi;
-        this.keterangan = keterangan;
+        this.tglPasang = tglPasang;
     }
 
-    public Long getId() {
-        return id;
+    public Long getIdFasilitas() {
+        return idFasilitas;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setIdFasilitas(Long idFasilitas) {
+        this.idFasilitas = idFasilitas;
     }
 
-    public User getPenghuni() {
-        return penghuni;
+    public Kamar getKamar() {
+        return kamar;
     }
 
-    public void setPenghuni(User penghuni) {
-        this.penghuni = penghuni;
+    public void setKamar(Kamar kamar) {
+        this.kamar = kamar;
+    }
+
+    public KategoriFasilitas getKategori() {
+        return kategori;
+    }
+
+    public void setKategori(KategoriFasilitas kategori) {
+        this.kategori = kategori;
+    }
+
+    public String getKodeAset() {
+        return kodeAset;
+    }
+
+    public void setKodeAset(String kodeAset) {
+        this.kodeAset = kodeAset;
     }
 
     public String getNamaFasilitas() {
@@ -94,12 +123,11 @@ public class FasilitasKamar {
         this.kondisi = kondisi;
     }
 
-    public String getKeterangan() {
-        return keterangan;
+    public LocalDate getTglPasang() {
+        return tglPasang;
     }
 
-    public void setKeterangan(String keterangan) {
-        this.keterangan = keterangan;
+    public void setTglPasang(LocalDate tglPasang) {
+        this.tglPasang = tglPasang;
     }
 }
-

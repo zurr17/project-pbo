@@ -22,7 +22,7 @@
 
         <h2 style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Laporan Berhasil Dikirim</h2>
         <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;max-width:300px;">
-          Laporan kerusakan Anda sudah tercatat di sistem dan akan segera diverifikasi oleh pengelola kost.
+          Laporan kerusakan Anda sudah tercatat di sistem dan notifikasi telah dikirim kepada pengelola kost.
         </p>
 
         <div class="success-ticket-card" style="margin-top:8px;">
@@ -40,14 +40,14 @@
           <div style="height:1px;background:#E2E8F0;"></div>
 
           <div style="display:flex;flex-direction:column;gap:4px;">
-            <div id="successKategori" style="font-size:13px;font-weight:600;color:#172554;">-</div>
-            <div id="successLokasi" style="font-size:12px;color:#64748B;">-</div>
+            <div id="successJudul" style="font-size:14px;font-weight:600;color:#172554;">-</div>
+            <div id="successMeta" style="font-size:12px;color:#64748B;">-</div>
           </div>
         </div>
 
         <div class="info-banner" style="width:100%;text-align:left;">
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
-          <span>Perubahan status perbaikan dapat dipantau kapan saja melalui halaman Riwayat.</span>
+          <span>Perubahan status dan riwayat penanganan dapat dipantau kapan saja melalui halaman Riwayat atau Notifikasi.</span>
         </div>
       </div>
 
@@ -61,7 +61,7 @@
   <script src="js/app.js"></script>
   <script>
     (async () => {
-      const user = SarprasApp.requireAuth();
+      const user = SarprasApp.requirePenghuniAuth();
       if (!user) return;
 
       const params = new URLSearchParams(window.location.search);
@@ -72,7 +72,7 @@
         const cached = sessionStorage.getItem('last_created_laporan');
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (!id || String(parsed.id) === String(id)) {
+          if (!id || String(parsed.id_laporan) === String(id)) {
             laporan = parsed;
           }
         }
@@ -82,26 +82,24 @@
 
       if (id && !laporan) {
         try {
-          const res = await fetch(`${SarprasApp.API_BASE}/laporan/${encodeURIComponent(id)}`);
-          if (res.ok) {
-            laporan = await res.json();
-          }
+          laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
         } catch {
           // ignore
         }
       }
 
       if (laporan) {
-        document.getElementById('successKode').textContent = laporan.kode_laporan;
-        document.getElementById('successKategori').textContent = laporan.kategori_fasilitas;
-        document.getElementById('successLokasi').textContent = `${laporan.lokasi_kamar} • ${SarprasApp.formatDateIndo(laporan.tanggal_lapor)}`;
+        document.getElementById('successKode').textContent = laporan.kode_tiket;
+        document.getElementById('successJudul').textContent = laporan.judul_laporan;
+        document.getElementById('successMeta').textContent =
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • Kamar ${laporan.nomor_kamar} • ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
 
-        const meta = SarprasApp.getStatusMeta(laporan.status);
+        const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('successStatusBadge');
         badge.className = `status-badge ${meta.className}`;
         badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(meta.label)}</span>`;
 
-        document.getElementById('detailLinkBtn').href = `detail-laporan.html?id=${encodeURIComponent(laporan.id)}`;
+        document.getElementById('detailLinkBtn').href = `detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}`;
       } else if (id) {
         document.getElementById('detailLinkBtn').href = `detail-laporan.html?id=${encodeURIComponent(id)}`;
       }

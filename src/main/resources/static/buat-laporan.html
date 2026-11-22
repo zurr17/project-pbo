@@ -14,51 +14,40 @@
       </a>
       <div class="app-bar-titles">
         <h1 class="app-bar-title">Buat laporan</h1>
-        <p class="app-bar-subtitle">Laporkan kerusakan fasilitas kost</p>
+        <p id="roomSubtitle" class="app-bar-subtitle">Laporkan kerusakan aset fasilitas kamar</p>
       </div>
     </header>
 
     <section class="page-body">
       <div class="info-banner">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span>Ceritakan kendalanya. Kami bantu teruskan ke petugas yang tepat.</span>
+        <span>Pilih fasilitas di kamar Anda yang bermasalah. Laporan akan langsung diteruskan ke Owner kost.</span>
       </div>
 
       <form id="laporanForm" class="form-stack" enctype="multipart/form-data" novalidate>
         <div id="formError" class="error-banner" role="alert"></div>
 
         <div class="form-group">
-          <label class="form-label" for="kategoriInput">Kategori kerusakan</label>
+          <label class="form-label" for="fasilitasSelect">Fasilitas kamar yang rusak</label>
           <div class="input-wrap">
-            <select id="kategoriInput" name="kategori_fasilitas" class="input-control" required>
-              <option value="Air & Sanitasi">Air &amp; Sanitasi</option>
-              <option value="Listrik & Pencahayaan">Listrik &amp; Pencahayaan</option>
-              <option value="Pintu & Kunci">Pintu &amp; Kunci</option>
-              <option value="AC & Ventilasi">AC &amp; Ventilasi</option>
-              <option value="Internet & Wi-Fi">Internet &amp; Wi-Fi</option>
-              <option value="Furnitur & Bangunan">Furnitur &amp; Bangunan</option>
-              <option value="Lainnya">Lainnya</option>
+            <select id="fasilitasSelect" name="id_fasilitas" class="input-control" required>
+              <option value="">Memuat fasilitas kamar...</option>
             </select>
           </div>
+          <div id="assetPreview" class="asset-preview-box" style="display:none;"></div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="lokasiInput">Lokasi / nomor kamar</label>
+          <label class="form-label" for="judulInput">Judul laporan</label>
           <div class="input-wrap">
             <input
-              id="lokasiInput"
-              name="lokasi_kamar"
+              id="judulInput"
+              name="judul_laporan"
               type="text"
               class="input-control"
-              placeholder="Contoh: Kamar A-12 · Kamar mandi"
+              placeholder="Contoh: AC kamar tidak dingin / Keran bocor"
               required
             />
-          </div>
-          <div class="quick-chips" aria-label="Pilih detail lokasi">
-            <button type="button" class="quick-chip" data-area="Kamar mandi">+ Kamar mandi</button>
-            <button type="button" class="quick-chip" data-area="Area kamar">+ Area kamar</button>
-            <button type="button" class="quick-chip" data-area="Pintu utama">+ Pintu utama</button>
-            <button type="button" class="quick-chip" data-area="Teras depan">+ Teras depan</button>
           </div>
         </div>
 
@@ -67,9 +56,9 @@
           <div class="input-wrap textarea-wrap">
             <textarea
               id="deskripsiInput"
-              name="deskripsi"
+              name="deskripsi_kerusakan"
               class="textarea-control"
-              placeholder="Jelaskan kondisi kerusakan secara singkat dan jelas..."
+              placeholder="Jelaskan kondisi kerusakan secara rinci..."
               required
             ></textarea>
           </div>
@@ -101,7 +90,7 @@
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M10.498 3.00061C11.1 3.00061 11.6 3.3 11.8181 3.78803L12.1826 4.46296C12.45 4.95 12.95 5.25039 13.5027 5.25039H15.0006C15.83 5.25039 16.5007 5.92 16.5007 6.75024V13.4996C16.5007 14.33 15.83 14.9994 15.0006 14.9994H2.99963C2.17 14.9994 1.49951 14.33 1.49951 13.4996V6.75024C1.49951 5.92 2.17 5.25039 2.99963 5.25039H4.4975C5.05 5.25039 5.55 4.95 5.81686 4.46446L6.18364 3.78653C6.45 3.3 6.95 3.00061 7.50299 3.00061H10.498ZM11.2503 9.74994C11.2503 10.9925 10.2429 11.9997 9.00011 11.9997C7.75737 11.9997 6.74993 10.9925 6.74993 9.74994C6.74993 8.50742 7.75737 7.50016 9.00011 7.50016C10.2429 7.50016 11.2503 8.50742 11.2503 9.74994Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
             <span id="tambahFotoLabel">Tambah foto</span>
           </button>
-          <span class="form-hint">JPG atau PNG, maksimal 5 MB per foto.</span>
+          <span class="form-hint">JPG, PNG, atau WEBP, maksimal 5 MB.</span>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:12px;padding-top:4px;">
@@ -109,7 +98,7 @@
             <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M17.3019 1.69987L8.64033 10.3596M11.5078 17.167C11.72 17.69 12.11 17.38 12.2496 17.148L17.3959 2.10685C17.51 1.78 17.22 1.49 16.8932 1.60416L1.85022 6.74982C1.53 6.86 1.51 7.36 1.83121 7.49158L8.10966 10.009C8.5 10.17 8.83 10.5 8.99007 10.8877L11.5078 17.167Z" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span>Kirim Laporan</span>
           </button>
-          <div style="text-align:center;font-size:11px;color:#64748B;">Laporan Anda akan diverifikasi oleh pengelola kost.</div>
+          <div style="text-align:center;font-size:11px;color:#64748B;">Laporan Anda akan diverifikasi dan ditangani oleh Owner kost.</div>
         </div>
       </form>
     </section>
@@ -117,12 +106,16 @@
 
   <script src="js/app.js"></script>
   <script>
-    (() => {
-      const user = SarprasApp.requireAuth();
+    (async () => {
+      const user = SarprasApp.requirePenghuniAuth();
       if (!user) return;
 
-      const lokasiInput = document.getElementById('lokasiInput');
-      const kategoriInput = document.getElementById('kategoriInput');
+      const params = new URLSearchParams(window.location.search);
+      const preselectedFasilitasId = params.get('fasilitasId');
+
+      const fasilitasSelect = document.getElementById('fasilitasSelect');
+      const assetPreview = document.getElementById('assetPreview');
+      const judulInput = document.getElementById('judulInput');
       const deskripsiInput = document.getElementById('deskripsiInput');
       const fotoInput = document.getElementById('fotoInput');
       const tambahFotoBtn = document.getElementById('tambahFotoBtn');
@@ -137,17 +130,11 @@
       const submitBtn = document.getElementById('submitBtn');
       const laporanForm = document.getElementById('laporanForm');
 
-      const baseKamar = user.nomor_kamar ? `Kamar ${user.nomor_kamar}` : '';
-      if (baseKamar) {
-        lokasiInput.value = baseKamar;
+      if (user.nomor_kamar) {
+        document.getElementById('roomSubtitle').textContent = `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''}`;
       }
 
-      document.querySelectorAll('.quick-chip').forEach((chip) => {
-        chip.addEventListener('click', () => {
-          const area = chip.getAttribute('data-area');
-          lokasiInput.value = baseKamar ? `${baseKamar} · ${area}` : area;
-        });
-      });
+      let fasilitasList = [];
 
       function showError(msg) {
         formError.textContent = msg;
@@ -159,6 +146,53 @@
         formError.textContent = '';
         formError.classList.remove('visible');
       }
+
+      function updateAssetPreview() {
+        const selectedId = Number(fasilitasSelect.value);
+        const item = fasilitasList.find((f) => f.id_fasilitas === selectedId);
+        if (!item) {
+          assetPreview.style.display = 'none';
+          return;
+        }
+        const meta = SarprasApp.getKondisiMeta(item.kondisi);
+        assetPreview.style.display = 'flex';
+        assetPreview.innerHTML = `
+          <div class="kv-row">
+            <span class="kv-label">Kode Aset</span>
+            <span class="kv-value">${SarprasApp.escapeHtml(item.kode_aset)}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Kategori &amp; Merk</span>
+            <span class="kv-value">${SarprasApp.escapeHtml(item.nama_kategori)} &bull; ${SarprasApp.escapeHtml(item.merk_tipe || '-')}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Kondisi Aset</span>
+            <span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>
+          </div>
+        `;
+      }
+
+      try {
+        fasilitasList = await SarprasApp.fetchFasilitasByPenghuni(user.id_pengguna);
+        if (!fasilitasList || fasilitasList.length === 0) {
+          fasilitasSelect.innerHTML = '<option value="">Belum ada fasilitas terdaftar di kamar Anda</option>';
+          submitBtn.disabled = true;
+          showError('Kamar Anda belum memiliki data fasilitas. Hubungi Owner kost untuk menambahkan fasilitas kamar terlebih dahulu.');
+        } else {
+          fasilitasSelect.innerHTML = '<option value="">-- Pilih fasilitas kamar --</option>' +
+            fasilitasList.map((f) => `<option value="${SarprasApp.escapeHtml(f.id_fasilitas)}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}</option>`).join('');
+          if (preselectedFasilitasId) {
+            fasilitasSelect.value = preselectedFasilitasId;
+          }
+          updateAssetPreview();
+        }
+      } catch (err) {
+        fasilitasSelect.innerHTML = '<option value="">Gagal memuat fasilitas</option>';
+        submitBtn.disabled = true;
+        showError(err.message || 'Gagal memuat daftar fasilitas kamar.');
+      }
+
+      fasilitasSelect.addEventListener('change', updateAssetPreview);
 
       function clearSelectedPhoto() {
         fotoInput.value = '';
@@ -206,20 +240,20 @@
         e.preventDefault();
         hideError();
 
-        const kategori = kategoriInput.value.trim();
-        const lokasi = lokasiInput.value.trim();
-        const deskripsi = deskripsiInput.value.trim();
+        const idFasilitas = fasilitasSelect.value;
+        const judulLaporan = judulInput.value.trim();
+        const deskripsiKerusakan = deskripsiInput.value.trim();
 
-        if (!kategori || !lokasi || !deskripsi) {
-          showError('Kategori fasilitas, lokasi kamar, dan deskripsi kerusakan wajib diisi.');
+        if (!idFasilitas || !judulLaporan || !deskripsiKerusakan) {
+          showError('Fasilitas kamar, judul laporan, dan deskripsi kerusakan wajib diisi.');
           return;
         }
 
         const formData = new FormData();
-        formData.append('penghuni_id', user.id);
-        formData.append('kategori_fasilitas', kategori);
-        formData.append('lokasi_kamar', lokasi);
-        formData.append('deskripsi', deskripsi);
+        formData.append('id_pengguna', user.id_pengguna);
+        formData.append('id_fasilitas', idFasilitas);
+        formData.append('judul_laporan', judulLaporan);
+        formData.append('deskripsi_kerusakan', deskripsiKerusakan);
         if (fotoInput.files && fotoInput.files[0]) {
           formData.append('foto', fotoInput.files[0]);
         }
@@ -238,7 +272,7 @@
           }
 
           sessionStorage.setItem('last_created_laporan', JSON.stringify(data));
-          window.location.href = `sukses.html?id=${encodeURIComponent(data.id)}`;
+          window.location.href = `sukses.html?id=${encodeURIComponent(data.id_laporan)}`;
         } catch (err) {
           showError(err.message || 'Gagal terhubung ke server.');
           submitBtn.disabled = false;

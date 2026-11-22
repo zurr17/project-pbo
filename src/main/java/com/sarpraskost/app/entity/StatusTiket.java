@@ -1,6 +1,6 @@
 package com.sarpraskost.app.entity;
 
-public enum StatusLaporan {
+public enum StatusTiket {
     MENUNGGU,
     DIPROSES,
     SELESAI,

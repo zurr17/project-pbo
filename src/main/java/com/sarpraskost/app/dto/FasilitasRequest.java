@@ -2,13 +2,15 @@ package com.sarpraskost.app.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDate;
 
 public record FasilitasRequest(
-    @JsonProperty("penghuni_id") @JsonAlias("penghuniId") Long penghuniId,
+    @JsonProperty("id_kamar") @JsonAlias("idKamar") Long idKamar,
+    @JsonProperty("id_kategori") @JsonAlias("idKategori") Long idKategori,
+    @JsonProperty("kode_aset") @JsonAlias("kodeAset") String kodeAset,
     @JsonProperty("nama_fasilitas") @JsonAlias("namaFasilitas") String namaFasilitas,
     @JsonProperty("merk_tipe") @JsonAlias("merkTipe") String merkTipe,
     String kondisi,
-    String keterangan
+    @JsonProperty("tgl_pasang") @JsonAlias("tglPasang") LocalDate tglPasang
 ) {
 }
-

@@ -1,7 +1,7 @@
 package com.sarpraskost.app.controller;
 
 import com.sarpraskost.app.dto.LoginRequest;
-import com.sarpraskost.app.dto.UserResponse;
+import com.sarpraskost.app.dto.PenggunaResponse;
 import com.sarpraskost.app.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +20,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<PenggunaResponse> login(@RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
 }

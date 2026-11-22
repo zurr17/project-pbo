@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,14 +27,32 @@ public class FasilitasController {
         this.fasilitasService = fasilitasService;
     }
 
+    @GetMapping
+    public ResponseEntity<List<FasilitasResponse>> listAll(
+        @RequestParam(value = "kamarId", required = false) Long kamarId,
+        @RequestParam(value = "kategoriId", required = false) Long kategoriId
+    ) {
+        return ResponseEntity.ok(fasilitasService.listAll(kamarId, kategoriId));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<FasilitasResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(fasilitasService.getById(id));
+    }
+
+    @GetMapping("/kamar/{idKamar}")
+    public ResponseEntity<List<FasilitasResponse>> listByKamar(@PathVariable Long idKamar) {
+        return ResponseEntity.ok(fasilitasService.listByKamar(idKamar));
+    }
+
+    @GetMapping("/penghuni/{idPengguna}")
+    public ResponseEntity<List<FasilitasResponse>> listByPenghuni(@PathVariable Long idPengguna) {
+        return ResponseEntity.ok(fasilitasService.listByPenghuni(idPengguna));
+    }
+
     @PostMapping
     public ResponseEntity<FasilitasResponse> create(@RequestBody FasilitasRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(fasilitasService.create(request));
-    }
-
-    @GetMapping("/penghuni/{penghuniId}")
-    public ResponseEntity<List<FasilitasResponse>> listByPenghuni(@PathVariable Long penghuniId) {
-        return ResponseEntity.ok(fasilitasService.listByPenghuni(penghuniId));
     }
 
     @PutMapping("/{id}")

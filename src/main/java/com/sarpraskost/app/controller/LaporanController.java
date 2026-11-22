@@ -1,5 +1,9 @@
 package com.sarpraskost.app.controller;
 
+import com.sarpraskost.app.dto.LaporanListResponse;
+import com.sarpraskost.app.dto.LaporanResponse;
+import com.sarpraskost.app.dto.UpdateLaporanRequest;
+import com.sarpraskost.app.service.LaporanService;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,11 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.sarpraskost.app.dto.LaporanResponse;
-import com.sarpraskost.app.dto.PenghuniLaporanListResponse;
-import com.sarpraskost.app.dto.UpdateLaporanRequest;
-import com.sarpraskost.app.service.LaporanService;
-
 @RestController
 @RequestMapping("/api/laporan")
 public class LaporanController {
@@ -28,15 +27,15 @@ public class LaporanController {
 
     public LaporanController(LaporanService laporanService) {
         this.laporanService = laporanService;
-    }   
+    }
 
-    @GetMapping("/penghuni/{penghuniId}")
-    public ResponseEntity<PenghuniLaporanListResponse> getByPenghuni(
-        @PathVariable Long penghuniId,
+    @GetMapping("/penghuni/{idPengguna}")
+    public ResponseEntity<LaporanListResponse> getByPenghuni(
+        @PathVariable Long idPengguna,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) String q
     ) {
-        return ResponseEntity.ok(laporanService.getLaporanByPenghuni(penghuniId, status, q));
+        return ResponseEntity.ok(laporanService.getLaporanByPenghuni(idPengguna, status, q));
     }
 
     @GetMapping("/{id}")
@@ -46,25 +45,28 @@ public class LaporanController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<LaporanResponse> createLaporan(
-        @RequestParam(value = "penghuni_id", required = false) Long penghuniIdSnake,
-        @RequestParam(value = "penghuniId", required = false) Long penghuniIdCamel,
-        @RequestParam(value = "kategori_fasilitas", required = false) String kategoriSnake,
-        @RequestParam(value = "kategoriFasilitas", required = false) String kategoriCamel,
-        @RequestParam(value = "lokasi_kamar", required = false) String lokasiSnake,
-        @RequestParam(value = "lokasiKamar", required = false) String lokasiCamel,
-        @RequestParam("deskripsi") String deskripsi,
+        @RequestParam(value = "id_pengguna", required = false) Long idPenggunaSnake,
+        @RequestParam(value = "penghuni_id", required = false) Long penghuniIdAlias,
+        @RequestParam(value = "idPengguna", required = false) Long idPenggunaCamel,
+        @RequestParam(value = "id_fasilitas", required = false) Long idFasilitasSnake,
+        @RequestParam(value = "idFasilitas", required = false) Long idFasilitasCamel,
+        @RequestParam(value = "judul_laporan", required = false) String judulSnake,
+        @RequestParam(value = "judulLaporan", required = false) String judulCamel,
+        @RequestParam(value = "deskripsi_kerusakan", required = false) String deskripsiSnake,
+        @RequestParam(value = "deskripsi", required = false) String deskripsiShort,
         @RequestParam(value = "foto", required = false) MultipartFile foto,
         @RequestParam(value = "file", required = false) MultipartFile file
     ) {
-        Long penghuniId = penghuniIdSnake != null ? penghuniIdSnake : penghuniIdCamel;
-        String kategori = kategoriSnake != null ? kategoriSnake : kategoriCamel;
-        String lokasi = lokasiSnake != null ? lokasiSnake : lokasiCamel;
+        Long idPengguna = firstNonNull(idPenggunaSnake, penghuniIdAlias, idPenggunaCamel);
+        Long idFasilitas = firstNonNull(idFasilitasSnake, idFasilitasCamel, null);
+        String judul = judulSnake != null ? judulSnake : judulCamel;
+        String deskripsi = deskripsiSnake != null ? deskripsiSnake : deskripsiShort;
         MultipartFile uploadedFoto = (foto != null && !foto.isEmpty()) ? foto : file;
 
         LaporanResponse created = laporanService.createLaporan(
-            penghuniId,
-            kategori,
-            lokasi,
+            idPengguna,
+            idFasilitas,
+            judul,
             deskripsi,
             uploadedFoto
         );
@@ -83,5 +85,11 @@ public class LaporanController {
     public ResponseEntity<Map<String, String>> deleteLaporan(@PathVariable Long id) {
         laporanService.deleteLaporan(id);
         return ResponseEntity.ok(Map.of("message", "Laporan berhasil dihapus."));
+    }
+
+    private Long firstNonNull(Long a, Long b, Long c) {
+        if (a != null) return a;
+        if (b != null) return b;
+        return c;
     }
 }

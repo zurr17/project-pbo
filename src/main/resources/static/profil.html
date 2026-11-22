@@ -49,20 +49,21 @@
           <div class="form-group">
             <label class="form-label" for="profileNamaInput">Nama lengkap</label>
             <div class="input-wrap">
-              <input id="profileNamaInput" name="nama" type="text" class="input-control" required />
+              <input id="profileNamaInput" name="nama_lengkap" type="text" class="input-control" required />
             </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="profileKamarInput">Nomor kamar</label>
+            <label class="form-label" for="profileNoHpInput">Nomor HP / WhatsApp</label>
             <div class="input-wrap">
-              <input
-                id="profileKamarInput"
-                name="nomor_kamar"
-                type="text"
-                class="input-control"
-                placeholder="Contoh: A-12"
-              />
+              <input id="profileNoHpInput" name="no_hp" type="tel" class="input-control" placeholder="Contoh: 081234567890" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="profileKamarSelect">Kamar</label>
+            <div class="input-wrap">
+              <select id="profileKamarSelect" name="id_kamar" class="input-control"></select>
             </div>
           </div>
 
@@ -95,7 +96,7 @@
       <div class="danger-zone-card">
         <div style="font-size:14px;font-weight:700;color:#991B1B;">Hapus Akun Permanen</div>
         <div style="font-size:12px;line-height:1.55;color:#B91C1C;">
-          Menghapus akun akan menghapus seluruh data laporan kerusakan, foto bukti, dan daftar fasilitas kamar Anda secara permanen.
+          Menghapus akun akan menghapus seluruh laporan kerusakan dan notifikasi Anda secara permanen.
         </div>
         <button type="button" id="openDeleteAccountBtn" class="btn btn-danger-outline">Hapus Akun</button>
       </div>
@@ -131,7 +132,7 @@
           <button type="button" class="text-link" data-close-sheet="deleteAccountSheet">Batal</button>
         </div>
         <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;">
-          Apakah Anda yakin ingin menghapus akun ini? Semua laporan kerusakan dan inventaris fasilitas Anda akan dihapus dan tidak dapat dipulihkan.
+          Apakah Anda yakin ingin menghapus akun ini? Semua laporan kerusakan dan riwayat notifikasi Anda akan dihapus permanen.
         </p>
         <div class="action-row">
           <button type="button" class="btn btn-outline" data-close-sheet="deleteAccountSheet">Batal</button>
@@ -144,7 +145,7 @@
   <script src="js/app.js"></script>
   <script>
     (async () => {
-      let currentUser = SarprasApp.requireAuth();
+      let currentUser = SarprasApp.requirePenghuniAuth();
       if (!currentUser) return;
 
       SarprasApp.attachSheetControls();
@@ -156,7 +157,8 @@
       const profileHeroKamar = document.getElementById('profileHeroKamar');
       const profileEmailDisplay = document.getElementById('profileEmailDisplay');
       const profileNamaInput = document.getElementById('profileNamaInput');
-      const profileKamarInput = document.getElementById('profileKamarInput');
+      const profileNoHpInput = document.getElementById('profileNoHpInput');
+      const profileKamarSelect = document.getElementById('profileKamarSelect');
       const profilePasswordInput = document.getElementById('profilePasswordInput');
       const togglePasswordBtn = document.getElementById('toggleProfilePasswordBtn');
       const profileForm = document.getElementById('profileForm');
@@ -168,15 +170,20 @@
       const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
 
       function applyUserToUi(u) {
-        const initial = (u.nama || 'P').trim().charAt(0).toUpperCase() || 'P';
+        const initial = (u.nama_lengkap || 'P').trim().charAt(0).toUpperCase() || 'P';
         profileAvatar.textContent = initial;
-        profileHeroNama.textContent = u.nama || '-';
+        profileHeroNama.textContent = u.nama_lengkap || '-';
         profileRoleBadge.textContent = u.role || 'PENGHUNI';
         profileHeroEmail.textContent = u.email || '-';
-        profileHeroKamar.textContent = u.nomor_kamar ? `Kamar ${u.nomor_kamar}` : 'Nomor kamar belum diatur';
+        profileHeroKamar.textContent = u.nomor_kamar
+          ? `Kamar ${u.nomor_kamar} (${u.tipe_kamar || ''} • Lantai ${u.lantai || '-'})`
+          : 'Kamar belum dipilih';
         profileEmailDisplay.textContent = u.email || '-';
-        profileNamaInput.value = u.nama || '';
-        profileKamarInput.value = u.nomor_kamar || '';
+        profileNamaInput.value = u.nama_lengkap || '';
+        profileNoHpInput.value = u.no_hp || '';
+        if (u.id_kamar && profileKamarSelect.options.length > 0) {
+          profileKamarSelect.value = String(u.id_kamar);
+        }
       }
 
       function showSuccess(msg) {
@@ -194,7 +201,13 @@
       applyUserToUi(currentUser);
 
       try {
-        const freshUser = await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`);
+        const [rooms, freshUser] = await Promise.all([
+          SarprasApp.fetchKamar(),
+          SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id_pengguna)}`)
+        ]);
+        profileKamarSelect.innerHTML = '<option value="">-- Belum memilih kamar --</option>' +
+          (rooms || []).map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+
         currentUser = freshUser;
         SarprasApp.saveUser(freshUser);
         applyUserToUi(freshUser);
@@ -211,16 +224,22 @@
         profileError.classList.remove('visible');
         profileSuccess.classList.remove('visible');
 
-        const nama = profileNamaInput.value.trim();
-        const nomor_kamar = profileKamarInput.value.trim();
+        const nama_lengkap = profileNamaInput.value.trim();
+        const no_hp = profileNoHpInput.value.trim();
+        const idKamarRaw = profileKamarSelect.value;
         const password = profilePasswordInput.value;
 
-        if (!nama) {
+        if (!nama_lengkap) {
           showError('Nama lengkap wajib diisi.');
           return;
         }
 
-        const payload = { nama, nomor_kamar };
+        const payload = { nama_lengkap, no_hp };
+        if (idKamarRaw) {
+          payload.id_kamar = Number(idKamarRaw);
+        } else {
+          payload.nomor_kamar = '';
+        }
         if (password && password.trim()) {
           payload.password = password;
         }
@@ -229,7 +248,7 @@
         saveProfileBtn.textContent = 'Menyimpan...';
 
         try {
-          const updated = await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`, {
+          const updated = await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id_pengguna)}`, {
             method: 'PUT',
             body: JSON.stringify(payload)
           });
@@ -256,7 +275,7 @@
         confirmDeleteAccountBtn.disabled = true;
         confirmDeleteAccountBtn.textContent = 'Menghapus...';
         try {
-          await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id)}`, {
+          await SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id_pengguna)}`, {
             method: 'DELETE'
           });
           SarprasApp.logout();

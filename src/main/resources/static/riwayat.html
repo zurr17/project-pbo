@@ -27,16 +27,17 @@
           id="searchInput"
           type="search"
           class="search-input"
-          placeholder="Cari nomor tiket atau kerusakan"
-          aria-label="Cari nomor tiket atau kerusakan"
+          placeholder="Cari kode tiket, judul, atau nama fasilitas"
+          aria-label="Cari kode tiket, judul, atau nama fasilitas"
         />
       </div>
 
-      <div class="filter-tabs" role="tablist" aria-label="Filter status laporan">
+      <div class="filter-tabs five-cols" role="tablist" aria-label="Filter status laporan">
         <button type="button" class="filter-tab active" data-status="SEMUA">Semua</button>
         <button type="button" class="filter-tab" data-status="MENUNGGU">Menunggu</button>
         <button type="button" class="filter-tab" data-status="DIPROSES">Diproses</button>
         <button type="button" class="filter-tab" data-status="SELESAI">Selesai</button>
+        <button type="button" class="filter-tab" data-status="DITOLAK">Ditolak</button>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:12px;">
@@ -48,11 +49,6 @@
         <div id="riwayatList" class="report-list">
           <div class="loading-state">Memuat riwayat laporan...</div>
         </div>
-      </div>
-
-      <div class="info-banner muted">
-        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M7.27269 14.8755C7.53 15.32 8 15.5839 8.49962 15.5839C9 15.5839 9.47 15.32 9.72655 14.8755M15.5838 5.66644C15.5838 4.03713 15.0171 2.62034 14.167 1.41608M2.8328 1.41608C1.98273 2.62034 1.41602 4.03713 1.41602 5.66644M2.31018 10.8561C1.91 11.29 2.22 12.042 2.83297 12.042H14.1672C14.78 12.042 15.09 11.29 14.6914 10.8568C13.7493 9.88562 12.7504 8.8535 12.7504 5.66644C12.7504 3.32 10.85 1.41608 8.50009 1.41608C6.15 1.41608 4.24975 3.32 4.24975 5.66644C4.24975 8.8535 3.25021 9.88562 2.31018 10.8561Z" stroke="#64748B" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <span>Perubahan status akan muncul di sini dan dikirim melalui notifikasi.</span>
       </div>
     </section>
 
@@ -81,7 +77,7 @@
   <script src="js/app.js"></script>
   <script>
     (() => {
-      const user = SarprasApp.requireAuth();
+      const user = SarprasApp.requirePenghuniAuth();
       if (!user) return;
 
       const searchInput = document.getElementById('searchInput');
@@ -91,7 +87,7 @@
 
       const urlParams = new URLSearchParams(window.location.search);
       let activeStatus = (urlParams.get('status') || 'SEMUA').toUpperCase();
-      if (!['SEMUA', 'MENUNGGU', 'DIPROSES', 'SELESAI'].includes(activeStatus)) {
+      if (!['SEMUA', 'MENUNGGU', 'DIPROSES', 'SELESAI', 'DITOLAK'].includes(activeStatus)) {
         activeStatus = 'SEMUA';
       }
 
@@ -104,7 +100,7 @@
       async function loadLaporan() {
         riwayatList.innerHTML = '<div class="loading-state">Memuat data laporan...</div>';
         try {
-          const data = await SarprasApp.fetchPenghuniLaporan(user.id, activeStatus, searchInput.value);
+          const data = await SarprasApp.fetchPenghuniLaporan(user.id_pengguna, activeStatus, searchInput.value);
           const list = data.laporan || [];
           countLabel.textContent = `${list.length} laporan`;
 

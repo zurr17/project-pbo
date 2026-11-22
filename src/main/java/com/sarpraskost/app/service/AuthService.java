@@ -1,9 +1,11 @@
 package com.sarpraskost.app.service;
 
 import com.sarpraskost.app.dto.LoginRequest;
-import com.sarpraskost.app.dto.UserResponse;
-import com.sarpraskost.app.entity.User;
-import com.sarpraskost.app.repository.UserRepository;
+import com.sarpraskost.app.dto.PenggunaResponse;
+import com.sarpraskost.app.entity.Pengguna;
+import com.sarpraskost.app.entity.Role;
+import com.sarpraskost.app.repository.PenggunaRepository;
+import com.sarpraskost.app.util.PasswordHasher;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,14 +15,14 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final PenggunaRepository penggunaRepository;
 
-    public AuthService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public AuthService(PenggunaRepository penggunaRepository) {
+        this.penggunaRepository = penggunaRepository;
     }
 
     @Transactional(readOnly = true)
-    public UserResponse login(LoginRequest request) {
+    public PenggunaResponse login(LoginRequest request) {
         if (request == null || isBlank(request.email()) || isBlank(request.password())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
@@ -29,24 +31,24 @@ public class AuthService {
         }
 
         String identifier = request.email().trim();
-        Optional<User> userOpt = userRepository.findByEmailIgnoreCase(identifier);
-        if (userOpt.isEmpty() && !identifier.contains("@")) {
-            userOpt = userRepository.findFirstByNomorKamarIgnoreCase(identifier);
+        Optional<Pengguna> penggunaOpt = penggunaRepository.findByEmailIgnoreCase(identifier);
+        if (penggunaOpt.isEmpty() && !identifier.contains("@")) {
+            penggunaOpt = penggunaRepository.findFirstByKamarNomorKamarIgnoreCaseAndRole(identifier, Role.PENGHUNI);
         }
 
-        User user = userOpt.orElseThrow(() -> new ResponseStatusException(
+        Pengguna pengguna = penggunaOpt.orElseThrow(() -> new ResponseStatusException(
             HttpStatus.UNAUTHORIZED,
             "Email/nomor kamar atau kata sandi salah."
         ));
 
-        if (!user.getPassword().equals(request.password())) {
+        if (!PasswordHasher.matches(request.password(), pengguna.getPasswordHash())) {
             throw new ResponseStatusException(
                 HttpStatus.UNAUTHORIZED,
                 "Email/nomor kamar atau kata sandi salah."
             );
         }
 
-        return UserResponse.from(user);
+        return PenggunaResponse.from(pengguna);
     }
 
     private boolean isBlank(String value) {

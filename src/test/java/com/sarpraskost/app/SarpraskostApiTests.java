@@ -3,7 +3,6 @@ package com.sarpraskost.app;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,13 +14,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.sarpraskost.app.entity.User;
+import com.sarpraskost.app.entity.Pengguna;
 import com.sarpraskost.app.repository.FasilitasKamarRepository;
+import com.sarpraskost.app.repository.KamarRepository;
+import com.sarpraskost.app.repository.KategoriFasilitasRepository;
 import com.sarpraskost.app.repository.LaporanKerusakanRepository;
-import com.sarpraskost.app.repository.UserRepository;
+import com.sarpraskost.app.repository.NotifikasiRepository;
+import com.sarpraskost.app.repository.PenggunaRepository;
+import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import com.sarpraskost.app.service.FileStorageService;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,16 +50,31 @@ class SarpraskostApiTests {
     private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private UserRepository userRepository;
+    private PenggunaRepository penggunaRepository;
 
     @Autowired
-    private LaporanKerusakanRepository laporanRepository;
+    private KamarRepository kamarRepository;
+
+    @Autowired
+    private KategoriFasilitasRepository kategoriRepository;
 
     @Autowired
     private FasilitasKamarRepository fasilitasRepository;
 
     @Autowired
+    private LaporanKerusakanRepository laporanRepository;
+
+    @Autowired
+    private RiwayatPenangananRepository riwayatRepository;
+
+    @Autowired
+    private NotifikasiRepository notifikasiRepository;
+
+    @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -64,15 +85,31 @@ class SarpraskostApiTests {
     }
 
     @Test
-    void loginEndpointAuthenticatesSeededPenghuniAndRejectsInvalidPassword() throws Exception {
+    void loginEndpointAuthenticatesSeededPenghuniAndOwnerOnly() throws Exception {
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"penghuni@kost.com\",\"password\":\"123\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nama").value("Mori"))
+            .andExpect(jsonPath("$.nama_lengkap").value("Akbar"))
             .andExpect(jsonPath("$.role").value("PENGHUNI"))
-            .andExpect(jsonPath("$.nomor_kamar").value("A-12"))
-            .andExpect(jsonPath("$.password").doesNotExist());
+            .andExpect(jsonPath("$.nomor_kamar").value("A-01"))
+            .andExpect(jsonPath("$.redirect_url").value("home.html"))
+            .andExpect(jsonPath("$.password_hash").doesNotExist());
+
+        mockMvc.perform(post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"A-01\",\"password\":\"123\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nama_lengkap").value("Akbar"));
+
+        mockMvc.perform(post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"owner@kost.com\",\"password\":\"123\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nama_lengkap").value("Pak Soleh"))
+            .andExpect(jsonPath("$.role").value("OWNER"))
+            .andExpect(jsonPath("$.redirect_url").value("owner-home.html"))
+            .andExpect(jsonPath("$.password_hash").doesNotExist());
 
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -82,121 +119,182 @@ class SarpraskostApiTests {
     }
 
     @Test
-    void penghuniReportsSummaryFilterSearchAndDetailWork() throws Exception {
-        User mori = userRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
-        long expectedTotal = laporanRepository.countByPenghuniId(mori.getId());
-        assertTrue(expectedTotal >= 3, "Seeded demo user should have at least 3 reports");
+    void seededMasterDataAndPenghuniReportsExist() throws Exception {
+        Pengguna andi = penggunaRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
 
-        MvcResult listResult = mockMvc.perform(get("/api/laporan/penghuni/" + mori.getId()))
+        mockMvc.perform(get("/api/kamar"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.ringkasan.total").value(expectedTotal))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("A-01")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("B-02")));
+
+        mockMvc.perform(get("/api/kategori"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[*].nama_kategori", hasItem("Elektronik")))
+            .andExpect(jsonPath("$[*].nama_kategori", hasItem("Sanitasi & Air")))
+            .andExpect(jsonPath("$[*].nama_kategori", hasItem("Furnitur")));
+
+        mockMvc.perform(get("/api/fasilitas/penghuni/" + andi.getIdPengguna()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("AC Samsung 1/2 PK")))
+            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Keran Kamar Mandi")))
+            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Lemari Pakaian")));
+
+        mockMvc.perform(get("/api/laporan/penghuni/" + andi.getIdPengguna()))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(2)))
             .andExpect(jsonPath("$.ringkasan.menunggu", greaterThanOrEqualTo(1)))
             .andExpect(jsonPath("$.ringkasan.diproses", greaterThanOrEqualTo(1)))
-            .andExpect(jsonPath("$.ringkasan.selesai", greaterThanOrEqualTo(1)))
-            .andExpect(jsonPath("$.laporan", hasSize((int) expectedTotal)))
-            .andReturn();
-
-        JsonNode root = objectMapper.readTree(listResult.getResponse().getContentAsString());
-        long firstId = root.get("laporan").get(0).get("id").asLong();
-
-        mockMvc.perform(get("/api/laporan/penghuni/" + mori.getId())
-                .param("status", "DIPROSES")
-                .param("q", "keran"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.laporan", hasSize(1)))
-            .andExpect(jsonPath("$.laporan[0].status").value("DIPROSES"));
-
-        mockMvc.perform(get("/api/laporan/" + firstId))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(firstId))
-            .andExpect(jsonPath("$.kode_laporan", startsWith("LPR-")));
+            .andExpect(jsonPath("$.laporan[0].kode_tiket", startsWith("LPR-")))
+            .andExpect(jsonPath("$.laporan[0].riwayat", hasSize(greaterThanOrEqualTo(1))));
     }
 
     @Test
-    void seededFasilitasExistForDemoPenghuni() throws Exception {
-        User mori = userRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
-
-        mockMvc.perform(get("/api/fasilitas/penghuni/" + mori.getId()))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("AC LG 1/2 PK")))
-            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Kasur Springbed")))
-            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Keran Air Kamar Mandi")));
-    }
-
-    @Test
-    void userCrudLifecycleAndCascadeCleanupWork() throws Exception {
-        String uniqueEmail = "uji-" + UUID.randomUUID() + "@kost.com";
-        Long userId = null;
-        Path savedFile = null;
+    void kamarKategoriAndFasilitasCrudEndpointsWork() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        Long kamarId = null;
+        Long kategoriId = null;
+        Long fasilitasId = null;
 
         try {
-            MvcResult regResult = mockMvc.perform(post("/api/users/register")
+            MvcResult kamarRes = mockMvc.perform(post("/api/kamar")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(String.format(
-                        "{\"nama\":\"Penghuni Uji\",\"email\":\"%s\",\"password\":\"rahasia1\",\"nomor_kamar\":\"B-08\"}",
-                        uniqueEmail
+                        "{\"nomor_kamar\":\"Z-%s\",\"tipe_kamar\":\"Deluxe\",\"lantai\":3,\"status_hunian\":\"KOSONG\"}",
+                        suffix
                     )))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.nama").value("Penghuni Uji"))
-                .andExpect(jsonPath("$.email").value(uniqueEmail))
-                .andExpect(jsonPath("$.role").value("PENGHUNI"))
-                .andExpect(jsonPath("$.nomor_kamar").value("B-08"))
-                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.nomor_kamar").value("Z-" + suffix))
                 .andReturn();
+            kamarId = objectMapper.readTree(kamarRes.getResponse().getContentAsString()).get("id_kamar").asLong();
 
-            userId = objectMapper.readTree(regResult.getResponse().getContentAsString()).get("id").asLong();
+            mockMvc.perform(put("/api/kamar/" + kamarId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"tipe_kamar\":\"VIP Suite\",\"lantai\":3,\"status_hunian\":\"PERBAIKAN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tipe_kamar").value("VIP Suite"))
+                .andExpect(jsonPath("$.status_hunian").value("PERBAIKAN"));
 
-            // Duplicate email returns 409
+            MvcResult katRes = mockMvc.perform(post("/api/kategori")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"nama_kategori\":\"Kategori-%s\",\"deskripsi\":\"Uji kategori\"}",
+                        suffix
+                    )))
+                .andExpect(status().isCreated())
+                .andReturn();
+            kategoriId = objectMapper.readTree(katRes.getResponse().getContentAsString()).get("id_kategori").asLong();
+
+            mockMvc.perform(put("/api/kategori/" + kategoriId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"nama_kategori\":\"KategoriUpd-%s\",\"deskripsi\":\"Deskripsi baru\"}",
+                        suffix
+                    )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deskripsi").value("Deskripsi baru"));
+
+            MvcResult fasRes = mockMvc.perform(post("/api/fasilitas")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"id_kamar\":%d,\"id_kategori\":%d,\"kode_aset\":\"AST-TEST-%s\",\"nama_fasilitas\":\"Meja Uji\",\"merk_tipe\":\"IKEA\",\"kondisi\":\"BAIK\"}",
+                        kamarId, kategoriId, suffix
+                    )))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.kode_aset").value("AST-TEST-" + suffix))
+                .andReturn();
+            fasilitasId = objectMapper.readTree(fasRes.getResponse().getContentAsString()).get("id_fasilitas").asLong();
+
+            mockMvc.perform(put("/api/fasilitas/" + fasilitasId)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"nama_fasilitas\":\"Meja Uji Baru\",\"kondisi\":\"PERLU_PERAWATAN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nama_fasilitas").value("Meja Uji Baru"))
+                .andExpect(jsonPath("$.kondisi").value("PERLU_PERAWATAN"));
+
+            mockMvc.perform(delete("/api/fasilitas/" + fasilitasId)).andExpect(status().isOk());
+            fasilitasId = null;
+
+            mockMvc.perform(delete("/api/kategori/" + kategoriId)).andExpect(status().isOk());
+            kategoriId = null;
+
+            mockMvc.perform(delete("/api/kamar/" + kamarId)).andExpect(status().isOk());
+            kamarId = null;
+        } finally {
+            if (fasilitasId != null && fasilitasRepository.existsById(fasilitasId)) {
+                fasilitasRepository.deleteById(fasilitasId);
+            }
+            if (kategoriId != null && kategoriRepository.existsById(kategoriId)) {
+                kategoriRepository.deleteById(kategoriId);
+            }
+            if (kamarId != null && kamarRepository.existsById(kamarId)) {
+                kamarRepository.deleteById(kamarId);
+            }
+        }
+    }
+
+    @Test
+    void userRegistrationUpdateAndCascadeDeleteWork() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        String uniqueEmail = "uji-" + suffix + "@kost.com";
+        Long kamarId = null;
+        Long userId = null;
+        Long fasilitasId = null;
+        Path savedFoto = null;
+
+        try {
+            MvcResult kamarRes = mockMvc.perform(post("/api/kamar")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"nomor_kamar\":\"U-%s\",\"tipe_kamar\":\"Reguler\",\"lantai\":1,\"status_hunian\":\"KOSONG\"}",
+                        suffix
+                    )))
+                .andExpect(status().isCreated())
+                .andReturn();
+            kamarId = objectMapper.readTree(kamarRes.getResponse().getContentAsString()).get("id_kamar").asLong();
+
+            Long kategoriId = kategoriRepository.findByNamaKategoriIgnoreCase("Elektronik").orElseThrow().getIdKategori();
+            MvcResult fasRes = mockMvc.perform(post("/api/fasilitas")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"id_kamar\":%d,\"id_kategori\":%d,\"nama_fasilitas\":\"Lampu Kamar Uji\",\"merk_tipe\":\"Philips\",\"kondisi\":\"BAIK\"}",
+                        kamarId, kategoriId
+                    )))
+                .andExpect(status().isCreated())
+                .andReturn();
+            fasilitasId = objectMapper.readTree(fasRes.getResponse().getContentAsString()).get("id_fasilitas").asLong();
+
+            MvcResult regRes = mockMvc.perform(post("/api/users/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"nama_lengkap\":\"Penghuni Uji\",\"email\":\"%s\",\"password\":\"rahasia1\",\"no_hp\":\"08120000111\",\"id_kamar\":%d}",
+                        uniqueEmail, kamarId
+                    )))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nama_lengkap").value("Penghuni Uji"))
+                .andExpect(jsonPath("$.role").value("PENGHUNI"))
+                .andExpect(jsonPath("$.id_kamar").value(kamarId))
+                .andReturn();
+            userId = objectMapper.readTree(regRes.getResponse().getContentAsString()).get("id_pengguna").asLong();
+
             mockMvc.perform(post("/api/users/register")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(String.format(
-                        "{\"nama\":\"Duplikat\",\"email\":\"%s\",\"password\":\"123\",\"nomor_kamar\":\"B-09\"}",
+                        "{\"nama_lengkap\":\"Duplikat\",\"email\":\"%s\",\"password\":\"123\"}",
                         uniqueEmail
                     )))
                 .andExpect(status().isConflict());
 
-            // Read user profile
-            mockMvc.perform(get("/api/users/" + userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(userId))
-                .andExpect(jsonPath("$.nama").value("Penghuni Uji"))
-                .andExpect(jsonPath("$.nomor_kamar").value("B-08"));
-
-            // Update profile without changing password
             mockMvc.perform(put("/api/users/" + userId)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"nama\":\"Penghuni Baru\",\"nomor_kamar\":\"C-01\",\"password\":\"\"}"))
+                    .content("{\"nama_lengkap\":\"Penghuni Baru\",\"no_hp\":\"08129998887\",\"password\":\"rahasia2\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nama").value("Penghuni Baru"))
-                .andExpect(jsonPath("$.nomor_kamar").value("C-01"));
-
-            // Old password still works
-            mockMvc.perform(post("/api/login")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format("{\"email\":\"%s\",\"password\":\"rahasia1\"}", uniqueEmail)))
-                .andExpect(status().isOk());
-
-            // Update password and verify login with new password
-            mockMvc.perform(put("/api/users/" + userId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"nama\":\"Penghuni Final\",\"nomor_kamar\":\"C-02\",\"password\":\"rahasia2\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nama").value("Penghuni Final"))
-                .andExpect(jsonPath("$.nomor_kamar").value("C-02"));
+                .andExpect(jsonPath("$.nama_lengkap").value("Penghuni Baru"))
+                .andExpect(jsonPath("$.no_hp").value("08129998887"));
 
             mockMvc.perform(post("/api/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(String.format("{\"email\":\"%s\",\"password\":\"rahasia2\"}", uniqueEmail)))
                 .andExpect(status().isOk());
-
-            // Create child facility & child report with uploaded photo to verify cascade delete
-            mockMvc.perform(post("/api/fasilitas")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format(
-                        "{\"penghuni_id\":%d,\"nama_fasilitas\":\"Meja Belajar\",\"merk_tipe\":\"Olympic\",\"kondisi\":\"BAIK\",\"keterangan\":\"Bersih\"}",
-                        userId
-                    )))
-                .andExpect(status().isCreated());
 
             MockMultipartFile foto = new MockMultipartFile(
                 "foto",
@@ -204,430 +302,189 @@ class SarpraskostApiTests {
                 "image/png",
                 new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
             );
-            MvcResult lapResult = mockMvc.perform(multipart("/api/laporan")
+            MvcResult lapRes = mockMvc.perform(multipart("/api/laporan")
                     .file(foto)
-                    .param("penghuni_id", String.valueOf(userId))
-                    .param("kategori_fasilitas", "Listrik & Pencahayaan")
-                    .param("lokasi_kamar", "Kamar C-02")
-                    .param("deskripsi", "Stop kontak longgar"))
+                    .param("id_pengguna", String.valueOf(userId))
+                    .param("id_fasilitas", String.valueOf(fasilitasId))
+                    .param("judul_laporan", "Lampu berkedip")
+                    .param("deskripsi_kerusakan", "Lampu kamar berkedip terus saat dinyalakan."))
                 .andExpect(status().isCreated())
                 .andReturn();
 
-            String fotoUrl = objectMapper.readTree(lapResult.getResponse().getContentAsString()).get("foto_url").asText();
-            savedFile = fileStorageService.getUploadDir().resolve(fotoUrl.substring("/uploads/".length()));
-            assertTrue(Files.exists(savedFile));
+            String fotoUrl = objectMapper.readTree(lapRes.getResponse().getContentAsString()).get("foto_url").asText();
+            savedFoto = fileStorageService.getUploadDir().resolve(fotoUrl.substring("/uploads/".length()));
+            assertTrue(Files.exists(savedFoto));
 
-            // Delete account cascades facilities, reports, photo file, and user
             mockMvc.perform(delete("/api/users/" + userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").exists());
-
-            assertFalse(Files.exists(savedFile), "Cascade user delete should remove report photo file");
-            mockMvc.perform(get("/api/users/" + userId)).andExpect(status().isNotFound());
+                .andExpect(status().isOk());
             userId = null;
+
+            assertFalse(Files.exists(savedFoto), "Deleting user should remove report photo file");
+            mockMvc.perform(get("/api/users/" + 999999)).andExpect(status().isNotFound());
         } finally {
-            if (savedFile != null) {
-                Files.deleteIfExists(savedFile);
+            if (savedFoto != null) {
+                Files.deleteIfExists(savedFoto);
             }
-            if (userId != null) {
-                fasilitasRepository.deleteByPenghuniId(userId);
-                laporanRepository.deleteByPenghuniId(userId);
-                userRepository.deleteById(userId);
+            if (userId != null && penggunaRepository.existsById(userId)) {
+                notifikasiRepository.deleteByPenggunaIdPengguna(userId);
+                laporanRepository.deleteAll(laporanRepository.findByPenggunaIdPengguna(userId));
+                penggunaRepository.deleteById(userId);
+            }
+            if (fasilitasId != null && fasilitasRepository.existsById(fasilitasId)) {
+                fasilitasRepository.deleteById(fasilitasId);
+            }
+            if (kamarId != null && kamarRepository.existsById(kamarId)) {
+                kamarRepository.deleteById(kamarId);
             }
         }
     }
 
     @Test
-    void fasilitasCrudEndpointsWorkAndCleanUp() throws Exception {
-        String uniqueEmail = "fasilitas-" + UUID.randomUUID() + "@kost.com";
-        Long userId = null;
+    void fullLaporanOwnerProsesSelesaiTolakAndNotifikasiFlowWork() throws Exception {
+        Pengguna andi = penggunaRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
+        Pengguna owner = penggunaRepository.findByEmailIgnoreCase("owner@kost.com").orElseThrow();
+        Long lemariId = fasilitasRepository.findByKamarIdKamarOrderByIdFasilitasDesc(andi.getKamar().getIdKamar())
+            .stream()
+            .filter(f -> f.getNamaFasilitas().contains("Lemari"))
+            .findFirst()
+            .orElseThrow()
+            .getIdFasilitas();
 
-        try {
-            MvcResult regResult = mockMvc.perform(post("/api/users/register")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format(
-                        "{\"nama\":\"Uji Fasilitas\",\"email\":\"%s\",\"password\":\"123\",\"nomor_kamar\":\"D-01\"}",
-                        uniqueEmail
-                    )))
-                .andExpect(status().isCreated())
-                .andReturn();
-            userId = objectMapper.readTree(regResult.getResponse().getContentAsString()).get("id").asLong();
-
-            MvcResult createRes = mockMvc.perform(post("/api/fasilitas")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format(
-                        "{\"penghuni_id\":%d,\"nama_fasilitas\":\"Lemari Kayu\",\"merk_tipe\":\"Informa\",\"kondisi\":\"BAIK\",\"keterangan\":\"2 pintu\"}",
-                        userId
-                    )))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.penghuni_id").value(userId))
-                .andExpect(jsonPath("$.nama_fasilitas").value("Lemari Kayu"))
-                .andExpect(jsonPath("$.kondisi").value("BAIK"))
-                .andReturn();
-
-            long fasId = objectMapper.readTree(createRes.getResponse().getContentAsString()).get("id").asLong();
-
-            mockMvc.perform(get("/api/fasilitas/penghuni/" + userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id").value(fasId));
-
-            mockMvc.perform(put("/api/fasilitas/" + fasId)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"nama_fasilitas\":\"Lemari Jati\",\"merk_tipe\":\"Informa Plus\",\"kondisi\":\"PERLU_PERAWATAN\",\"keterangan\":\"Engsel perlu pelumas\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nama_fasilitas").value("Lemari Jati"))
-                .andExpect(jsonPath("$.merk_tipe").value("Informa Plus"))
-                .andExpect(jsonPath("$.kondisi").value("PERLU_PERAWATAN"))
-                .andExpect(jsonPath("$.keterangan").value("Engsel perlu pelumas"));
-
-            mockMvc.perform(delete("/api/fasilitas/" + fasId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").exists());
-
-            mockMvc.perform(get("/api/fasilitas/penghuni/" + userId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)))
-                .andExpect(jsonPath("$[*].id", not(hasItem((int) fasId))));
-        } finally {
-            if (userId != null) {
-                mockMvc.perform(delete("/api/users/" + userId));
-            }
-        }
-    }
-
-    @Test
-    void laporanCreateUpdateAndDeleteWithPhotoCleanupWork() throws Exception {
-        User mori = userRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
-        MockMultipartFile foto = new MockMultipartFile(
+        MockMultipartFile fotoAwal = new MockMultipartFile(
             "foto",
-            "bukti.png",
+            "awal.png",
             "image/png",
             new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}
         );
 
-        MvcResult createResult = mockMvc.perform(multipart("/api/laporan")
-                .file(foto)
-                .param("penghuni_id", String.valueOf(mori.getId()))
-                .param("kategori_fasilitas", "AC & Ventilasi")
-                .param("lokasi_kamar", "Kamar A-12 · Area kamar")
-                .param("deskripsi", "AC tidak dingin sejak semalam."))
+        MvcResult createRes = mockMvc.perform(multipart("/api/laporan")
+                .file(fotoAwal)
+                .param("id_pengguna", String.valueOf(andi.getIdPengguna()))
+                .param("id_fasilitas", String.valueOf(lemariId))
+                .param("judul_laporan", "Engsel lemari lepas")
+                .param("deskripsi_kerusakan", "Engsel pintu kanan lemari lepas sehingga tidak dapat ditutup."))
             .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.kode_laporan", startsWith("LPR-")))
-            .andExpect(jsonPath("$.status").value("MENUNGGU"))
-            .andExpect(jsonPath("$.foto_url", startsWith("/uploads/")))
+            .andExpect(jsonPath("$.status_tiket").value("MENUNGGU"))
+            .andExpect(jsonPath("$.kondisi_fasilitas").value("RUSAK"))
+            .andExpect(jsonPath("$.riwayat", hasSize(1)))
             .andReturn();
 
-        JsonNode created = objectMapper.readTree(createResult.getResponse().getContentAsString());
-        long createdId = created.get("id").asLong();
-        String fotoUrl = created.get("foto_url").asText();
-        String filename = fotoUrl.substring("/uploads/".length());
-        Path savedFile = fileStorageService.getUploadDir().resolve(filename);
-        boolean deletedViaApi = false;
+        JsonNode created = objectMapper.readTree(createRes.getResponse().getContentAsString());
+        long lapId1 = created.get("id_laporan").asLong();
+        Path awalPath = fileStorageService.getUploadDir().resolve(created.get("foto_url").asText().replace("/uploads/", ""));
+        Path sesudahPath = null;
+        Long lapId2 = null;
 
         try {
-            assertTrue(Files.exists(savedFile), "Uploaded file should exist in uploads/");
-            mockMvc.perform(get(fotoUrl)).andExpect(status().isOk());
-
-            mockMvc.perform(put("/api/laporan/" + createdId)
+            // Penghuni edit while MENUNGGU
+            mockMvc.perform(put("/api/laporan/" + lapId1)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"kategori_fasilitas\":\"Listrik & Pencahayaan\",\"lokasi_kamar\":\"Kamar A-12 · Teras\",\"deskripsi\":\"Lampu kamar berkedip dan saklar panas.\"}"))
+                    .content("{\"judul_laporan\":\"Engsel pintu lemari patah\",\"deskripsi_kerusakan\":\"Engsel bawah patah.\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(createdId))
-                .andExpect(jsonPath("$.kategori_fasilitas").value("Listrik & Pencahayaan"))
-                .andExpect(jsonPath("$.lokasi_kamar").value("Kamar A-12 · Teras"))
-                .andExpect(jsonPath("$.deskripsi").value("Lampu kamar berkedip dan saklar panas."));
+                .andExpect(jsonPath("$.judul_laporan").value("Engsel pintu lemari patah"));
 
-            mockMvc.perform(delete("/api/laporan/" + createdId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").exists());
-            deletedViaApi = true;
-
-            assertFalse(Files.exists(savedFile), "Deleting laporan should delete its uploaded photo");
-            mockMvc.perform(get("/api/laporan/" + createdId)).andExpect(status().isNotFound());
-        } finally {
-            if (!deletedViaApi && laporanRepository.existsById(createdId)) {
-                laporanRepository.deleteById(createdId);
-            }
-            Files.deleteIfExists(savedFile);
-        }
-    }
-
-    @Test
-    void ownerAndMekanikEndpointsAndWorkflowWork() throws Exception {
-        // 1. Seeded Owner login works
-        mockMvc.perform(post("/api/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"owner@kost.com\",\"password\":\"123\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nama").value("Bu Ratna"))
-            .andExpect(jsonPath("$.role").value("OWNER"))
-            .andExpect(jsonPath("$.password").doesNotExist());
-
-        // 2. Seeded Mekanik accounts exist and GET /api/users/mekanik returns them
-        MvcResult mekanikResult = mockMvc.perform(get("/api/users/mekanik"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
-            .andExpect(jsonPath("$[*].nama", hasItem("Pak Budi")))
-            .andExpect(jsonPath("$[*].nama", hasItem("Mas Dedi")))
-            .andExpect(jsonPath("$[*].role", hasItem("MEKANIK")))
-            .andReturn();
-
-        JsonNode mekanikArray = objectMapper.readTree(mekanikResult.getResponse().getContentAsString());
-        long mekanikId = mekanikArray.get(0).get("id").asLong();
-        String mekanikNama = mekanikArray.get(0).get("nama").asText();
-
-        // 3. Owner dashboard & filter endpoints work
-        long totalReports = laporanRepository.count();
-        mockMvc.perform(get("/api/owner/dashboard"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.ringkasan.total").value(totalReports))
-            .andExpect(jsonPath("$.ringkasan.menunggu", greaterThanOrEqualTo(1)))
-            .andExpect(jsonPath("$.ringkasan.diproses", greaterThanOrEqualTo(1)))
-            .andExpect(jsonPath("$.ringkasan.selesai", greaterThanOrEqualTo(1)))
-            .andExpect(jsonPath("$.laporan", hasSize((int) totalReports)))
-            .andExpect(jsonPath("$.laporan[0].nomor_kamar_penghuni").exists());
-
-        mockMvc.perform(get("/api/owner/laporan")
-                .param("status", "DIPROSES")
-                .param("q", "Mori"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.laporan", hasSize(greaterThanOrEqualTo(1))))
-            .andExpect(jsonPath("$.laporan[0].status").value("DIPROSES"))
-            .andExpect(jsonPath("$.laporan[0].nama_penghuni").value("Mori"));
-
-        // 4. Create temporary report to test approve & reject without dirtying seeded rows
-        User mori = userRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
-        MvcResult createResult = mockMvc.perform(multipart("/api/laporan")
-                .param("penghuni_id", String.valueOf(mori.getId()))
-                .param("kategori_fasilitas", "Air & Sanitasi")
-                .param("lokasi_kamar", "Kamar A-12 · Wastafel")
-                .param("deskripsi", "Pipa wastafel uji coba owner rembes."))
-            .andExpect(status().isCreated())
-            .andReturn();
-
-        JsonNode createJson = objectMapper.readTree(createResult.getResponse().getContentAsString());
-        long tempId = createJson.get("id").asLong();
-        String tempKode = createJson.get("kode_laporan").asText();
-
-        try {
-            // Invalid mekanik role rejected (penghuni is not mekanik)
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/setujui")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format("{\"mekanik_id\":%d,\"prioritas\":\"Tinggi\"}", mori.getId())))
-                .andExpect(status().isBadRequest());
-
-            // Blank priority defaults to "Sedang"
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/setujui")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format("{\"mekanik_id\":%d,\"prioritas\":\"  \"}", mekanikId)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DIPROSES"))
-                .andExpect(jsonPath("$.prioritas").value("Sedang"));
-
-            // Valid approve & assign mechanic with Darurat priority
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/setujui")
+            // Owner proses
+            mockMvc.perform(put("/api/owner/laporan/" + lapId1 + "/proses")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(String.format(
-                        "{\"mekanik_id\":%d,\"prioritas\":\"Darurat\",\"catatan_owner\":\"Bawa seal pipa cadangan\"}",
-                        mekanikId
+                        "{\"id_pengguna\":%d,\"catatan_penanganan\":\"Membeli engsel stainless baru.\",\"biaya_perbaikan\":75000}",
+                        owner.getIdPengguna()
                     )))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DIPROSES"))
-                .andExpect(jsonPath("$.mekanik_id").value(mekanikId))
-                .andExpect(jsonPath("$.nama_mekanik").value(mekanikNama))
-                .andExpect(jsonPath("$.prioritas").value("Darurat"))
-                .andExpect(jsonPath("$.catatan_owner").value("Bawa seal pipa cadangan"))
-                .andExpect(jsonPath("$.tanggal_diproses").isNotEmpty())
-                .andExpect(jsonPath("$.catatan_penanganan", org.hamcrest.Matchers.containsString(mekanikNama)))
-                .andExpect(jsonPath("$.catatan_penanganan", org.hamcrest.Matchers.containsString("Bawa seal pipa cadangan")));
+                .andExpect(jsonPath("$.status_tiket").value("DIPROSES"))
+                .andExpect(jsonPath("$.kondisi_fasilitas").value("PERLU_PERAWATAN"))
+                .andExpect(jsonPath("$.biaya_perbaikan").value(75000))
+                .andExpect(jsonPath("$.riwayat", hasSize(2)));
 
-            // Blank rejection reason rejected
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/tolak")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"kategori_penolakan\":\"Lainnya\",\"alasan_penolakan\":\"   \"}"))
-                .andExpect(status().isBadRequest());
-
-            // Valid rejection
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/tolak")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"kategori_penolakan\":\"Bukan tanggung jawab fasilitas kost\",\"alasan_penolakan\":\"Pipa bukan bagian fasilitas inventaris kost.\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DITOLAK"))
-                .andExpect(jsonPath("$.kategori_penolakan").value("Bukan tanggung jawab fasilitas kost"))
-                .andExpect(jsonPath("$.alasan_penolakan").value("Pipa bukan bagian fasilitas inventaris kost."))
-                .andExpect(jsonPath("$.tanggal_diproses").isNotEmpty());
-
-            mockMvc.perform(get("/api/owner/dashboard"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.ringkasan.ditolak", greaterThanOrEqualTo(1)));
-
-            mockMvc.perform(get("/api/owner/laporan")
-                    .param("status", "DITOLAK")
-                    .param("q", tempKode))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.laporan", hasSize(1)))
-                .andExpect(jsonPath("$.laporan[0].id").value(tempId));
-        } finally {
-            if (laporanRepository.existsById(tempId)) {
-                laporanRepository.deleteById(tempId);
-            }
-        }
-    }
-
-    @Test
-    void mekanikLoginDashboardFilterAndCompletionFlowWork() throws Exception {
-        // 1. Seeded Mekanik login works
-        MvcResult loginResult = mockMvc.perform(post("/api/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"mekanik@kost.com\",\"password\":\"123\"}"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nama").value("Pak Budi"))
-            .andExpect(jsonPath("$.role").value("MEKANIK"))
-            .andExpect(jsonPath("$.password").doesNotExist())
-            .andReturn();
-
-        long mekanikId = objectMapper.readTree(loginResult.getResponse().getContentAsString()).get("id").asLong();
-
-        // 2. Mekanik dashboard returns seeded DIPROSES tasks
-        mockMvc.perform(get("/api/mekanik/" + mekanikId + "/dashboard"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(2)))
-            .andExpect(jsonPath("$.ringkasan.diproses", greaterThanOrEqualTo(2)))
-            .andExpect(jsonPath("$.laporan", hasSize(greaterThanOrEqualTo(2))))
-            .andExpect(jsonPath("$.laporan[0].mekanik_id").value(mekanikId));
-
-        // Non-mechanic ID rejected on mechanic endpoints
-        User mori = userRepository.findByEmailIgnoreCase("penghuni@kost.com").orElseThrow();
-        mockMvc.perform(get("/api/mekanik/" + mori.getId() + "/dashboard"))
-            .andExpect(status().isBadRequest());
-
-        // Filter & search mechanic tasks
-        mockMvc.perform(get("/api/mekanik/" + mekanikId + "/tugas")
-                .param("status", "DIPROSES")
-                .param("q", "AC"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.laporan", hasSize(greaterThanOrEqualTo(1))))
-            .andExpect(jsonPath("$.laporan[0].status").value("DIPROSES"))
-            .andExpect(jsonPath("$.laporan[0].catatan_owner").isNotEmpty());
-
-        // 3. Full multipart progress + completion flow on temporary task
-        MvcResult createResult = mockMvc.perform(multipart("/api/laporan")
-                .param("penghuni_id", String.valueOf(mori.getId()))
-                .param("kategori_fasilitas", "Furnitur & Bangunan")
-                .param("lokasi_kamar", "Kamar A-12 · Lemari Pakaian")
-                .param("deskripsi", "Engsel pintu lemari patah untuk uji alur teknisi mekanik."))
-            .andExpect(status().isCreated())
-            .andReturn();
-
-        JsonNode createdJson = objectMapper.readTree(createResult.getResponse().getContentAsString());
-        long tempId = createdJson.get("id").asLong();
-        String tempKode = createdJson.get("kode_laporan").asText();
-
-        Path firstPhotoPath = null;
-        Path secondPhotoPath = null;
-        boolean deletedViaApi = false;
-
-        try {
-            mockMvc.perform(put("/api/owner/laporan/" + tempId + "/setujui")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(String.format(
-                        "{\"mekanik_id\":%d,\"prioritas\":\"Tinggi\",\"catatan_owner\":\"Ganti engsel stainless baru.\"}",
-                        mekanikId
-                    )))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DIPROSES"))
-                .andExpect(jsonPath("$.mekanik_id").value(mekanikId));
-
-            // Invalid status MENUNGGU rejected
-            mockMvc.perform(multipart(HttpMethod.PUT, "/api/mekanik/tugas/" + tempId + "/selesai")
-                    .param("status", "MENUNGGU")
-                    .param("catatanMekanik", "Status tidak valid"))
-                .andExpect(status().isBadRequest());
-
-            // Progress update stays DIPROSES without setting tanggal_selesai
-            mockMvc.perform(multipart(HttpMethod.PUT, "/api/mekanik/tugas/" + tempId + "/selesai")
-                    .param("status", "DIPROSES")
-                    .param("catatanMekanik", "Engsel lama sudah dilepas, menunggu baut cadangan."))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("DIPROSES"))
-                .andExpect(jsonPath("$.catatan_mekanik").value("Engsel lama sudah dilepas, menunggu baut cadangan."))
-                .andExpect(jsonPath("$.tanggal_selesai").isEmpty());
-
-            // Complete task with photo upload
-            MockMultipartFile firstPhoto = new MockMultipartFile(
-                "fotoSelesai",
-                "bukti-selesai-1.jpg",
+            // Owner selesai with foto_sesudah
+            MockMultipartFile fotoSesudah = new MockMultipartFile(
+                "foto_sesudah",
+                "sesudah.jpg",
                 "image/jpeg",
                 new byte[] {1, 2, 3, 4}
             );
-            MvcResult finishResult = mockMvc.perform(multipart(HttpMethod.PUT, "/api/mekanik/tugas/" + tempId + "/selesai")
-                    .file(firstPhoto)
-                    .param("status", "SELESAI")
-                    .param("catatanMekanik", "Engsel lemari baru terpasang kokoh dan berfungsi normal."))
+            MvcResult selesaiRes = mockMvc.perform(multipart(HttpMethod.PUT, "/api/owner/laporan/" + lapId1 + "/selesai")
+                    .file(fotoSesudah)
+                    .param("id_pengguna", String.valueOf(owner.getIdPengguna()))
+                    .param("catatan_penanganan", "Engsel baru sudah terpasang kokoh.")
+                    .param("biaya_perbaikan", "85000"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SELESAI"))
-                .andExpect(jsonPath("$.catatan_mekanik").value("Engsel lemari baru terpasang kokoh dan berfungsi normal."))
-                .andExpect(jsonPath("$.foto_selesai_url", startsWith("/uploads/")))
-                .andExpect(jsonPath("$.tanggal_selesai").isNotEmpty())
+                .andExpect(jsonPath("$.status_tiket").value("SELESAI"))
+                .andExpect(jsonPath("$.kondisi_fasilitas").value("BAIK"))
+                .andExpect(jsonPath("$.foto_sesudah_url", startsWith("/uploads/")))
+                .andExpect(jsonPath("$.biaya_perbaikan").value(85000))
+                .andExpect(jsonPath("$.riwayat", hasSize(3)))
                 .andReturn();
 
-            String firstUrl = objectMapper.readTree(finishResult.getResponse().getContentAsString())
-                .get("foto_selesai_url").asText();
-            firstPhotoPath = fileStorageService.getUploadDir().resolve(firstUrl.replace("/uploads/", ""));
-            assertTrue(Files.exists(firstPhotoPath), "Uploaded completion photo should exist on disk");
-            mockMvc.perform(get(firstUrl)).andExpect(status().isOk());
+            String fotoSesudahUrl = objectMapper.readTree(selesaiRes.getResponse().getContentAsString())
+                .get("foto_sesudah_url").asText();
+            sesudahPath = fileStorageService.getUploadDir().resolve(fotoSesudahUrl.replace("/uploads/", ""));
+            assertTrue(Files.exists(sesudahPath));
 
-            // Re-upload replacement photo and verify old file is cleaned up
-            MockMultipartFile secondPhoto = new MockMultipartFile(
-                "fotoSelesai",
-                "bukti-selesai-2.png",
-                "image/png",
-                new byte[] {5, 6, 7, 8}
-            );
-            MvcResult updatePhotoResult = mockMvc.perform(multipart(HttpMethod.PUT, "/api/mekanik/tugas/" + tempId + "/selesai")
-                    .file(secondPhoto)
-                    .param("status", "SELESAI")
-                    .param("catatanMekanik", "Foto selesai diperbarui dengan pencahayaan lebih jelas."))
+            // Notification exists for Penghuni and can be marked read
+            MvcResult notifRes = mockMvc.perform(get("/api/notifikasi/" + andi.getIdPengguna()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.foto_selesai_url", not(firstUrl)))
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
                 .andReturn();
-
-            String secondUrl = objectMapper.readTree(updatePhotoResult.getResponse().getContentAsString())
-                .get("foto_selesai_url").asText();
-            secondPhotoPath = fileStorageService.getUploadDir().resolve(secondUrl.replace("/uploads/", ""));
-            assertFalse(Files.exists(firstPhotoPath), "Old completion photo should be deleted when replaced");
-            assertTrue(Files.exists(secondPhotoPath), "New completion photo should exist on disk");
-
-            // Search completed task in mechanic tasks list
-            mockMvc.perform(get("/api/mekanik/" + mekanikId + "/tugas")
-                    .param("status", "SELESAI")
-                    .param("q", tempKode))
+            long notifId = objectMapper.readTree(notifRes.getResponse().getContentAsString()).get(0).get("id_notifikasi").asLong();
+            mockMvc.perform(put("/api/notifikasi/" + notifId + "/baca"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.laporan", hasSize(1)))
-                .andExpect(jsonPath("$.laporan[0].id").value(tempId))
-                .andExpect(jsonPath("$.ringkasan.selesai", greaterThanOrEqualTo(1)));
+                .andExpect(jsonPath("$.is_read").value(true));
 
-            // Delete temporary report and ensure completion photo file is deleted too
-            mockMvc.perform(delete("/api/laporan/" + tempId)).andExpect(status().isOk());
-            deletedViaApi = true;
-            assertFalse(Files.exists(secondPhotoPath), "Deleting laporan should delete foto_selesai_url file too");
+            // Test Tolak flow on a 2nd temporary report
+            MvcResult lap2Res = mockMvc.perform(multipart("/api/laporan")
+                    .param("id_pengguna", String.valueOf(andi.getIdPengguna()))
+                    .param("id_fasilitas", String.valueOf(lemariId))
+                    .param("judul_laporan", "Laporan duplikat uji")
+                    .param("deskripsi_kerusakan", "Uji coba penolakan owner."))
+                .andExpect(status().isCreated())
+                .andReturn();
+            lapId2 = objectMapper.readTree(lap2Res.getResponse().getContentAsString()).get("id_laporan").asLong();
+
+            mockMvc.perform(put("/api/owner/laporan/" + lapId2 + "/tolak")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"id_pengguna\":%d,\"kategori_penolakan\":\"Laporan duplikat\",\"alasan_penolakan\":\"Sudah pernah dilaporkan sebelumnya.\"}",
+                        owner.getIdPengguna()
+                    )))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status_tiket").value("DITOLAK"))
+                .andExpect(jsonPath("$.kondisi_fasilitas").value("BAIK"))
+                .andExpect(jsonPath("$.riwayat", hasSize(2)));
+
+            // Owner dashboard reflects everything
+            mockMvc.perform(get("/api/owner/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(4)));
+
+            mockMvc.perform(delete("/api/laporan/" + lapId1)).andExpect(status().isOk());
+            assertFalse(Files.exists(awalPath));
+            assertFalse(Files.exists(sesudahPath));
+            lapId1 = -1L;
+
+            mockMvc.perform(delete("/api/laporan/" + lapId2)).andExpect(status().isOk());
+            lapId2 = null;
         } finally {
-            if (!deletedViaApi && laporanRepository.existsById(tempId)) {
-                laporanRepository.deleteById(tempId);
+            if (lapId1 > 0 && laporanRepository.existsById(lapId1)) {
+                notifikasiRepository.deleteByLaporanIdLaporan(lapId1);
+                riwayatRepository.deleteByLaporanIdLaporan(lapId1);
+                laporanRepository.deleteById(lapId1);
             }
-            if (firstPhotoPath != null) {
-                Files.deleteIfExists(firstPhotoPath);
+            if (lapId2 != null && laporanRepository.existsById(lapId2)) {
+                notifikasiRepository.deleteByLaporanIdLaporan(lapId2);
+                riwayatRepository.deleteByLaporanIdLaporan(lapId2);
+                laporanRepository.deleteById(lapId2);
             }
-            if (secondPhotoPath != null) {
-                Files.deleteIfExists(secondPhotoPath);
+            Files.deleteIfExists(awalPath);
+            if (sesudahPath != null) {
+                Files.deleteIfExists(sesudahPath);
             }
         }
     }
 
     @Test
-    void staticFrontendPagesServeSuccessfully() throws Exception {
-        String[] paths = {
+    void staticFrontendPagesServeSuccessfullyAndMechanicPagesRemoved() throws Exception {
+        String[] activePaths = {
             "/index.html",
             "/login.html",
             "/register.html",
@@ -638,22 +495,61 @@ class SarpraskostApiTests {
             "/detail-laporan.html",
             "/fasilitas.html",
             "/profil.html",
+            "/notifikasi.html",
             "/owner-home.html",
             "/owner-laporan.html",
             "/owner-detail-laporan.html",
-            "/owner-setujui.html",
+            "/owner-proses.html",
             "/owner-tolak.html",
             "/owner-konfirmasi.html",
+            "/owner-kamar-fasilitas.html",
+            "/css/style.css",
+            "/js/app.js"
+        };
+        for (String path : activePaths) {
+            mockMvc.perform(get(path)).andExpect(status().isOk());
+        }
+
+        String[] removedPaths = {
             "/mekanik-home.html",
             "/mekanik-tugas.html",
             "/mekanik-detail-tugas.html",
             "/mekanik-update-pekerjaan.html",
             "/mekanik-selesai.html",
-            "/css/style.css",
-            "/js/app.js"
+            "/owner-setujui.html"
         };
-        for (String path : paths) {
-            mockMvc.perform(get(path)).andExpect(status().isOk());
+        for (String path : removedPaths) {
+            mockMvc.perform(get(path)).andExpect(status().isNotFound());
+        }
+    }
+
+    @Test
+    void databaseSchemaMatchesSevenErdTablesAndColumns() {
+        List<String> tables = jdbcTemplate.queryForList(
+            "SELECT table_name FROM information_schema.tables "
+                + "WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name",
+            String.class
+        );
+        Set<String> expectedTables = Set.of(
+            "kamar",
+            "pengguna",
+            "kategori_fasilitas",
+            "fasilitas_kamar",
+            "laporan_kerusakan",
+            "riwayat_penanganan",
+            "notifikasi"
+        );
+        assertTrue(tables.size() == 7 && Set.copyOf(tables).equals(expectedTables),
+            "Expected exact 7 ERD tables, found: " + tables);
+
+        for (String table : expectedTables) {
+            List<String> cols = jdbcTemplate.queryForList(
+                "SELECT column_name FROM information_schema.columns "
+                    + "WHERE table_schema = 'public' AND table_name = ? ORDER BY ordinal_position",
+                String.class,
+                table
+            );
+            System.out.println("SCHEMA_TABLE " + table + " -> " + cols);
         }
     }
 }

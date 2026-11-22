@@ -16,79 +16,21 @@
       </a>
       <div class="app-bar-titles">
         <h1 class="app-bar-title">Fasilitas kamar</h1>
-        <p id="fasilitasRoomSub" class="app-bar-subtitle">Inventaris dan kondisi fasilitas</p>
+        <p id="fasilitasRoomSub" class="app-bar-subtitle">Inventaris aset kamar Anda</p>
       </div>
     </header>
 
     <section class="page-body has-bottom-nav">
-      <div id="fasilitasSuccess" class="success-banner" role="status"></div>
-      <div id="fasilitasError" class="error-banner" role="alert"></div>
-
-      <div class="section-card">
-        <div class="section-header">
-          <h2 class="section-title">Tambah fasilitas</h2>
-          <span class="form-hint">Catat barang di kamar</span>
-        </div>
-
-        <form id="createFasilitasForm" class="form-stack" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="createNamaInput">Nama fasilitas</label>
-            <div class="input-wrap">
-              <input
-                id="createNamaInput"
-                name="nama_fasilitas"
-                type="text"
-                class="input-control"
-                placeholder="Contoh: Lemari Pakaian 2 Pintu"
-                required
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="createMerkInput">Merk / tipe</label>
-            <div class="input-wrap">
-              <input
-                id="createMerkInput"
-                name="merk_tipe"
-                type="text"
-                class="input-control"
-                placeholder="Contoh: Olympic Minimalis (opsional)"
-              />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="createKondisiInput">Kondisi saat ini</label>
-            <div class="input-wrap">
-              <select id="createKondisiInput" name="kondisi" class="input-control">
-                <option value="BAIK">Baik</option>
-                <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
-                <option value="RUSAK">Rusak</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="createKeteranganInput">Keterangan</label>
-            <div class="input-wrap textarea-wrap">
-              <textarea
-                id="createKeteranganInput"
-                name="keterangan"
-                class="textarea-control"
-                style="min-height:72px;"
-                placeholder="Catatan kondisi atau kelengkapan fasilitas (opsional)..."
-              ></textarea>
-            </div>
-          </div>
-
-          <button type="submit" id="createFasilitasBtn" class="btn btn-primary">Tambah Fasilitas</button>
-        </form>
+      <div class="info-banner">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span>Inventaris dan kondisi aset dicatat oleh pengelola kost. Pilih <strong>Laporkan Kerusakan</strong> jika ada aset yang bermasalah.</span>
       </div>
+
+      <div id="fasilitasError" class="error-banner" role="alert"></div>
 
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="section-header">
-          <h2 class="section-title">Daftar fasilitas</h2>
+          <h2 class="section-title">Daftar fasilitas kamar</h2>
           <span id="fasilitasCountLabel" class="section-meta">0 item</span>
         </div>
 
@@ -118,305 +60,63 @@
         </a>
       </div>
     </nav>
-
-    <!-- Edit Fasilitas Sheet -->
-    <div id="editFasilitasSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
-      <div class="sheet-panel">
-        <div class="sheet-handle"></div>
-        <div class="section-header">
-          <h3 class="section-title">Edit Fasilitas</h3>
-          <button type="button" class="text-link" data-close-sheet="editFasilitasSheet">Batal</button>
-        </div>
-        <form id="editFasilitasForm" class="form-stack" novalidate>
-          <input type="hidden" id="editFasilitasId" />
-          <div id="editFasilitasError" class="error-banner" role="alert"></div>
-
-          <div class="form-group">
-            <label class="form-label" for="editNamaInput">Nama fasilitas</label>
-            <div class="input-wrap">
-              <input id="editNamaInput" type="text" class="input-control" required />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="editMerkInput">Merk / tipe</label>
-            <div class="input-wrap">
-              <input id="editMerkInput" type="text" class="input-control" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="editKondisiInput">Kondisi</label>
-            <div class="input-wrap">
-              <select id="editKondisiInput" class="input-control">
-                <option value="BAIK">Baik</option>
-                <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
-                <option value="RUSAK">Rusak</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="editKeteranganInput">Keterangan</label>
-            <div class="input-wrap textarea-wrap">
-              <textarea id="editKeteranganInput" class="textarea-control" style="min-height:76px;"></textarea>
-            </div>
-          </div>
-
-          <button type="submit" id="saveEditFasilitasBtn" class="btn btn-primary">Simpan Perubahan</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Sheet -->
-    <div id="deleteFasilitasSheet" class="sheet-backdrop" role="dialog" aria-modal="true">
-      <div class="sheet-panel">
-        <div class="sheet-handle"></div>
-        <div class="section-header">
-          <h3 class="section-title">Hapus Fasilitas?</h3>
-          <button type="button" class="text-link" data-close-sheet="deleteFasilitasSheet">Batal</button>
-        </div>
-        <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;">
-          Fasilitas <strong id="deleteFasilitasName" style="color:#172554;">-</strong> akan dihapus permanen dari daftar inventaris kamar Anda.
-        </p>
-        <div class="action-row">
-          <button type="button" class="btn btn-outline" data-close-sheet="deleteFasilitasSheet">Batal</button>
-          <button type="button" id="confirmDeleteFasilitasBtn" class="btn btn-danger">Ya, Hapus</button>
-        </div>
-      </div>
-    </div>
   </main>
 
   <script src="js/app.js"></script>
   <script>
-    (() => {
-      const user = SarprasApp.requireAuth();
+    (async () => {
+      const user = SarprasApp.requirePenghuniAuth();
       if (!user) return;
 
-      SarprasApp.attachSheetControls();
-
       if (user.nomor_kamar) {
-        document.getElementById('fasilitasRoomSub').textContent = `Inventaris Kamar ${user.nomor_kamar}`;
+        document.getElementById('fasilitasRoomSub').textContent =
+          `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} (Lantai ${user.lantai || '-'})`;
       }
 
-      const fasilitasSuccess = document.getElementById('fasilitasSuccess');
-      const fasilitasError = document.getElementById('fasilitasError');
       const fasilitasList = document.getElementById('fasilitasList');
       const fasilitasCountLabel = document.getElementById('fasilitasCountLabel');
 
-      const createForm = document.getElementById('createFasilitasForm');
-      const createNamaInput = document.getElementById('createNamaInput');
-      const createMerkInput = document.getElementById('createMerkInput');
-      const createKondisiInput = document.getElementById('createKondisiInput');
-      const createKeteranganInput = document.getElementById('createKeteranganInput');
-      const createBtn = document.getElementById('createFasilitasBtn');
-
-      const editForm = document.getElementById('editFasilitasForm');
-      const editFasilitasId = document.getElementById('editFasilitasId');
-      const editNamaInput = document.getElementById('editNamaInput');
-      const editMerkInput = document.getElementById('editMerkInput');
-      const editKondisiInput = document.getElementById('editKondisiInput');
-      const editKeteranganInput = document.getElementById('editKeteranganInput');
-      const editFasilitasError = document.getElementById('editFasilitasError');
-      const saveEditBtn = document.getElementById('saveEditFasilitasBtn');
-
-      const deleteFasilitasName = document.getElementById('deleteFasilitasName');
-      const confirmDeleteBtn = document.getElementById('confirmDeleteFasilitasBtn');
-
-      let itemsCache = [];
-      let pendingDeleteId = null;
-
-      function showSuccess(msg) {
-        fasilitasError.classList.remove('visible');
-        fasilitasSuccess.textContent = msg;
-        fasilitasSuccess.classList.add('visible');
-      }
-
-      function showError(msg) {
-        fasilitasSuccess.classList.remove('visible');
-        fasilitasError.textContent = msg;
-        fasilitasError.classList.add('visible');
-      }
-
-      function renderFasilitasCard(item) {
+      function renderCard(item) {
         const meta = SarprasApp.getKondisiMeta(item.kondisi);
-        const merk = item.merk_tipe ? SarprasApp.escapeHtml(item.merk_tipe) : 'Merk/tipe belum dicatat';
-        const ket = item.keterangan
-          ? `<p class="facility-notes">${SarprasApp.escapeHtml(item.keterangan)}</p>`
-          : '';
         return `
           <article class="facility-card">
             <div class="facility-header">
               <div style="min-width:0;">
-                <h3 class="facility-title">${SarprasApp.escapeHtml(item.nama_fasilitas)}</h3>
-                <div class="facility-brand">${merk}</div>
+                <div class="report-code">${SarprasApp.escapeHtml(item.kode_aset)} &bull; ${SarprasApp.escapeHtml(item.nama_kategori)}</div>
+                <h3 class="facility-title" style="margin-top:4px;">${SarprasApp.escapeHtml(item.nama_fasilitas)}</h3>
+                <div class="facility-brand">${SarprasApp.escapeHtml(item.merk_tipe || 'Merk belum dicatat')}</div>
               </div>
               <span class="status-badge ${meta.className}">
                 <span class="status-dot"></span>
                 <span>${SarprasApp.escapeHtml(meta.label)}</span>
               </span>
             </div>
-            ${ket}
-            <div class="action-row">
-              <button type="button" class="btn btn-secondary btn-sm" data-edit-id="${item.id}">Edit</button>
-              <button type="button" class="btn btn-danger-outline btn-sm" data-delete-id="${item.id}">Hapus</button>
+            <div class="kv-row">
+              <span class="kv-label">Tanggal Pasang</span>
+              <span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatDateIndo(item.tgl_pasang))}</span>
             </div>
+            <a href="buat-laporan.html?fasilitasId=${encodeURIComponent(item.id_fasilitas)}" class="btn btn-secondary btn-sm">
+              Laporkan Kerusakan Aset Ini
+            </a>
           </article>
         `;
       }
 
-      async function loadFasilitas() {
-        fasilitasList.innerHTML = '<div class="loading-state">Memuat daftar fasilitas...</div>';
-        try {
-          const list = await SarprasApp.requestJson(`/fasilitas/penghuni/${encodeURIComponent(user.id)}`);
-          itemsCache = Array.isArray(list) ? list : [];
-          fasilitasCountLabel.textContent = `${itemsCache.length} item`;
+      try {
+        const list = await SarprasApp.fetchFasilitasByPenghuni(user.id_pengguna);
+        const items = Array.isArray(list) ? list : [];
+        fasilitasCountLabel.textContent = `${items.length} item`;
 
-          if (itemsCache.length === 0) {
-            fasilitasList.innerHTML = '<div class="empty-state">Belum ada fasilitas tercatat untuk kamar Anda.</div>';
-          } else {
-            fasilitasList.innerHTML = itemsCache.map(renderFasilitasCard).join('');
-          }
-        } catch (err) {
-          fasilitasList.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
+        if (!user.id_kamar) {
+          fasilitasList.innerHTML = '<div class="empty-state">Anda belum terhubung ke nomor kamar. Silakan pilih kamar di halaman <a href="profil.html" class="text-link">Profil</a>.</div>';
+        } else if (items.length === 0) {
+          fasilitasList.innerHTML = '<div class="empty-state">Belum ada fasilitas tercatat pada kamar ini.</div>';
+        } else {
+          fasilitasList.innerHTML = items.map(renderCard).join('');
         }
+      } catch (err) {
+        fasilitasList.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
       }
-
-      createForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        fasilitasError.classList.remove('visible');
-        fasilitasSuccess.classList.remove('visible');
-
-        const nama_fasilitas = createNamaInput.value.trim();
-        const merk_tipe = createMerkInput.value.trim();
-        const kondisi = createKondisiInput.value;
-        const keterangan = createKeteranganInput.value.trim();
-
-        if (!nama_fasilitas) {
-          showError('Nama fasilitas wajib diisi.');
-          return;
-        }
-
-        createBtn.disabled = true;
-        createBtn.textContent = 'Menyimpan...';
-
-        try {
-          await SarprasApp.requestJson('/fasilitas', {
-            method: 'POST',
-            body: JSON.stringify({
-              penghuni_id: user.id,
-              nama_fasilitas,
-              merk_tipe,
-              kondisi,
-              keterangan
-            })
-          });
-          createForm.reset();
-          createKondisiInput.value = 'BAIK';
-          showSuccess('Fasilitas kamar berhasil ditambahkan.');
-          await loadFasilitas();
-        } catch (err) {
-          showError(err.message || 'Gagal menambahkan fasilitas.');
-        } finally {
-          createBtn.disabled = false;
-          createBtn.textContent = 'Tambah Fasilitas';
-        }
-      });
-
-      fasilitasList.addEventListener('click', (e) => {
-        const editBtn = e.target.closest('[data-edit-id]');
-        if (editBtn) {
-          const id = Number(editBtn.getAttribute('data-edit-id'));
-          const item = itemsCache.find((f) => f.id === id);
-          if (!item) return;
-
-          editFasilitasError.classList.remove('visible');
-          editFasilitasId.value = item.id;
-          editNamaInput.value = item.nama_fasilitas || '';
-          editMerkInput.value = item.merk_tipe || '';
-          editKondisiInput.value = item.kondisi || 'BAIK';
-          editKeteranganInput.value = item.keterangan || '';
-          SarprasApp.openSheet('editFasilitasSheet');
-          return;
-        }
-
-        const deleteBtn = e.target.closest('[data-delete-id]');
-        if (deleteBtn) {
-          const id = Number(deleteBtn.getAttribute('data-delete-id'));
-          const item = itemsCache.find((f) => f.id === id);
-          if (!item) return;
-
-          pendingDeleteId = id;
-          deleteFasilitasName.textContent = item.nama_fasilitas;
-          SarprasApp.openSheet('deleteFasilitasSheet');
-        }
-      });
-
-      editForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        editFasilitasError.classList.remove('visible');
-
-        const id = editFasilitasId.value;
-        const nama_fasilitas = editNamaInput.value.trim();
-        const merk_tipe = editMerkInput.value.trim();
-        const kondisi = editKondisiInput.value;
-        const keterangan = editKeteranganInput.value.trim();
-
-        if (!nama_fasilitas) {
-          editFasilitasError.textContent = 'Nama fasilitas tidak boleh kosong.';
-          editFasilitasError.classList.add('visible');
-          return;
-        }
-
-        saveEditBtn.disabled = true;
-        saveEditBtn.textContent = 'Menyimpan...';
-
-        try {
-          await SarprasApp.requestJson(`/fasilitas/${encodeURIComponent(id)}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              nama_fasilitas,
-              merk_tipe,
-              kondisi,
-              keterangan
-            })
-          });
-          SarprasApp.closeSheet('editFasilitasSheet');
-          showSuccess('Data fasilitas berhasil diperbarui.');
-          await loadFasilitas();
-        } catch (err) {
-          editFasilitasError.textContent = err.message || 'Gagal memperbarui fasilitas.';
-          editFasilitasError.classList.add('visible');
-        } finally {
-          saveEditBtn.disabled = false;
-          saveEditBtn.textContent = 'Simpan Perubahan';
-        }
-      });
-
-      confirmDeleteBtn.addEventListener('click', async () => {
-        if (!pendingDeleteId) return;
-
-        confirmDeleteBtn.disabled = true;
-        confirmDeleteBtn.textContent = 'Menghapus...';
-
-        try {
-          await SarprasApp.requestJson(`/fasilitas/${encodeURIComponent(pendingDeleteId)}`, {
-            method: 'DELETE'
-          });
-          pendingDeleteId = null;
-          SarprasApp.closeSheet('deleteFasilitasSheet');
-          showSuccess('Fasilitas berhasil dihapus.');
-          await loadFasilitas();
-        } catch (err) {
-          SarprasApp.closeSheet('deleteFasilitasSheet');
-          showError(err.message || 'Gagal menghapus fasilitas.');
-        } finally {
-          confirmDeleteBtn.disabled = false;
-          confirmDeleteBtn.textContent = 'Ya, Hapus';
-        }
-      });
-
-      loadFasilitas();
     })();
   </script>
 </body>

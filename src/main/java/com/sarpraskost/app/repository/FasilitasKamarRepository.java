@@ -10,13 +10,23 @@ import org.springframework.data.repository.query.Param;
 
 public interface FasilitasKamarRepository extends JpaRepository<FasilitasKamar, Long> {
 
-    @EntityGraph(attributePaths = "penghuni")
-    List<FasilitasKamar> findByPenghuniIdOrderByIdDesc(Long penghuniId);
+    @EntityGraph(attributePaths = {"kamar", "kategori"})
+    List<FasilitasKamar> findAllByOrderByIdFasilitasDesc();
 
-    @Query("SELECT f FROM FasilitasKamar f JOIN FETCH f.penghuni WHERE f.id = :id")
+    @EntityGraph(attributePaths = {"kamar", "kategori"})
+    List<FasilitasKamar> findByKamarIdKamarOrderByIdFasilitasDesc(Long idKamar);
+
+    @EntityGraph(attributePaths = {"kamar", "kategori"})
+    List<FasilitasKamar> findByKategoriIdKategoriOrderByIdFasilitasDesc(Long idKategori);
+
+    @Query("SELECT f FROM FasilitasKamar f JOIN FETCH f.kamar JOIN FETCH f.kategori WHERE f.idFasilitas = :id")
     Optional<FasilitasKamar> findDetailById(@Param("id") Long id);
 
-    long countByPenghuniId(Long penghuniId);
+    boolean existsByKodeAsetIgnoreCase(String kodeAset);
 
-    void deleteByPenghuniId(Long penghuniId);
+    long countByKamarIdKamar(Long idKamar);
+
+    long countByKategoriIdKategori(Long idKategori);
+
+    List<FasilitasKamar> findByKodeAsetStartingWith(String prefix);
 }

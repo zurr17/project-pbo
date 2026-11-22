@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detail Laporan Pengelola — SarprasKost</title>
+  <title>Verifikasi Laporan — SarprasKost</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -15,7 +15,7 @@
         </svg>
       </a>
       <div class="app-bar-titles">
-        <h1 class="app-bar-title">Detail laporan</h1>
+        <h1 class="app-bar-title">Verifikasi laporan</h1>
         <p id="detailKodeSub" class="app-bar-subtitle">Memuat kode tiket...</p>
       </div>
     </header>
@@ -35,18 +35,18 @@
       </div>
 
       <div id="detailPhotoBox" class="photo-box">
-        <img id="detailPhotoImg" class="photo-img" src="" alt="Foto bukti kerusakan" />
+        <img id="detailPhotoImg" class="photo-img" src="" alt="Foto kerusakan awal" />
         <div class="photo-placeholder-label">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
             <path d="M4 16L8.586 11.414C9.367 10.633 10.633 10.633 11.414 11.414L16 16M14 14L15.586 12.414C16.367 11.633 17.633 11.633 18.414 12.414L20 14M6 20H18C19.105 20 20 19.105 20 18V6C20 4.895 19.105 4 18 4H6C4.895 4 4 4.895 4 6V18C4 19.105 4.895 20 6 20ZM9 9C9 9.552 8.552 10 8 10C7.448 10 7 9.552 7 9C7 8.448 7.448 8 8 8C8.552 8 9 8.448 9 9Z" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <span>Tidak ada foto bukti kerusakan</span>
+          <span>Tidak ada foto kerusakan awal</span>
         </div>
         <div id="photoCountPill" class="photo-count-pill" style="display:none;">
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M10.5 7.49985L8.957 5.95685C8.58 5.58 7.92 5.58 7.543 5.95685L3 10.4998M2.5 1.5H9.5C10.0523 1.5 10.5 1.94772 10.5 2.5V9.5C10.5 10.0523 10.0523 10.5 9.5 10.5H2.5C1.94772 10.5 1.5 10.0523 1.5 9.5V2.5C1.5 1.94772 1.94772 1.5 2.5 1.5ZM5.5 4.5C5.5 5.05228 5.05228 5.5 4.5 5.5C3.94772 5.5 3.5 5.05228 3.5 4.5C3.5 3.94772 3.94772 3.5 4.5 3.5C5.05228 3.5 5.5 3.94772 5.5 4.5Z" stroke="white" stroke-linecap="round" />
           </svg>
-          <span>1 foto</span>
+          <span>Foto awal</span>
         </div>
       </div>
 
@@ -63,31 +63,35 @@
       <div class="resident-info-card">
         <div id="residentAvatar" class="resident-avatar">P</div>
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;">
-          <div style="font-size:10px;color:#64748B;">Informasi Pelapor</div>
-          <div id="detailPenghuniNama" style="font-size:14px;font-weight:600;color:#172554;">Pelapor: - &bull; Penghuni</div>
-          <div id="detailPenghuniKamar" style="font-size:12px;color:#64748B;">Kamar -</div>
+          <div style="font-size:10px;color:#64748B;">Pelapor</div>
+          <div id="detailPenghuniNama" style="font-size:14px;font-weight:600;color:#172554;">-</div>
+          <div id="detailPenghuniMeta" style="font-size:12px;color:#64748B;">-</div>
         </div>
       </div>
 
+      <div id="assetDetailCard" class="summary-mini-card"></div>
+
       <div id="detailStatusBanner" class="info-banner">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="flex-shrink:0;margin-top:2px;">
-          <path d="M7.99996 3.9997V8.00003H10.6668M14.6672 8.00003C14.6672 11.6822 11.6822 14.6672 7.99996 14.6672C4.31777 14.6672 1.33276 11.6822 1.33276 8.00003C1.33276 4.31783 4.31777 1.33282 7.99996 1.33282C11.6822 1.33282 14.6672 4.31783 14.6672 8.00003Z" stroke="#2563EB" stroke-width="1.3" stroke-linecap="round" />
+          <path d="M7.99996 3.9997V8.00003H10.6668M14.6672 8.00003C14.6672 11.6822 11.6822 14.6672 7.99996 14.6672C4.31777 14.6672 1.33276 11.6822 1.33276 8.00003C1.33276 4.31783 4.31777 1.33282 7.99996 1.33282C11.6822 1.33282 14.6672 4.31783 14.6672 8.00003Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
         </svg>
-        <span id="detailStatusInfo">Laporan menunggu verifikasi pengelola untuk ditugaskan ke teknisi atau ditolak.</span>
+        <span id="detailStatusInfo">Laporan menunggu verifikasi pengelola.</span>
       </div>
 
-      <div id="detailAssignmentCard" class="summary-mini-card" style="display:none;"></div>
+      <div id="afterPhotoCard" class="summary-mini-card" style="display:none;">
+        <div style="font-size:12px;font-weight:600;color:#172554;">Foto Bukti Sesudah Diperbaiki</div>
+        <div class="photo-box has-image" style="height:160px;">
+          <img id="afterPhotoImg" class="photo-img" src="" alt="Foto sesudah diperbaiki" />
+        </div>
+      </div>
 
       <div style="display:flex;flex-direction:column;gap:14px;">
-        <h3 class="section-title">Progres penanganan</h3>
+        <h3 class="section-title">Riwayat penanganan</h3>
         <div id="timelineContainer" class="timeline"></div>
       </div>
     </section>
 
-    <div id="ownerActionBar" class="owner-bottom-action-bar">
-      <a id="tolakLinkBtn" href="owner-tolak.html" class="btn btn-danger">Tolak</a>
-      <a id="setujuiLinkBtn" href="owner-setujui.html" class="btn btn-primary">Setujui &amp; tugaskan</a>
-    </div>
+    <div id="ownerActionBar" class="owner-bottom-action-bar" style="display:none;"></div>
   </main>
 
   <script src="js/app.js"></script>
@@ -99,6 +103,8 @@
       const params = new URLSearchParams(window.location.search);
       const id = params.get('id');
       const errorBanner = document.getElementById('detailError');
+      const actionBar = document.getElementById('ownerActionBar');
+      const detailContent = document.getElementById('detailContent');
 
       function showError(msg) {
         errorBanner.textContent = msg;
@@ -108,75 +114,71 @@
       if (!id) {
         showError('ID laporan tidak ditemukan di URL.');
         document.getElementById('detailTitle').textContent = 'Laporan tidak ditemukan';
-        document.getElementById('ownerActionBar').style.display = 'none';
         return;
       }
 
-      document.getElementById('tolakLinkBtn').href = `owner-tolak.html?id=${encodeURIComponent(id)}`;
-      document.getElementById('setujuiLinkBtn').href = `owner-setujui.html?id=${encodeURIComponent(id)}`;
-
-      function renderTimeline(laporan) {
-        const status = (laporan.status || 'MENUNGGU').toUpperCase();
-        const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.99969 3L4.50024 8.4996L2.00049 5.99978" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        const closeSvg = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3L9 9" stroke="#B91C1C" stroke-width="1.6" stroke-linecap="round"/></svg>';
-
-        let steps = [];
-        if (status === 'DITOLAK') {
-          steps = [
-            { state: 'done', label: 'Laporan diterima', time: SarprasApp.formatDateTimeIndo(laporan.tanggal_lapor), bold: false },
-            { state: 'rejected', label: 'Laporan ditolak pengelola', time: SarprasApp.formatDateTimeIndo(laporan.tanggal_diproses || laporan.tanggal_lapor), bold: true }
-          ];
-        } else {
-          const isDiprosesOrSelesai = status === 'DIPROSES' || status === 'SELESAI';
-          const isSelesai = status === 'SELESAI';
-          steps = [
-            { state: 'done', label: 'Laporan diterima', time: SarprasApp.formatDateTimeIndo(laporan.tanggal_lapor), bold: status === 'MENUNGGU' },
-            { state: isDiprosesOrSelesai ? 'done' : 'active', label: 'Diverifikasi pengelola', time: isDiprosesOrSelesai ? SarprasApp.formatDateTimeIndo(laporan.tanggal_diproses || laporan.tanggal_lapor) : 'Menunggu verifikasi', bold: status === 'MENUNGGU' },
-            { state: isSelesai ? 'done' : (status === 'DIPROSES' ? 'active' : 'pending'), label: 'Sedang diperbaiki', time: laporan.tanggal_diproses ? SarprasApp.formatDateTimeIndo(laporan.tanggal_diproses) : 'Menunggu teknisi', bold: status === 'DIPROSES' },
-            { state: isSelesai ? 'done' : 'pending', label: 'Perbaikan selesai', time: laporan.tanggal_selesai ? SarprasApp.formatDateTimeIndo(laporan.tanggal_selesai) : 'Menunggu perbaikan', bold: isSelesai }
-          ];
-        }
-
-        document.getElementById('timelineContainer').innerHTML = steps.map((step, index) => {
-          const isLast = index === steps.length - 1;
-          let dotContent = '';
-          if (step.state === 'done') dotContent = checkSvg;
-          if (step.state === 'rejected') dotContent = closeSvg;
-          const labelClass = step.state === 'pending' ? 'timeline-label muted' : (step.bold ? 'timeline-label bold' : 'timeline-label');
-          return `
-            <div class="timeline-item">
-              <div class="timeline-rail">
-                <div class="timeline-dot ${step.state}">${dotContent}</div>
-                ${isLast ? '' : '<div class="timeline-line"></div>'}
-              </div>
-              <div class="timeline-content" style="${isLast ? 'padding-bottom:0;' : ''}">
-                <span class="${labelClass}">${SarprasApp.escapeHtml(step.label)}</span>
-                <span class="timeline-time">${SarprasApp.escapeHtml(step.time)}</span>
-              </div>
-            </div>
+      function renderActionBar(statusUpper) {
+        if (statusUpper === 'MENUNGGU') {
+          actionBar.className = 'owner-bottom-action-bar';
+          actionBar.innerHTML = `
+            <a href="owner-tolak.html?id=${encodeURIComponent(id)}" class="btn btn-danger-outline">Tolak</a>
+            <a href="owner-proses.html?id=${encodeURIComponent(id)}&mode=proses" class="btn btn-primary">Setujui / Proses</a>
           `;
-        }).join('');
+          actionBar.style.display = 'grid';
+          detailContent.classList.add('has-bottom-action');
+        } else if (statusUpper === 'DIPROSES') {
+          actionBar.className = 'owner-bottom-action-bar single';
+          actionBar.innerHTML = `
+            <a href="owner-proses.html?id=${encodeURIComponent(id)}&mode=selesai" class="btn btn-primary">Selesaikan &amp; Upload Bukti</a>
+          `;
+          actionBar.style.display = 'grid';
+          detailContent.classList.add('has-bottom-action');
+        } else {
+          actionBar.style.display = 'none';
+          detailContent.classList.remove('has-bottom-action');
+        }
       }
 
       function renderDetail(laporan) {
-        document.getElementById('detailKodeSub').textContent = laporan.kode_laporan;
-        document.getElementById('detailMeta').textContent = `${laporan.kategori_fasilitas} • ${SarprasApp.formatDateIndo(laporan.tanggal_lapor)}`;
-        document.getElementById('detailTitle').textContent = SarprasApp.deriveTitle(laporan);
-        document.getElementById('detailDesc').textContent = laporan.deskripsi || '-';
-        document.getElementById('detailLokasi').textContent = laporan.lokasi_kamar || '-';
+        document.getElementById('detailKodeSub').textContent = laporan.kode_tiket;
+        document.getElementById('detailMeta').textContent = `${laporan.nama_kategori} • ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
+        document.getElementById('detailTitle').textContent = laporan.judul_laporan;
+        document.getElementById('detailDesc').textContent = laporan.deskripsi_kerusakan || '-';
+        document.getElementById('detailLokasi').textContent =
+          `Kamar ${laporan.nomor_kamar} (${laporan.tipe_kamar} • Lantai ${laporan.lantai})`;
 
-        const meta = SarprasApp.getStatusMeta(laporan.status);
+        const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('detailStatusBadge');
         badge.className = `status-badge ${meta.className}`;
         badge.innerHTML = `<span class="status-dot"></span><span>${SarprasApp.escapeHtml(meta.label)}</span>`;
 
-        const namaPenghuni = laporan.nama_penghuni || 'Penghuni Kost';
-        const initial = namaPenghuni.trim().charAt(0).toUpperCase() || 'P';
-        document.getElementById('residentAvatar').textContent = initial;
-        document.getElementById('detailPenghuniNama').textContent = `Pelapor: ${namaPenghuni} • Penghuni`;
-        document.getElementById('detailPenghuniKamar').textContent = laporan.nomor_kamar_penghuni
-          ? `Kamar ${laporan.nomor_kamar_penghuni}`
-          : 'Penghuni Kost Cendana';
+        const namaPelapor = laporan.nama_pelapor || 'Penghuni Kost';
+        document.getElementById('residentAvatar').textContent = namaPelapor.trim().charAt(0).toUpperCase() || 'P';
+        document.getElementById('detailPenghuniNama').textContent = namaPelapor;
+        document.getElementById('detailPenghuniMeta').textContent =
+          `Kamar ${laporan.nomor_kamar} • ${laporan.no_hp_pelapor || 'No. HP belum diisi'}`;
+
+        const kMeta = SarprasApp.getKondisiMeta(laporan.kondisi_fasilitas);
+        document.getElementById('assetDetailCard').innerHTML = `
+          <div class="kv-row">
+            <span class="kv-label">Aset Fasilitas</span>
+            <span class="kv-value">${SarprasApp.escapeHtml(laporan.nama_fasilitas)}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Kode Aset &amp; Merk</span>
+            <span class="kv-value">${SarprasApp.escapeHtml(laporan.kode_aset)} &bull; ${SarprasApp.escapeHtml(laporan.merk_tipe || '-')}</span>
+          </div>
+          <div class="kv-row">
+            <span class="kv-label">Kondisi Aset Saat Ini</span>
+            <span class="status-badge ${kMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(kMeta.label)}</span>
+          </div>
+          ${laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0 ? `
+            <div class="kv-row">
+              <span class="kv-label">Biaya Perbaikan</span>
+              <span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span>
+            </div>
+          ` : ''}
+        `;
 
         const photoBox = document.getElementById('detailPhotoBox');
         const photoImg = document.getElementById('detailPhotoImg');
@@ -193,65 +195,37 @@
           };
         }
 
-        const statusUpper = (laporan.status || 'MENUNGGU').toUpperCase();
+        const afterCard = document.getElementById('afterPhotoCard');
+        const afterImg = document.getElementById('afterPhotoImg');
+        if (laporan.foto_sesudah_url) {
+          afterImg.src = laporan.foto_sesudah_url;
+          afterCard.style.display = 'flex';
+        } else {
+          afterCard.style.display = 'none';
+        }
+
+        const statusUpper = (laporan.status_tiket || 'MENUNGGU').toUpperCase();
         const statusBanner = document.getElementById('detailStatusBanner');
         const statusInfo = document.getElementById('detailStatusInfo');
-        const assignCard = document.getElementById('detailAssignmentCard');
 
         if (statusUpper === 'DITOLAK') {
           statusBanner.className = 'info-banner danger';
-          statusInfo.textContent = laporan.catatan_penanganan || 'Laporan telah ditolak oleh pengelola kost.';
-          assignCard.style.display = 'flex';
-          assignCard.innerHTML = `
-            <div class="kv-row">
-              <span class="kv-label">Kategori Penolakan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.kategori_penolakan || '-')}</span>
-            </div>
-            <div class="kv-row">
-              <span class="kv-label">Alasan Penolakan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(laporan.alasan_penolakan || laporan.catatan_penanganan || '-')}</span>
-            </div>
-          `;
-        } else if (statusUpper === 'DIPROSES' || statusUpper === 'SELESAI') {
+          statusInfo.textContent = laporan.catatan_terakhir || 'Laporan telah ditolak oleh pengelola kost.';
+        } else if (statusUpper === 'SELESAI') {
           statusBanner.className = 'info-banner';
-          statusInfo.textContent = laporan.catatan_penanganan || 'Laporan sedang ditangani oleh teknisi kost.';
-          if (laporan.nama_mekanik || laporan.prioritas || laporan.catatan_owner) {
-            assignCard.style.display = 'flex';
-            assignCard.innerHTML = `
-              <div class="kv-row">
-                <span class="kv-label">Teknisi Ditugaskan</span>
-                <span class="kv-value">${SarprasApp.escapeHtml(laporan.nama_mekanik || '-')}</span>
-              </div>
-              <div class="kv-row">
-                <span class="kv-label">Prioritas</span>
-                <span class="kv-value">${SarprasApp.escapeHtml(laporan.prioritas || '-')}</span>
-              </div>
-              ${laporan.catatan_owner ? `
-                <div class="kv-row">
-                  <span class="kv-label">Catatan Pengelola</span>
-                  <span class="kv-value">${SarprasApp.escapeHtml(laporan.catatan_owner)}</span>
-                </div>
-              ` : ''}
-              ${laporan.catatan_mekanik ? `
-                <div class="kv-row">
-                  <span class="kv-label">Catatan Teknisi</span>
-                  <span class="kv-value">${SarprasApp.escapeHtml(laporan.catatan_mekanik)}</span>
-                </div>
-              ` : ''}
-              ${laporan.foto_selesai_url ? `
-                <div class="photo-box has-image" style="height:140px;margin-top:6px;">
-                  <img class="photo-img" src="${SarprasApp.escapeHtml(laporan.foto_selesai_url)}" alt="Foto bukti penyelesaian teknisi" />
-                </div>
-              ` : ''}
-            `;
-          }
+          statusInfo.textContent = laporan.catatan_terakhir || 'Perbaikan telah selesai ditangani.';
+        } else if (statusUpper === 'DIPROSES') {
+          statusBanner.className = 'info-banner';
+          statusInfo.textContent = laporan.catatan_terakhir || 'Sedang dalam penanganan. Tekan tombol di bawah saat perbaikan selesai.';
         } else {
           statusBanner.className = 'info-banner';
-          statusInfo.textContent = 'Laporan baru masuk. Silakan setujui untuk menugaskan mekanik atau tolak dengan alasan yang jelas.';
-          assignCard.style.display = 'none';
+          statusInfo.textContent = 'Laporan baru masuk. Setujui untuk memproses perbaikan atau tolak dengan alasan jelas.';
         }
 
-        renderTimeline(laporan);
+        document.getElementById('timelineContainer').innerHTML =
+          SarprasApp.renderRiwayatTimeline(laporan.riwayat);
+
+        renderActionBar(statusUpper);
       }
 
       try {

@@ -889,6 +889,97 @@ select.input-control {
   grid-template-columns: repeat(3, 1fr);
 }
 
+.filter-tabs.five-cols {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-tabs.five-cols::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-tabs.five-cols .filter-tab {
+  flex: 0 0 auto;
+  padding: 0 12px;
+}
+
+.segment-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  background: var(--surface-muted);
+  border-radius: var(--radius-md);
+}
+
+.segment-tab {
+  height: 36px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segment-tab.active {
+  background: var(--white);
+  color: var(--navy);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.bell-btn-wrap {
+  position: relative;
+}
+
+.notif-count-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #DC2626;
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--white);
+}
+
+.notif-count-badge.visible {
+  display: inline-flex;
+}
+
+.notif-card {
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.notif-card.unread {
+  background: var(--blue-soft);
+  border-color: #BFDBFE;
+}
+
+.notif-card:hover {
+  border-color: #93C5FD;
+}
+
 .filter-tab {
   height: 36px;
   border-radius: var(--radius-tab);
@@ -1143,12 +1234,42 @@ select.input-control {
 
 .timeline-content {
   flex: 1;
-  padding-top: 2px;
+  padding-top: 1px;
   padding-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.timeline-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.timeline-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.timeline-cost-pill {
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-weight: 600;
 }
 
 .timeline-label {
@@ -1613,8 +1734,7 @@ select.input-control {
   padding-bottom: 104px;
 }
 
-.owner-bottom-action-bar,
-.mekanik-bottom-action-bar {
+.owner-bottom-action-bar {
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -1630,8 +1750,19 @@ select.input-control {
   gap: 10px;
 }
 
-.mekanik-bottom-action-bar {
+.owner-bottom-action-bar.single {
   grid-template-columns: 1fr;
+}
+
+.asset-preview-box {
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
 }
 
 .confirm-ring-danger {
