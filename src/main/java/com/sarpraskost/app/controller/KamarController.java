@@ -32,7 +32,7 @@ public class KamarController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<KamarResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<KamarResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(kamarService.getById(id));
     }
 
@@ -43,14 +43,14 @@ public class KamarController {
 
     @PutMapping("/{id}")
     public ResponseEntity<KamarResponse> update(
-        @PathVariable Long id,
+        @PathVariable Integer id,
         @RequestBody KamarRequest request
     ) {
         return ResponseEntity.ok(kamarService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
         kamarService.delete(id);
         return ResponseEntity.ok(Map.of("message", "Kamar berhasil dihapus."));
     }

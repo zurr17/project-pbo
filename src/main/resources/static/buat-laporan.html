@@ -14,27 +14,33 @@
       </a>
       <div class="app-bar-titles">
         <h1 class="app-bar-title">Buat laporan</h1>
-        <p id="roomSubtitle" class="app-bar-subtitle">Laporkan kerusakan aset fasilitas kamar</p>
+        <p id="roomSubtitle" class="app-bar-subtitle">Laporkan kerusakan fasilitas kamar atau umum</p>
       </div>
     </header>
 
     <section class="page-body">
       <div class="info-banner">
         <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span>Pilih fasilitas di kamar Anda yang bermasalah. Laporan akan langsung diteruskan ke Owner kost.</span>
+        <span>Anda dapat melaporkan fasilitas di kamar Anda maupun <strong>Fasilitas Umum / Bersama</strong>. Laporan diteruskan langsung ke Pengelola kost.</span>
       </div>
 
       <form id="laporanForm" class="form-stack" enctype="multipart/form-data" novalidate>
         <div id="formError" class="error-banner" role="alert"></div>
 
         <div class="form-group">
-          <label class="form-label" for="fasilitasSelect">Fasilitas kamar yang rusak</label>
+          <label class="form-label" for="fasilitasSelect">Fasilitas yang rusak</label>
           <div class="input-wrap">
             <select id="fasilitasSelect" name="id_fasilitas" class="input-control" required>
-              <option value="">Memuat fasilitas kamar...</option>
+              <option value="">Memuat daftar fasilitas...</option>
             </select>
           </div>
           <div id="assetPreview" class="asset-preview-box" style="display:none;"></div>
+        </div>
+
+        <div id="umumExistingWarning" class="warning-banner" role="alert">
+          <div style="font-weight:700;color:#92400E;">Laporan Fasilitas Umum Sudah Aktif</div>
+          <div id="umumExistingDetail">-</div>
+          <button type="button" id="umumTerdampakBtn" class="btn btn-primary btn-sm">Saya Terdampak (+1)</button>
         </div>
 
         <div class="form-group">
@@ -45,7 +51,8 @@
               name="judul_laporan"
               type="text"
               class="input-control"
-              placeholder="Contoh: AC kamar tidak dingin / Keran bocor"
+              placeholder="Contoh: AC kamar tidak dingin / WiFi mati"
+              maxlength="100"
               required
             />
           </div>
@@ -61,6 +68,31 @@
               placeholder="Jelaskan kondisi kerusakan secara rinci..."
               required
             ></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="tingkatUrgensiSelect">Tingkat urgensi</label>
+          <div class="input-wrap">
+            <select id="tingkatUrgensiSelect" name="tingkat_urgensi" class="input-control">
+              <option value="RENDAH">Rendah (Tidak mendesak)</option>
+              <option value="SEDANG" selected>Sedang (Normal)</option>
+              <option value="TINGGI">Tinggi (Perlu segera ditangani)</option>
+              <option value="DARURAT">Darurat (Bocor deras / Korsleting / Darurat)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="urgentBoxCard" class="toggle-box-card">
+          <label class="checkbox-label-row" for="isUrgentCheckbox">
+            <input id="isUrgentCheckbox" name="is_urgent" type="checkbox" />
+            <span>Tandai sebagai Laporan Darurat (Prioritas Merah)</span>
+          </label>
+          <div id="izinMasukGroup" style="display:none;padding-top:8px;border-top:1px solid #FECACA;">
+            <label class="checkbox-label-row" for="izinMasukCheckbox" style="font-weight:500;color:#7F1D1D;">
+              <input id="izinMasukCheckbox" name="izin_masuk_kamar" type="checkbox" />
+              <span>Saya menyetujui <strong>izin masuk kamar</strong> kepada pengelola kost untuk penanganan darurat jika saya sedang tidak di kamar.</span>
+            </label>
           </div>
         </div>
 
@@ -98,7 +130,7 @@
             <svg width="19" height="19" viewBox="0 0 19 19" fill="none"><path d="M17.3019 1.69987L8.64033 10.3596M11.5078 17.167C11.72 17.69 12.11 17.38 12.2496 17.148L17.3959 2.10685C17.51 1.78 17.22 1.49 16.8932 1.60416L1.85022 6.74982C1.53 6.86 1.51 7.36 1.83121 7.49158L8.10966 10.009C8.5 10.17 8.83 10.5 8.99007 10.8877L11.5078 17.167Z" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
             <span>Kirim Laporan</span>
           </button>
-          <div style="text-align:center;font-size:11px;color:#64748B;">Laporan Anda akan diverifikasi dan ditangani oleh Owner kost.</div>
+          <div style="text-align:center;font-size:11px;color:#64748B;">Laporan Anda akan diverifikasi dan ditangani oleh Pengelola kost.</div>
         </div>
       </form>
     </section>
@@ -115,8 +147,16 @@
 
       const fasilitasSelect = document.getElementById('fasilitasSelect');
       const assetPreview = document.getElementById('assetPreview');
+      const umumExistingWarning = document.getElementById('umumExistingWarning');
+      const umumExistingDetail = document.getElementById('umumExistingDetail');
+      const umumTerdampakBtn = document.getElementById('umumTerdampakBtn');
       const judulInput = document.getElementById('judulInput');
       const deskripsiInput = document.getElementById('deskripsiInput');
+      const tingkatUrgensiSelect = document.getElementById('tingkatUrgensiSelect');
+      const urgentBoxCard = document.getElementById('urgentBoxCard');
+      const isUrgentCheckbox = document.getElementById('isUrgentCheckbox');
+      const izinMasukGroup = document.getElementById('izinMasukGroup');
+      const izinMasukCheckbox = document.getElementById('izinMasukCheckbox');
       const fotoInput = document.getElementById('fotoInput');
       const tambahFotoBtn = document.getElementById('tambahFotoBtn');
       const tambahFotoLabel = document.getElementById('tambahFotoLabel');
@@ -131,10 +171,13 @@
       const laporanForm = document.getElementById('laporanForm');
 
       if (user.nomor_kamar) {
-        document.getElementById('roomSubtitle').textContent = `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''}`;
+        document.getElementById('roomSubtitle').textContent = `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} & Fasilitas Umum`;
       }
 
       let fasilitasList = [];
+      let activeUmumList = [];
+      let currentMatchedUmum = null;
+      let duplicateBlocked = false;
 
       function showError(msg) {
         formError.textContent = msg;
@@ -147,16 +190,58 @@
         formError.classList.remove('visible');
       }
 
+      function syncUrgentControls() {
+        const selectedId = Number(fasilitasSelect.value);
+        const item = fasilitasList.find((f) => f.id_fasilitas === selectedId);
+        const isUmum = item ? Boolean(item.is_umum) : false;
+        const urgent = isUrgentCheckbox.checked;
+
+        urgentBoxCard.classList.toggle('urgent-active', urgent);
+        if (urgent && !isUmum) {
+          izinMasukGroup.style.display = 'block';
+        } else {
+          izinMasukGroup.style.display = 'none';
+          if (isUmum) izinMasukCheckbox.checked = false;
+        }
+      }
+
+      tingkatUrgensiSelect.addEventListener('change', () => {
+        if (tingkatUrgensiSelect.value === 'DARURAT') {
+          isUrgentCheckbox.checked = true;
+        }
+        syncUrgentControls();
+      });
+
+      isUrgentCheckbox.addEventListener('change', () => {
+        if (isUrgentCheckbox.checked) {
+          tingkatUrgensiSelect.value = 'DARURAT';
+        } else if (tingkatUrgensiSelect.value === 'DARURAT') {
+          tingkatUrgensiSelect.value = 'TINGGI';
+        }
+        syncUrgentControls();
+      });
+
       function updateAssetPreview() {
+        hideError();
         const selectedId = Number(fasilitasSelect.value);
         const item = fasilitasList.find((f) => f.id_fasilitas === selectedId);
         if (!item) {
           assetPreview.style.display = 'none';
+          umumExistingWarning.classList.remove('visible');
+          currentMatchedUmum = null;
+          duplicateBlocked = false;
+          submitBtn.disabled = false;
+          syncUrgentControls();
           return;
         }
+
         const meta = SarprasApp.getKondisiMeta(item.kondisi);
         assetPreview.style.display = 'flex';
         assetPreview.innerHTML = `
+          <div class="kv-row">
+            <span class="kv-label">Lokasi Aset</span>
+            <span class="kv-value">${item.is_umum ? 'Fasilitas Umum / Bersama' : 'Kamar ' + SarprasApp.escapeHtml(item.nomor_kamar)}</span>
+          </div>
           <div class="kv-row">
             <span class="kv-label">Kode Aset</span>
             <span class="kv-value">${SarprasApp.escapeHtml(item.kode_aset)}</span>
@@ -170,17 +255,82 @@
             <span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>
           </div>
         `;
+
+        currentMatchedUmum = item.is_umum
+          ? activeUmumList.find((u) => Number(u.id_fasilitas) === Number(item.id_fasilitas)) || null
+          : null;
+
+        if (currentMatchedUmum) {
+          duplicateBlocked = true;
+          submitBtn.disabled = true;
+          const voted = sessionStorage.getItem(`sarpraskost_terdampak_${user.id_pengguna}_${currentMatchedUmum.id_laporan}`) === '1';
+          umumExistingDetail.innerHTML = `
+            Tiket <strong>${SarprasApp.escapeHtml(currentMatchedUmum.kode_tiket)}</strong>
+            ("<em>${SarprasApp.escapeHtml(currentMatchedUmum.judul_laporan)}</em>") sedang berstatus
+            <strong>${SarprasApp.escapeHtml(SarprasApp.getStatusMeta(currentMatchedUmum.status_tiket).label)}</strong>
+            dengan <strong>${Number(currentMatchedUmum.jumlah_terdampak || 1)} penghuni terdampak</strong>.
+            Agar tidak membuat tiket duplikat, silakan tekan tombol <strong>Saya Terdampak (+1)</strong> di bawah.
+          `;
+          umumTerdampakBtn.disabled = voted;
+          umumTerdampakBtn.textContent = voted ? 'Sudah Ditandai Terdampak' : 'Saya Terdampak (+1)';
+          umumExistingWarning.classList.add('visible');
+        } else {
+          duplicateBlocked = false;
+          submitBtn.disabled = false;
+          umumExistingWarning.classList.remove('visible');
+        }
+
+        syncUrgentControls();
       }
 
+      umumTerdampakBtn.addEventListener('click', async () => {
+        if (!currentMatchedUmum || umumTerdampakBtn.disabled) return;
+        umumTerdampakBtn.disabled = true;
+        umumTerdampakBtn.textContent = 'Mencatat...';
+        try {
+          const updated = await SarprasApp.tambahTerdampak(currentMatchedUmum.id_laporan);
+          currentMatchedUmum.jumlah_terdampak = updated.jumlah_terdampak;
+          sessionStorage.setItem(`sarpraskost_terdampak_${user.id_pengguna}_${currentMatchedUmum.id_laporan}`, '1');
+          umumTerdampakBtn.textContent = 'Sudah Ditandai Terdampak';
+          updateAssetPreview();
+        } catch (err) {
+          umumTerdampakBtn.disabled = false;
+          umumTerdampakBtn.textContent = 'Saya Terdampak (+1)';
+          showError(err.message || 'Gagal mencatat status terdampak.');
+        }
+      });
+
       try {
-        fasilitasList = await SarprasApp.fetchFasilitasByPenghuni(user.id_pengguna);
-        if (!fasilitasList || fasilitasList.length === 0) {
-          fasilitasSelect.innerHTML = '<option value="">Belum ada fasilitas terdaftar di kamar Anda</option>';
+        const [fasilitasRes, umumRes] = await Promise.all([
+          SarprasApp.fetchFasilitasByPenghuni(user.id_pengguna),
+          SarprasApp.fetchActiveFasilitasUmum().catch(() => [])
+        ]);
+        fasilitasList = fasilitasRes || [];
+        activeUmumList = umumRes || [];
+
+        if (fasilitasList.length === 0) {
+          fasilitasSelect.innerHTML = '<option value="">Belum ada fasilitas terdaftar</option>';
           submitBtn.disabled = true;
-          showError('Kamar Anda belum memiliki data fasilitas. Hubungi Owner kost untuk menambahkan fasilitas kamar terlebih dahulu.');
+          showError('Belum ada data fasilitas kamar maupun umum. Hubungi Pengelola kost.');
         } else {
-          fasilitasSelect.innerHTML = '<option value="">-- Pilih fasilitas kamar --</option>' +
-            fasilitasList.map((f) => `<option value="${SarprasApp.escapeHtml(f.id_fasilitas)}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}</option>`).join('');
+          const roomAssets = fasilitasList.filter((f) => !f.is_umum);
+          const sharedAssets = fasilitasList.filter((f) => f.is_umum);
+          let optionsHtml = '<option value="">-- Pilih fasilitas yang rusak --</option>';
+          if (roomAssets.length > 0) {
+            optionsHtml += `<optgroup label="Fasilitas Kamar ${SarprasApp.escapeHtml(user.nomor_kamar || '')}">` +
+              roomAssets.map((f) => `<option value="${f.id_fasilitas}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}</option>`).join('') +
+              '</optgroup>';
+          }
+          if (sharedAssets.length > 0) {
+            optionsHtml += '<optgroup label="Fasilitas Umum / Bersama">' +
+              sharedAssets.map((f) => {
+                const active = activeUmumList.find((u) => Number(u.id_fasilitas) === Number(f.id_fasilitas));
+                const tag = active ? ` [Sudah Dilaporkan: ${active.jumlah_terdampak} terdampak]` : '';
+                return `<option value="${f.id_fasilitas}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}${SarprasApp.escapeHtml(tag)}</option>`;
+              }).join('') +
+              '</optgroup>';
+          }
+          fasilitasSelect.innerHTML = optionsHtml;
           if (preselectedFasilitasId) {
             fasilitasSelect.value = preselectedFasilitasId;
           }
@@ -189,7 +339,7 @@
       } catch (err) {
         fasilitasSelect.innerHTML = '<option value="">Gagal memuat fasilitas</option>';
         submitBtn.disabled = true;
-        showError(err.message || 'Gagal memuat daftar fasilitas kamar.');
+        showError(err.message || 'Gagal memuat daftar fasilitas.');
       }
 
       fasilitasSelect.addEventListener('change', updateAssetPreview);
@@ -240,12 +390,25 @@
         e.preventDefault();
         hideError();
 
+        if (duplicateBlocked) {
+          showError('Laporan aktif untuk fasilitas umum ini sudah tersedia. Gunakan tombol Saya Terdampak (+1).');
+          return;
+        }
+
         const idFasilitas = fasilitasSelect.value;
         const judulLaporan = judulInput.value.trim();
         const deskripsiKerusakan = deskripsiInput.value.trim();
+        const selectedAsset = fasilitasList.find((f) => String(f.id_fasilitas) === String(idFasilitas));
+        const isUmum = selectedAsset ? Boolean(selectedAsset.is_umum) : false;
+        const isUrgent = isUrgentCheckbox.checked;
+        const izinMasuk = izinMasukCheckbox.checked;
 
         if (!idFasilitas || !judulLaporan || !deskripsiKerusakan) {
-          showError('Fasilitas kamar, judul laporan, dan deskripsi kerusakan wajib diisi.');
+          showError('Fasilitas yang rusak, judul laporan, dan deskripsi kerusakan wajib diisi.');
+          return;
+        }
+        if (!isUmum && isUrgent && !izinMasuk) {
+          showError('Untuk laporan darurat di kamar pribadi, Anda wajib mencentang persetujuan izin masuk kamar.');
           return;
         }
 
@@ -254,6 +417,9 @@
         formData.append('id_fasilitas', idFasilitas);
         formData.append('judul_laporan', judulLaporan);
         formData.append('deskripsi_kerusakan', deskripsiKerusakan);
+        formData.append('tingkat_urgensi', tingkatUrgensiSelect.value);
+        formData.append('is_urgent', String(isUrgent));
+        formData.append('izin_masuk_kamar', String(izinMasuk));
         if (fotoInput.files && fotoInput.files[0]) {
           formData.append('foto', fotoInput.files[0]);
         }

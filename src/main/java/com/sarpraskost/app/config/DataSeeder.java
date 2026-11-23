@@ -1,5 +1,14 @@
 package com.sarpraskost.app.config;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sarpraskost.app.entity.FasilitasKamar;
 import com.sarpraskost.app.entity.Kamar;
 import com.sarpraskost.app.entity.KategoriFasilitas;
@@ -11,6 +20,7 @@ import com.sarpraskost.app.entity.RiwayatPenanganan;
 import com.sarpraskost.app.entity.Role;
 import com.sarpraskost.app.entity.StatusHunian;
 import com.sarpraskost.app.entity.StatusTiket;
+import com.sarpraskost.app.entity.TingkatUrgensi;
 import com.sarpraskost.app.repository.FasilitasKamarRepository;
 import com.sarpraskost.app.repository.KamarRepository;
 import com.sarpraskost.app.repository.KategoriFasilitasRepository;
@@ -18,15 +28,7 @@ import com.sarpraskost.app.repository.LaporanKerusakanRepository;
 import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
-import com.sarpraskost.app.service.LaporanService;
 import com.sarpraskost.app.util.PasswordHasher;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -38,7 +40,6 @@ public class DataSeeder implements CommandLineRunner {
     private final LaporanKerusakanRepository laporanRepository;
     private final RiwayatPenangananRepository riwayatRepository;
     private final NotifikasiRepository notifikasiRepository;
-    private final LaporanService laporanService;
 
     public DataSeeder(
         KamarRepository kamarRepository,
@@ -47,8 +48,7 @@ public class DataSeeder implements CommandLineRunner {
         FasilitasKamarRepository fasilitasRepository,
         LaporanKerusakanRepository laporanRepository,
         RiwayatPenangananRepository riwayatRepository,
-        NotifikasiRepository notifikasiRepository,
-        LaporanService laporanService
+        NotifikasiRepository notifikasiRepository
     ) {
         this.kamarRepository = kamarRepository;
         this.penggunaRepository = penggunaRepository;
@@ -57,223 +57,270 @@ public class DataSeeder implements CommandLineRunner {
         this.laporanRepository = laporanRepository;
         this.riwayatRepository = riwayatRepository;
         this.notifikasiRepository = notifikasiRepository;
-        this.laporanService = laporanService;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
-        Kamar kamarA01 = kamarRepository.findByNomorKamarIgnoreCase("A-01")
+        if (kamarRepository.count() == 0 && penggunaRepository.count() == 0) {
+            seedBaseSqlEquivalentData();
+        } else {
+            upgradeLegacyPlaceholderPasswords();
+        }
+
+        ensureFasilitasUmumAssets();
+        syncUrgentFlagsFromTingkatUrgensi();
+    }
+
+    private void upgradeLegacyPlaceholderPasswords() {
+        for (Pengguna user : penggunaRepository.findAll()) {
+            String stored = user.getPasswordHash();
+            if (stored == null || !stored.contains(":")) {
+                user.setPasswordHash(PasswordHasher.hash("123"));
+                penggunaRepository.save(user);
+            }
+        }
+    }
+
+    private void ensureFasilitasUmumAssets() {
+        Kamar kamarUmum = kamarRepository.findByNomorKamarIgnoreCase("UMUM")
             .orElseGet(() -> kamarRepository.save(new Kamar(
-                "A-01",
-                "VIP",
-                1,
+                "UMUM",
+                "Fasilitas Umum",
+                (short) 1,
                 StatusHunian.TERISI
             )));
-
-        kamarRepository.findByNomorKamarIgnoreCase("B-02")
-            .orElseGet(() -> kamarRepository.save(new Kamar(
-                "B-02",
-                "Reguler",
-                2,
-                StatusHunian.KOSONG
-            )));
-
-        Pengguna penghuni = penggunaRepository.findByEmailIgnoreCase("penghuni@kost.com")
-            .orElseGet(() -> penggunaRepository.save(new Pengguna(
-                kamarA01,
-                "Akbar",
-                "penghuni@kost.com",
-                PasswordHasher.hash("123"),
-                "081234567890",
-                Role.PENGHUNI
-            )));
-        if (!"Akbar".equals(penghuni.getNamaLengkap())) {
-            penghuni.setNamaLengkap("Akbar");
-            penghuni = penggunaRepository.save(penghuni);
-        }
-
-        Pengguna owner = penggunaRepository.findByEmailIgnoreCase("owner@kost.com")
-            .orElseGet(() -> penggunaRepository.save(new Pengguna(
-                null,
-                "Pak Soleh",
-                "owner@kost.com",
-                PasswordHasher.hash("123"),
-                "081198765432",
-                Role.OWNER
-            )));
-        if (!"Pak Soleh".equals(owner.getNamaLengkap())) {
-            owner.setNamaLengkap("Pak Soleh");
-            owner = penggunaRepository.save(owner);
-        }
 
         KategoriFasilitas katElektronik = kategoriRepository.findByNamaKategoriIgnoreCase("Elektronik")
             .orElseGet(() -> kategoriRepository.save(new KategoriFasilitas(
                 "Elektronik",
-                "Perangkat elektronik kamar seperti AC, lampu, TV, dan stopkontak."
+                "Perangkat pendingin udara, pemanas air, dan elektronik kamar"
             )));
 
         KategoriFasilitas katSanitasi = kategoriRepository.findByNamaKategoriIgnoreCase("Sanitasi & Air")
             .orElseGet(() -> kategoriRepository.save(new KategoriFasilitas(
                 "Sanitasi & Air",
-                "Perlengkapan kamar mandi, keran air, shower, wastafel, dan saluran air."
+                "Keran, shower, wastafel, kloset, dan pipa saluran air"
             )));
 
-        KategoriFasilitas katFurnitur = kategoriRepository.findByNamaKategoriIgnoreCase("Furnitur")
-            .orElseGet(() -> kategoriRepository.save(new KategoriFasilitas(
-                "Furnitur",
-                "Perabotan kamar seperti lemari pakaian, tempat tidur, meja belajar, dan kursi."
+        FasilitasKamar routerWifi = fasilitasRepository.findByKodeAsetIgnoreCase("UMM-001")
+            .orElseGet(() -> fasilitasRepository.save(new FasilitasKamar(
+                kamarUmum,
+                katElektronik,
+                "UMM-001",
+                "Router WiFi Lantai 1",
+                "TP-Link Omada EAP225",
+                KondisiFasilitas.RUSAK_RINGAN,
+                LocalDate.of(2025, 6, 15)
             )));
 
-        if (fasilitasRepository.countByKamarIdKamar(kamarA01.getIdKamar()) == 0) {
-            seedFasilitasKamarA01(kamarA01, katElektronik, katSanitasi, katFurnitur);
+        if (!fasilitasRepository.existsByKodeAsetIgnoreCase("UMM-002")) {
+            fasilitasRepository.save(new FasilitasKamar(
+                kamarUmum,
+                katSanitasi,
+                "UMM-002",
+                "Mesin Air / Pompa Utama",
+                "Shimizu PS-230 BIT",
+                KondisiFasilitas.BAIK,
+                LocalDate.of(2025, 6, 15)
+            ));
         }
 
-        if (laporanRepository.count() == 0) {
-            seedSampleLaporan(kamarA01, penghuni, owner);
-        } else {
-            for (Notifikasi notif : notifikasiRepository.findAll()) {
-                String updatedMsg = notif.getPesanNotif()
-                    .replace("Andi Pratama", "Akbar")
-                    .replace("Bu Ratna", "Pak Soleh");
-                if (!updatedMsg.equals(notif.getPesanNotif())) {
-                    notif.setPesanNotif(updatedMsg);
-                    notifikasiRepository.save(notif);
-                }
+        if (laporanRepository.countByFasilitasIdFasilitas(routerWifi.getIdFasilitas()) == 0) {
+            seedSampleFasilitasUmumReport(routerWifi);
+        }
+    }
+
+    private void seedSampleFasilitasUmumReport(FasilitasKamar routerWifi) {
+        Pengguna pelapor = penggunaRepository.findByEmailIgnoreCase("raka@kost.id")
+            .or(() -> penggunaRepository.findFirstByRoleOrderByIdPenggunaAsc(Role.PENGHUNI))
+            .orElse(null);
+        Pengguna owner = penggunaRepository.findFirstByRoleOrderByIdPenggunaAsc(Role.OWNER).orElse(null);
+        if (pelapor == null || owner == null) {
+            return;
+        }
+        String kode = "TKT-20261106-01";
+        if (laporanRepository.findByKodeTiketIgnoreCase(kode).isPresent()) {
+            return;
+        }
+
+        LocalDateTime waktu = LocalDateTime.of(2026, 11, 6, 9, 15);
+        LaporanKerusakan lap = new LaporanKerusakan();
+        lap.setKodeTiket(kode);
+        lap.setJudulLaporan("WiFi Lantai 1 Sering Putus");
+        lap.setDeskripsiKerusakan("Koneksi WiFi area koridor lantai 1 putus-putus sejak pagi dan lampu indikator berkedip merah.");
+        lap.setFotoUrl("");
+        lap.setTingkatUrgensi(TingkatUrgensi.TINGGI);
+        lap.setStatusTiket(StatusTiket.MENUNGGU);
+        lap.setTglLapor(waktu);
+        lap.setPengguna(pelapor);
+        lap.setFasilitas(routerWifi);
+        lap.setJumlahTerdampak(2);
+        lap.setUrgent(false);
+        lap.setIzinMasukKamar(false);
+        lap = laporanRepository.save(lap);
+
+        RiwayatPenanganan riwayat = new RiwayatPenanganan();
+        riwayat.setLaporan(lap);
+        riwayat.setPengguna(pelapor);
+        riwayat.setStatusBaru(StatusTiket.MENUNGGU);
+        riwayat.setCatatanPenanganan("Laporan kerusakan fasilitas umum dikirim oleh penghuni.");
+        riwayat.setBiayaPerbaikan(BigDecimal.ZERO);
+        riwayat.setWaktuUpdate(waktu);
+        riwayatRepository.save(riwayat);
+
+        Notifikasi notifOwner = new Notifikasi();
+        notifOwner.setPengguna(owner);
+        notifOwner.setLaporan(lap);
+        notifOwner.setJudulNotif("Laporan Baru: WiFi Lantai 1 Sering Putus");
+        notifOwner.setPesanNotif("Penghuni melaporkan gangguan fasilitas bersama pada Router WiFi Lantai 1.");
+        notifOwner.setRead(false);
+        notifOwner.setWaktuKirim(waktu);
+        notifikasiRepository.save(notifOwner);
+    }
+
+    private void syncUrgentFlagsFromTingkatUrgensi() {
+        for (LaporanKerusakan laporan : laporanRepository.findAll()) {
+            if (laporan.getTingkatUrgensi() == TingkatUrgensi.DARURAT && !laporan.isUrgent()) {
+                laporan.setUrgent(true);
+                laporanRepository.save(laporan);
             }
         }
     }
 
-    private void seedFasilitasKamarA01(
-        Kamar kamarA01,
-        KategoriFasilitas katElektronik,
-        KategoriFasilitas katSanitasi,
-        KategoriFasilitas katFurnitur
-    ) {
-        LocalDate today = LocalDate.now();
-        fasilitasRepository.saveAll(List.of(
-            new FasilitasKamar(
-                kamarA01,
-                katElektronik,
-                "AST-A01-01",
-                "AC Samsung 1/2 PK",
-                "Samsung AR05BGHQASINSE",
-                KondisiFasilitas.PERLU_PERAWATAN,
-                today.minusMonths(8)
-            ),
-            new FasilitasKamar(
-                kamarA01,
-                katSanitasi,
-                "AST-A01-02",
-                "Keran Kamar Mandi",
-                "Onda Brass 1/2 Inch",
-                KondisiFasilitas.RUSAK,
-                today.minusMonths(14)
-            ),
-            new FasilitasKamar(
-                kamarA01,
-                katFurnitur,
-                "AST-A01-03",
-                "Lemari Pakaian",
-                "Olympic 2 Pintu Minimalis",
-                KondisiFasilitas.BAIK,
-                today.minusMonths(12)
-            )
+    private void seedBaseSqlEquivalentData() {
+        Kamar k1 = kamarRepository.save(new Kamar("A-101", "VIP AC", (short) 1, StatusHunian.TERISI));
+        Kamar k2 = kamarRepository.save(new Kamar("A-102", "Reguler", (short) 1, StatusHunian.TERISI));
+        Kamar k3 = kamarRepository.save(new Kamar("B-201", "VIP AC", (short) 2, StatusHunian.TERISI));
+        kamarRepository.save(new Kamar("B-202", "Reguler", (short) 2, StatusHunian.KOSONG));
+
+        Pengguna raka = penggunaRepository.save(new Pengguna(
+            k1, "Raka Pratama", "raka@kost.id", PasswordHasher.hash("123"), "0812-3456-7890", Role.PENGHUNI
         ));
-    }
+        Pengguna nadia = penggunaRepository.save(new Pengguna(
+            k2, "Nadia Putri", "nadia@kost.id", PasswordHasher.hash("123"), "0857-9876-5432", Role.PENGHUNI
+        ));
+        Pengguna dimas = penggunaRepository.save(new Pengguna(
+            k3, "Dimas Anggara", "dimas@kost.id", PasswordHasher.hash("123"), "0896-1122-3344", Role.PENGHUNI
+        ));
+        Pengguna budi = penggunaRepository.save(new Pengguna(
+            null, "Budi Santoso", "budi.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
+        ));
 
-    private void seedSampleLaporan(Kamar kamarA01, Pengguna penghuni, Pengguna owner) {
-        List<FasilitasKamar> fasilitasList = fasilitasRepository.findByKamarIdKamarOrderByIdFasilitasDesc(kamarA01.getIdKamar());
-        FasilitasKamar ac = fasilitasList.stream()
-            .filter(f -> f.getNamaFasilitas().contains("AC"))
-            .findFirst()
-            .orElse(fasilitasList.get(0));
-        FasilitasKamar keran = fasilitasList.stream()
-            .filter(f -> f.getNamaFasilitas().contains("Keran"))
-            .findFirst()
-            .orElse(fasilitasList.get(0));
+        KategoriFasilitas katElektronik = kategoriRepository.save(new KategoriFasilitas(
+            "Elektronik", "Perangkat pendingin udara, pemanas air, dan elektronik kamar"
+        ));
+        KategoriFasilitas katKelistrikan = kategoriRepository.save(new KategoriFasilitas(
+            "Kelistrikan", "Lampu, saklar, stop kontak, dan instalasi MCB"
+        ));
+        KategoriFasilitas katSanitasi = kategoriRepository.save(new KategoriFasilitas(
+            "Sanitasi & Air", "Keran, shower, wastafel, kloset, dan pipa saluran air"
+        ));
+        KategoriFasilitas katFurnitur = kategoriRepository.save(new KategoriFasilitas(
+            "Furnitur", "Kasur, lemari pakaian, meja belajar, dan kursi"
+        ));
 
-        LocalDate today = LocalDate.now();
-        LocalDateTime now = LocalDateTime.now();
+        FasilitasKamar f1 = fasilitasRepository.save(new FasilitasKamar(
+            k1, katElektronik, "AST-001", "AC Split 1 PK", "Daikin FTC25", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
+        ));
+        fasilitasRepository.save(new FasilitasKamar(
+            k1, katKelistrikan, "AST-002", "Lampu LED 18W", "Philips MyCare", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
+        ));
+        FasilitasKamar f3 = fasilitasRepository.save(new FasilitasKamar(
+            k2, katSanitasi, "AST-003", "Keran Wastafel", "Onda V688", KondisiFasilitas.DALAM_PERBAIKAN, LocalDate.of(2025, 7, 1)
+        ));
+        FasilitasKamar f4 = fasilitasRepository.save(new FasilitasKamar(
+            k3, katFurnitur, "AST-004", "Lemari Pakaian 2 Pintu", "Olympic", KondisiFasilitas.RUSAK_RINGAN, LocalDate.of(2025, 5, 20)
+        ));
 
-        // Laporan 1: MENUNGGU
-        LaporanKerusakan lap1 = new LaporanKerusakan();
-        lap1.setPengguna(penghuni);
-        lap1.setFasilitas(keran);
-        lap1.setKodeTiket(laporanService.generateNextKodeTiket(today));
-        lap1.setJudulLaporan("Keran kamar mandi bocor");
-        lap1.setDeskripsiKerusakan(
-            "Air terus menetes dari sambungan leher keran kamar mandi meskipun tuas sudah ditutup rapat sejak pagi."
-        );
-        lap1.setTglLapor(now.minusHours(3));
-        lap1.setStatusTiket(StatusTiket.MENUNGGU);
-        lap1 = laporanRepository.save(lap1);
+        LaporanKerusakan l1 = new LaporanKerusakan();
+        l1.setKodeTiket("TKT-20261101-01");
+        l1.setJudulLaporan("AC Tidak Dingin");
+        l1.setDeskripsiKerusakan("AC hanya keluar angin biasa dan unit indoor berisik.");
+        l1.setFotoUrl("/uploads/laporan/l001.jpg");
+        l1.setTingkatUrgensi(TingkatUrgensi.TINGGI);
+        l1.setStatusTiket(StatusTiket.SELESAI);
+        l1.setTglLapor(LocalDateTime.of(2026, 11, 1, 8, 30));
+        l1.setPengguna(raka);
+        l1.setFasilitas(f1);
+        l1 = laporanRepository.save(l1);
+
+        LaporanKerusakan l2 = new LaporanKerusakan();
+        l2.setKodeTiket("TKT-20261103-02");
+        l2.setJudulLaporan("Keran Wastafel Patah");
+        l2.setDeskripsiKerusakan("Air bocor terus menerus membasahi lantai kamar mandi.");
+        l2.setFotoUrl("/uploads/laporan/l002.jpg");
+        l2.setTingkatUrgensi(TingkatUrgensi.DARURAT);
+        l2.setStatusTiket(StatusTiket.DIPROSES);
+        l2.setTglLapor(LocalDateTime.of(2026, 11, 3, 7, 45));
+        l2.setPengguna(nadia);
+        l2.setFasilitas(f3);
+        l2.setUrgent(true);
+        l2.setIzinMasukKamar(true);
+        l2.setJadwalPengerjaan(LocalDateTime.of(2026, 11, 4, 9, 0));
+        l2 = laporanRepository.save(l2);
+
+        LaporanKerusakan l3 = new LaporanKerusakan();
+        l3.setKodeTiket("TKT-20261105-03");
+        l3.setJudulLaporan("Engsel Lemari Lepas");
+        l3.setDeskripsiKerusakan("Pintu lemari sebelah kanan miring dan sulit ditutup.");
+        l3.setFotoUrl("/uploads/laporan/l003.jpg");
+        l3.setTingkatUrgensi(TingkatUrgensi.SEDANG);
+        l3.setStatusTiket(StatusTiket.MENUNGGU);
+        l3.setTglLapor(LocalDateTime.of(2026, 11, 5, 16, 20));
+        l3.setPengguna(dimas);
+        l3.setFasilitas(f4);
+        l3 = laporanRepository.save(l3);
 
         RiwayatPenanganan r1 = new RiwayatPenanganan();
-        r1.setLaporan(lap1);
-        r1.setPengguna(penghuni);
-        r1.setStatusBaru(StatusTiket.MENUNGGU);
-        r1.setCatatanPenanganan("Laporan kerusakan dikirim oleh penghuni.");
-        r1.setWaktuUpdate(now.minusHours(3));
-        riwayatRepository.save(r1);
+        r1.setLaporan(l1);
+        r1.setPengguna(budi);
+        r1.setStatusBaru(StatusTiket.DIPROSES);
+        r1.setCatatanPenanganan("Pengelola melakukan pengecekan tekanan freon dan evaporator.");
+        r1.setBiayaPerbaikan(BigDecimal.ZERO);
+        r1.setWaktuUpdate(LocalDateTime.of(2026, 11, 1, 10, 15));
+
+        RiwayatPenanganan r2 = new RiwayatPenanganan();
+        r2.setLaporan(l1);
+        r2.setPengguna(budi);
+        r2.setStatusBaru(StatusTiket.SELESAI);
+        r2.setCatatanPenanganan("Pengisian ulang freon R32 dan pembersihan filter AC selesai.");
+        r2.setFotoSesudahUrl("/uploads/selesai/s001.jpg");
+        r2.setBiayaPerbaikan(new BigDecimal("150000.00"));
+        r2.setWaktuUpdate(LocalDateTime.of(2026, 11, 2, 14, 0));
+
+        RiwayatPenanganan r3 = new RiwayatPenanganan();
+        r3.setLaporan(l2);
+        r3.setPengguna(budi);
+        r3.setStatusBaru(StatusTiket.DIPROSES);
+        r3.setCatatanPenanganan("Penutupan katup air sementara dan pembelian unit keran baru.");
+        r3.setBiayaPerbaikan(new BigDecimal("45000.00"));
+        r3.setWaktuUpdate(LocalDateTime.of(2026, 11, 3, 9, 30));
+        riwayatRepository.saveAll(List.of(r1, r2, r3));
 
         Notifikasi n1 = new Notifikasi();
-        n1.setPengguna(owner);
-        n1.setLaporan(lap1);
-        n1.setJudulNotif("Laporan Baru: Keran kamar mandi bocor");
-        n1.setPesanNotif("Akbar (Kamar A-01) melaporkan kerusakan pada Keran Kamar Mandi.");
-        n1.setRead(false);
-        n1.setWaktuKirim(now.minusHours(3));
-        notifikasiRepository.save(n1);
+        n1.setPengguna(budi);
+        n1.setLaporan(l1);
+        n1.setJudulNotif("Laporan Baru: AC Tidak Dingin");
+        n1.setPesanNotif("Penghuni kamar A-101 melaporkan kerusakan pada AC Split 1 PK.");
+        n1.setRead(true);
+        n1.setWaktuKirim(LocalDateTime.of(2026, 11, 1, 8, 31));
 
-        // Laporan 2: DIPROSES
-        LaporanKerusakan lap2 = new LaporanKerusakan();
-        lap2.setPengguna(penghuni);
-        lap2.setFasilitas(ac);
-        lap2.setKodeTiket(laporanService.generateNextKodeTiket(today));
-        lap2.setJudulLaporan("AC kamar kurang dingin dan menetes");
-        lap2.setDeskripsiKerusakan(
-            "Hembusan udara AC terasa tidak dingin sejak semalam dan terdapat tetesan air dari unit indoor."
-        );
-        lap2.setTglLapor(now.minusDays(1));
-        lap2.setStatusTiket(StatusTiket.DIPROSES);
-        lap2 = laporanRepository.save(lap2);
+        Notifikasi n2 = new Notifikasi();
+        n2.setPengguna(raka);
+        n2.setLaporan(l1);
+        n2.setJudulNotif("Perbaikan Tiket Selesai");
+        n2.setPesanNotif("Tiket TKT-20261101-01 telah selesai diperbaiki oleh pengelola.");
+        n2.setRead(true);
+        n2.setWaktuKirim(LocalDateTime.of(2026, 11, 2, 14, 1));
 
-        RiwayatPenanganan r2a = new RiwayatPenanganan();
-        r2a.setLaporan(lap2);
-        r2a.setPengguna(penghuni);
-        r2a.setStatusBaru(StatusTiket.MENUNGGU);
-        r2a.setCatatanPenanganan("Laporan kerusakan dikirim oleh penghuni.");
-        r2a.setWaktuUpdate(now.minusDays(1));
-
-        RiwayatPenanganan r2b = new RiwayatPenanganan();
-        r2b.setLaporan(lap2);
-        r2b.setPengguna(owner);
-        r2b.setStatusBaru(StatusTiket.DIPROSES);
-        r2b.setCatatanPenanganan(
-            "Laporan disetujui pengelola. Jadwal pembersihan filter dan pengecekan freon dilakukan sore ini."
-        );
-        r2b.setBiayaPerbaikan(BigDecimal.valueOf(150000));
-        r2b.setWaktuUpdate(now.minusHours(18));
-        riwayatRepository.saveAll(List.of(r2a, r2b));
-
-        Notifikasi n2Owner = new Notifikasi();
-        n2Owner.setPengguna(owner);
-        n2Owner.setLaporan(lap2);
-        n2Owner.setJudulNotif("Laporan Baru: AC kamar kurang dingin dan menetes");
-        n2Owner.setPesanNotif("Akbar (Kamar A-01) melaporkan kerusakan pada AC Samsung 1/2 PK.");
-        n2Owner.setRead(true);
-        n2Owner.setWaktuKirim(now.minusDays(1));
-
-        Notifikasi n2Penghuni = new Notifikasi();
-        n2Penghuni.setPengguna(penghuni);
-        n2Penghuni.setLaporan(lap2);
-        n2Penghuni.setJudulNotif("Laporan Diproses");
-        n2Penghuni.setPesanNotif(
-            "Laporan AC kamar kurang dingin dan menetes sedang ditangani oleh Pak Soleh. Estimasi biaya: Rp 150.000."
-        );
-        n2Penghuni.setRead(false);
-        n2Penghuni.setWaktuKirim(now.minusHours(18));
-        notifikasiRepository.saveAll(List.of(n2Owner, n2Penghuni));
+        Notifikasi n3 = new Notifikasi();
+        n3.setPengguna(budi);
+        n3.setLaporan(l2);
+        n3.setJudulNotif("Laporan Darurat Masuk");
+        n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar A-102.");
+        n3.setRead(false);
+        n3.setWaktuKirim(LocalDateTime.of(2026, 11, 3, 7, 46));
+        notifikasiRepository.saveAll(List.of(n1, n2, n3));
     }
 }

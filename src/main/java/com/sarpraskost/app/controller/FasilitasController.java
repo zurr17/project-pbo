@@ -29,24 +29,29 @@ public class FasilitasController {
 
     @GetMapping
     public ResponseEntity<List<FasilitasResponse>> listAll(
-        @RequestParam(value = "kamarId", required = false) Long kamarId,
-        @RequestParam(value = "kategoriId", required = false) Long kategoriId
+        @RequestParam(value = "kamarId", required = false) Integer kamarId,
+        @RequestParam(value = "kategoriId", required = false) Integer kategoriId
     ) {
         return ResponseEntity.ok(fasilitasService.listAll(kamarId, kategoriId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FasilitasResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<FasilitasResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(fasilitasService.getById(id));
     }
 
     @GetMapping("/kamar/{idKamar}")
-    public ResponseEntity<List<FasilitasResponse>> listByKamar(@PathVariable Long idKamar) {
+    public ResponseEntity<List<FasilitasResponse>> listByKamar(@PathVariable Integer idKamar) {
         return ResponseEntity.ok(fasilitasService.listByKamar(idKamar));
     }
 
+    @GetMapping("/umum")
+    public ResponseEntity<List<FasilitasResponse>> listByUmum() {
+        return ResponseEntity.ok(fasilitasService.listByUmum());
+    }
+
     @GetMapping("/penghuni/{idPengguna}")
-    public ResponseEntity<List<FasilitasResponse>> listByPenghuni(@PathVariable Long idPengguna) {
+    public ResponseEntity<List<FasilitasResponse>> listByPenghuni(@PathVariable Integer idPengguna) {
         return ResponseEntity.ok(fasilitasService.listByPenghuni(idPengguna));
     }
 
@@ -57,14 +62,14 @@ public class FasilitasController {
 
     @PutMapping("/{id}")
     public ResponseEntity<FasilitasResponse> update(
-        @PathVariable Long id,
+        @PathVariable Integer id,
         @RequestBody FasilitasRequest request
     ) {
         return ResponseEntity.ok(fasilitasService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
         fasilitasService.delete(id);
         return ResponseEntity.ok(Map.of("message", "Fasilitas berhasil dihapus."));
     }

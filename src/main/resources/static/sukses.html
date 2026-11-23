@@ -29,7 +29,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div>
               <div style="font-size:11px;color:#64748B;">Nomor Tiket Laporan</div>
-              <div id="successKode" style="font-size:17px;font-weight:700;color:#172554;margin-top:3px;">LPR-...</div>
+              <div id="successKode" style="font-size:17px;font-weight:700;color:#172554;margin-top:3px;">TKT-...</div>
             </div>
             <span id="successStatusBadge" class="status-badge status-menunggu">
               <span class="status-dot"></span>
@@ -91,8 +91,10 @@
       if (laporan) {
         document.getElementById('successKode').textContent = laporan.kode_tiket;
         document.getElementById('successJudul').textContent = laporan.judul_laporan;
+        const lokasiTxt = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
+        const urgentTxt = laporan.is_urgent ? ' • PRIORITAS DARURAT' : '';
         document.getElementById('successMeta').textContent =
-          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • Kamar ${laporan.nomor_kamar} • ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${lokasiTxt} • ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}${urgentTxt}`;
 
         const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('successStatusBadge');

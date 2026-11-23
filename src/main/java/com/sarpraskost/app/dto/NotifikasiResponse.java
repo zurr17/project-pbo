@@ -7,12 +7,13 @@ import com.sarpraskost.app.entity.StatusTiket;
 import java.time.LocalDateTime;
 
 public record NotifikasiResponse(
-    @JsonProperty("id_notifikasi") Long idNotifikasi,
-    @JsonProperty("id_pengguna") Long idPengguna,
-    @JsonProperty("id_laporan") Long idLaporan,
+    @JsonProperty("id_notifikasi") Integer idNotifikasi,
+    @JsonProperty("id_pengguna") Integer idPengguna,
+    @JsonProperty("id_laporan") Integer idLaporan,
     @JsonProperty("kode_tiket") String kodeTiket,
     @JsonProperty("judul_laporan") String judulLaporan,
     @JsonProperty("status_tiket") StatusTiket statusTiket,
+    @JsonProperty("is_urgent") boolean isUrgent,
     @JsonProperty("judul_notif") String judulNotif,
     @JsonProperty("pesan_notif") String pesanNotif,
     @JsonProperty("is_read") boolean isRead,
@@ -27,6 +28,7 @@ public record NotifikasiResponse(
             laporan.getKodeTiket(),
             laporan.getJudulLaporan(),
             laporan.getStatusTiket(),
+            laporan.isUrgent(),
             n.getJudulNotif(),
             n.getPesanNotif(),
             n.isRead(),

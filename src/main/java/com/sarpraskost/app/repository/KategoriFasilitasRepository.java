@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface KategoriFasilitasRepository extends JpaRepository<KategoriFasilitas, Long> {
+public interface KategoriFasilitasRepository extends JpaRepository<KategoriFasilitas, Integer> {
     Optional<KategoriFasilitas> findByNamaKategoriIgnoreCase(String namaKategori);
     List<KategoriFasilitas> findAllByOrderByNamaKategoriAsc();
 }

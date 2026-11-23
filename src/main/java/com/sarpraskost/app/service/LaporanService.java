@@ -1,5 +1,6 @@
 package com.sarpraskost.app.service;
 
+import com.sarpraskost.app.dto.FasilitasUmumAktifResponse;
 import com.sarpraskost.app.dto.LaporanListResponse;
 import com.sarpraskost.app.dto.LaporanResponse;
 import com.sarpraskost.app.dto.LaporanSummaryResponse;
@@ -14,6 +15,7 @@ import com.sarpraskost.app.entity.Pengguna;
 import com.sarpraskost.app.entity.RiwayatPenanganan;
 import com.sarpraskost.app.entity.Role;
 import com.sarpraskost.app.entity.StatusTiket;
+import com.sarpraskost.app.entity.TingkatUrgensi;
 import com.sarpraskost.app.repository.FasilitasKamarRepository;
 import com.sarpraskost.app.repository.LaporanKerusakanRepository;
 import com.sarpraskost.app.repository.NotifikasiRepository;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +42,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class LaporanService {
 
     private static final DateTimeFormatter CODE_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
+    private static final DateTimeFormatter SCHEDULE_FORMAT = DateTimeFormatter.ofPattern(
+        "dd MMM yyyy 'pukul' HH:mm",
+        Locale.forLanguageTag("id-ID")
+    );
     private static final List<StatusTiket> ACTIVE_STATUSES = List.of(StatusTiket.MENUNGGU, StatusTiket.DIPROSES);
 
     private final LaporanKerusakanRepository laporanRepository;
@@ -69,7 +76,7 @@ public class LaporanService {
 
     @Transactional(readOnly = true)
     public LaporanListResponse getLaporanByPenghuni(
-        Long idPengguna,
+        Integer idPengguna,
         String statusParam,
         String searchQuery
     ) {
@@ -80,6 +87,27 @@ public class LaporanService {
         List<LaporanKerusakan> allReports =
             laporanRepository.findByPenggunaIdPenggunaOrderByTglLaporDescIdLaporanDesc(idPengguna);
         return buildFilteredListResponse(allReports, statusParam, searchQuery, false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FasilitasUmumAktifResponse> getActiveFasilitasUmum() {
+        List<LaporanKerusakan> activeShared = laporanRepository.findActiveFasilitasUmum(ACTIVE_STATUSES);
+        if (activeShared.isEmpty()) {
+            return List.of();
+        }
+        List<Integer> ids = activeShared.stream().map(LaporanKerusakan::getIdLaporan).toList();
+        Map<Integer, String> lastNoteByLaporan = riwayatRepository
+            .findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(ids)
+            .stream()
+            .collect(Collectors.toMap(
+                r -> r.getLaporan().getIdLaporan(),
+                RiwayatPenanganan::getCatatanPenanganan,
+                (first, second) -> second
+            ));
+
+        return activeShared.stream()
+            .map(l -> FasilitasUmumAktifResponse.from(l, lastNoteByLaporan.get(l.getIdLaporan())))
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +122,7 @@ public class LaporanService {
     }
 
     @Transactional(readOnly = true)
-    public LaporanResponse getLaporanById(Long id) {
+    public LaporanResponse getLaporanById(Integer id) {
         LaporanKerusakan laporan = laporanRepository.findDetailById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Laporan tidak ditemukan."));
         List<RiwayatPenangananResponse> riwayat = riwayatRepository
@@ -107,17 +135,20 @@ public class LaporanService {
 
     @Transactional
     public synchronized LaporanResponse createLaporan(
-        Long idPengguna,
-        Long idFasilitas,
+        Integer idPengguna,
+        Integer idFasilitas,
         String judulLaporan,
         String deskripsiKerusakan,
+        String tingkatUrgensiRaw,
+        Boolean isUrgentParam,
+        Boolean izinMasukKamarParam,
         MultipartFile foto
     ) {
         if (idPengguna == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id_pengguna wajib diisi.");
         }
         if (idFasilitas == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fasilitas kamar wajib dipilih.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fasilitas wajib dipilih.");
         }
         if (isBlank(judulLaporan)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Judul laporan wajib diisi.");
@@ -129,13 +160,35 @@ public class LaporanService {
         Pengguna pelapor = penggunaRepository.findByIdPengguna(idPengguna)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Data penghuni tidak ditemukan."));
         FasilitasKamar fasilitas = fasilitasRepository.findDetailById(idFasilitas)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas kamar tidak ditemukan."));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas tidak ditemukan."));
 
-        if (pelapor.getRole() == Role.PENGHUNI && pelapor.getKamar() != null
-            && !pelapor.getKamar().getIdKamar().equals(fasilitas.getKamar().getIdKamar())) {
+        boolean fasilitasUmum = isFasilitasUmum(fasilitas);
+        validatePelaporFacilityAccess(pelapor, fasilitas, fasilitasUmum);
+
+        if (fasilitasUmum) {
+            laporanRepository.findFirstByFasilitasIdFasilitasAndStatusTiketInOrderByTglLaporDescIdLaporanDesc(
+                fasilitas.getIdFasilitas(),
+                ACTIVE_STATUSES
+            ).ifPresent(existing -> {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Sudah ada laporan aktif untuk fasilitas umum ini (" + existing.getKodeTiket()
+                        + "). Gunakan tombol 'Saya Terdampak (+1)'."
+                );
+            });
+        }
+
+        TingkatUrgensi urgensi = resolveUrgensi(tingkatUrgensiRaw, isUrgentParam);
+        boolean urgent = Boolean.TRUE.equals(isUrgentParam) || urgensi == TingkatUrgensi.DARURAT;
+        if (urgent && urgensi != TingkatUrgensi.DARURAT && isBlank(tingkatUrgensiRaw)) {
+            urgensi = TingkatUrgensi.DARURAT;
+        }
+        boolean izinMasuk = Boolean.TRUE.equals(izinMasukKamarParam);
+
+        if (!fasilitasUmum && urgent && !izinMasuk) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Fasilitas yang dipilih tidak berada di kamar penghuni."
+                "Untuk laporan darurat di kamar pribadi, Anda wajib mencentang persetujuan izin masuk kamar."
             );
         }
 
@@ -148,45 +201,63 @@ public class LaporanService {
         laporan.setKodeTiket(generateNextKodeTiket(now.toLocalDate()));
         laporan.setJudulLaporan(judulLaporan.trim());
         laporan.setDeskripsiKerusakan(deskripsiKerusakan.trim());
-        laporan.setFotoUrl(fotoUrl);
+        laporan.setFotoUrl(fotoUrl != null ? fotoUrl : "");
+        laporan.setTingkatUrgensi(urgensi);
         laporan.setTglLapor(now);
         laporan.setStatusTiket(StatusTiket.MENUNGGU);
+        laporan.setJumlahTerdampak(1);
+        laporan.setUrgent(urgent);
+        laporan.setIzinMasukKamar(fasilitasUmum ? false : izinMasuk);
 
         LaporanKerusakan saved = laporanRepository.save(laporan);
 
         if (fasilitas.getKondisi() == KondisiFasilitas.BAIK) {
-            fasilitas.setKondisi(KondisiFasilitas.RUSAK);
+            fasilitas.setKondisi(urgent ? KondisiFasilitas.RUSAK_BERAT : KondisiFasilitas.RUSAK_RINGAN);
             fasilitasRepository.save(fasilitas);
         }
 
-        simpanRiwayat(
-            saved,
-            pelapor,
-            StatusTiket.MENUNGGU,
-            "Laporan kerusakan dikirim oleh penghuni.",
-            null,
-            null,
-            now
-        );
+        String initialNote = buildInitialRiwayatNote(fasilitasUmum, urgent, izinMasuk);
+        simpanRiwayat(saved, pelapor, StatusTiket.MENUNGGU, initialNote, null, BigDecimal.ZERO, now);
 
-        String kamarLabel = fasilitas.getKamar().getNomorKamar();
-        List<Pengguna> owners = penggunaRepository.findByRoleOrderByNamaLengkapAsc(Role.OWNER);
-        for (Pengguna owner : owners) {
-            notifikasiService.kirimNotifikasi(
-                owner,
-                saved,
-                "Laporan Baru: " + saved.getJudulLaporan(),
-                pelapor.getNamaLengkap() + " (Kamar " + kamarLabel + ") melaporkan kerusakan pada "
-                    + fasilitas.getNamaFasilitas() + ".",
-                now
-            );
-        }
+        notifyOwnersOnNewReport(saved, pelapor, fasilitas, fasilitasUmum, urgent, izinMasuk, now);
 
         return getLaporanById(saved.getIdLaporan());
     }
 
     @Transactional
-    public LaporanResponse updateLaporan(Long id, UpdateLaporanRequest request) {
+    public synchronized FasilitasUmumAktifResponse tambahTerdampak(Integer idLaporan) {
+        LaporanKerusakan laporan = laporanRepository.findDetailById(idLaporan)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Laporan tidak ditemukan."));
+
+        if (!isFasilitasUmum(laporan.getFasilitas())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Fitur 'Saya Terdampak (+1)' hanya berlaku untuk laporan fasilitas umum."
+            );
+        }
+
+        if (!ACTIVE_STATUSES.contains(laporan.getStatusTiket())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Tiket ini sudah selesai atau ditolak sehingga tidak dapat menambah penghuni terdampak."
+            );
+        }
+
+        int current = laporan.getJumlahTerdampak() == null ? 1 : laporan.getJumlahTerdampak();
+        laporan.setJumlahTerdampak(current + 1);
+        LaporanKerusakan saved = laporanRepository.save(laporan);
+
+        String lastNote = riwayatRepository
+            .findByLaporanIdLaporanOrderByWaktuUpdateAscIdRiwayatAsc(saved.getIdLaporan())
+            .stream()
+            .reduce((first, second) -> second)
+            .map(RiwayatPenanganan::getCatatanPenanganan)
+            .orElse(null);
+        return FasilitasUmumAktifResponse.from(saved, lastNote);
+    }
+
+    @Transactional
+    public LaporanResponse updateLaporan(Integer id, UpdateLaporanRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data pembaruan laporan wajib diisi.");
         }
@@ -201,21 +272,18 @@ public class LaporanService {
             );
         }
 
-        if (request.idFasilitas() == null && request.judulLaporan() == null && request.deskripsiKerusakan() == null) {
+        if (request.idFasilitas() == null && request.judulLaporan() == null
+            && request.deskripsiKerusakan() == null && request.tingkatUrgensi() == null
+            && request.isUrgent() == null && request.izinMasukKamar() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Minimal satu data laporan harus diubah.");
         }
 
+        FasilitasKamar targetFasilitas = laporan.getFasilitas();
         if (request.idFasilitas() != null) {
-            FasilitasKamar fasilitas = fasilitasRepository.findDetailById(request.idFasilitas())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas kamar tidak ditemukan."));
-            if (laporan.getPengguna().getKamar() != null
-                && !laporan.getPengguna().getKamar().getIdKamar().equals(fasilitas.getKamar().getIdKamar())) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Fasilitas yang dipilih tidak berada di kamar penghuni."
-                );
-            }
-            laporan.setFasilitas(fasilitas);
+            targetFasilitas = fasilitasRepository.findDetailById(request.idFasilitas())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas tidak ditemukan."));
+            validatePelaporFacilityAccess(laporan.getPengguna(), targetFasilitas, isFasilitasUmum(targetFasilitas));
+            laporan.setFasilitas(targetFasilitas);
         }
 
         if (request.judulLaporan() != null) {
@@ -232,24 +300,48 @@ public class LaporanService {
             laporan.setDeskripsiKerusakan(request.deskripsiKerusakan().trim());
         }
 
+        if (request.tingkatUrgensi() != null) {
+            TingkatUrgensi nextUrgensi = resolveUrgensi(request.tingkatUrgensi(), request.isUrgent());
+            laporan.setTingkatUrgensi(nextUrgensi);
+            if (nextUrgensi == TingkatUrgensi.DARURAT) {
+                laporan.setUrgent(true);
+            }
+        }
+        if (request.isUrgent() != null) {
+            laporan.setUrgent(request.isUrgent());
+            if (request.isUrgent() && laporan.getTingkatUrgensi() != TingkatUrgensi.DARURAT) {
+                laporan.setTingkatUrgensi(TingkatUrgensi.DARURAT);
+            }
+        }
+        if (request.izinMasukKamar() != null) {
+            laporan.setIzinMasukKamar(request.izinMasukKamar());
+        }
+
+        if (!isFasilitasUmum(targetFasilitas) && laporan.isUrgent() && !laporan.isIzinMasukKamar()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Untuk laporan darurat di kamar pribadi, persetujuan izin masuk kamar wajib dicentang."
+            );
+        }
+
         laporanRepository.save(laporan);
         return getLaporanById(id);
     }
 
     @Transactional
-    public void deleteLaporan(Long id) {
+    public void deleteLaporan(Integer id) {
         LaporanKerusakan laporan = laporanRepository.findDetailById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Laporan tidak ditemukan."));
 
         List<String> filesToDelete = new ArrayList<>();
-        if (laporan.getFotoUrl() != null) {
+        if (!isBlank(laporan.getFotoUrl())) {
             filesToDelete.add(laporan.getFotoUrl());
         }
 
         List<RiwayatPenanganan> riwayatList =
             riwayatRepository.findByLaporanIdLaporanOrderByWaktuUpdateAscIdRiwayatAsc(id);
         for (RiwayatPenanganan item : riwayatList) {
-            if (item.getFotoSesudahUrl() != null) {
+            if (!isBlank(item.getFotoSesudahUrl())) {
                 filesToDelete.add(item.getFotoSesudahUrl());
             }
         }
@@ -275,7 +367,7 @@ public class LaporanService {
     }
 
     @Transactional
-    public LaporanResponse prosesLaporan(Long id, OwnerProsesRequest request) {
+    public LaporanResponse prosesLaporan(Integer id, OwnerProsesRequest request) {
         LaporanKerusakan laporan = laporanRepository.findDetailById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Laporan tidak ditemukan."));
 
@@ -286,18 +378,28 @@ public class LaporanService {
             );
         }
 
-        Pengguna owner = resolveOwnerActor(request != null ? request.idPengguna() : null);
-        String catatan = request != null && !isBlank(request.catatanPenanganan())
+        if (request == null || request.jadwalPengerjaan() == null) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Jadwal pengerjaan (tanggal dan waktu pasti) wajib diisi oleh pengelola."
+            );
+        }
+
+        Pengguna owner = resolveOwnerActor(request.idPengguna());
+        String formattedJadwal = request.jadwalPengerjaan().format(SCHEDULE_FORMAT);
+        String baseCatatan = !isBlank(request.catatanPenanganan())
             ? request.catatanPenanganan().trim()
-            : "Laporan disetujui dan sedang ditangani oleh pengelola.";
-        BigDecimal biaya = validateBiaya(request != null ? request.biayaPerbaikan() : null);
+            : "Laporan disetujui dan dijadwalkan untuk diperbaiki oleh pengelola.";
+        String catatan = baseCatatan + " Jadwal pengerjaan: " + formattedJadwal + ".";
+        BigDecimal biaya = validateBiayaNonNull(request.biayaPerbaikan());
         KondisiFasilitas nextKondisi = parseKondisiOptional(
-            request != null ? request.kondisiFasilitas() : null,
-            KondisiFasilitas.PERLU_PERAWATAN
+            request.kondisiFasilitas(),
+            KondisiFasilitas.DALAM_PERBAIKAN
         );
 
         LocalDateTime now = LocalDateTime.now();
         laporan.setStatusTiket(StatusTiket.DIPROSES);
+        laporan.setJadwalPengerjaan(request.jadwalPengerjaan());
         laporanRepository.save(laporan);
 
         FasilitasKamar fasilitas = laporan.getFasilitas();
@@ -306,15 +408,15 @@ public class LaporanService {
 
         simpanRiwayat(laporan, owner, StatusTiket.DIPROSES, catatan, null, biaya, now);
 
-        String estimasiText = biaya != null && biaya.compareTo(BigDecimal.ZERO) > 0
+        String estimasiText = biaya.compareTo(BigDecimal.ZERO) > 0
             ? " Estimasi biaya: " + formatRupiah(biaya) + "."
             : "";
         notifikasiService.kirimNotifikasi(
             laporan.getPengguna(),
             laporan,
-            "Laporan Diproses",
-            "Laporan " + laporan.getJudulLaporan() + " sedang ditangani oleh "
-                + owner.getNamaLengkap() + "." + estimasiText,
+            "Jadwal Perbaikan Ditetapkan",
+            "Laporan " + laporan.getJudulLaporan() + " akan ditangani oleh " + owner.getNamaLengkap()
+                + " pada jadwal " + formattedJadwal + "." + estimasiText,
             now
         );
 
@@ -322,7 +424,7 @@ public class LaporanService {
     }
 
     @Transactional
-    public LaporanResponse tolakLaporan(Long id, OwnerTolakRequest request) {
+    public LaporanResponse tolakLaporan(Integer id, OwnerTolakRequest request) {
         if (request == null || isBlank(request.alasanPenolakan())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Alasan penolakan wajib diisi.");
         }
@@ -357,7 +459,7 @@ public class LaporanService {
             fasilitasRepository.save(fasilitas);
         }
 
-        simpanRiwayat(laporan, owner, StatusTiket.DITOLAK, catatan, null, null, now);
+        simpanRiwayat(laporan, owner, StatusTiket.DITOLAK, catatan, null, BigDecimal.ZERO, now);
 
         notifikasiService.kirimNotifikasi(
             laporan.getPengguna(),
@@ -372,8 +474,8 @@ public class LaporanService {
 
     @Transactional
     public LaporanResponse selesaikanLaporan(
-        Long id,
-        Long idPengguna,
+        Integer id,
+        Integer idPengguna,
         String catatanPenanganan,
         BigDecimal biayaPerbaikan,
         String kondisiFasilitas,
@@ -390,7 +492,7 @@ public class LaporanService {
         }
 
         Pengguna owner = resolveOwnerActor(idPengguna);
-        BigDecimal biaya = validateBiaya(biayaPerbaikan);
+        BigDecimal biaya = validateBiayaNonNull(biayaPerbaikan);
         String catatan = !isBlank(catatanPenanganan)
             ? catatanPenanganan.trim()
             : "Perbaikan telah diselesaikan oleh pengelola.";
@@ -407,7 +509,7 @@ public class LaporanService {
 
         simpanRiwayat(laporan, owner, StatusTiket.SELESAI, catatan, fotoSesudahUrl, biaya, now);
 
-        String biayaText = biaya != null && biaya.compareTo(BigDecimal.ZERO) > 0
+        String biayaText = biaya.compareTo(BigDecimal.ZERO) > 0
             ? " Total biaya: " + formatRupiah(biaya) + "."
             : "";
         notifikasiService.kirimNotifikasi(
@@ -422,13 +524,64 @@ public class LaporanService {
     }
 
     public String generateNextKodeTiket(LocalDate date) {
-        String prefix = "LPR-" + date.format(CODE_DATE_FORMAT) + "-";
+        String prefix = "TKT-" + date.format(CODE_DATE_FORMAT) + "-";
         int maxSequence = laporanRepository.findByKodeTiketStartingWith(prefix).stream()
             .map(LaporanKerusakan::getKodeTiket)
             .mapToInt(code -> extractSequence(code, prefix))
             .max()
             .orElse(0);
-        return prefix + String.format("%03d", maxSequence + 1);
+        return prefix + String.format("%02d", maxSequence + 1);
+    }
+
+    private void validatePelaporFacilityAccess(Pengguna pelapor, FasilitasKamar fasilitas, boolean fasilitasUmum) {
+        if (pelapor.getRole() != Role.PENGHUNI || fasilitasUmum) {
+            return;
+        }
+        if (pelapor.getKamar() == null || !pelapor.getKamar().getIdKamar().equals(fasilitas.getKamar().getIdKamar())) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Fasilitas yang dipilih tidak berada di kamar penghuni atau fasilitas umum."
+            );
+        }
+    }
+
+    private String buildInitialRiwayatNote(boolean fasilitasUmum, boolean urgent, boolean izinMasuk) {
+        StringBuilder sb = new StringBuilder("Laporan kerusakan ");
+        sb.append(fasilitasUmum ? "fasilitas umum " : "");
+        sb.append("dikirim oleh penghuni");
+        if (urgent) {
+            sb.append(" dengan prioritas DARURAT");
+        }
+        if (!fasilitasUmum && izinMasuk) {
+            sb.append(" (izin masuk kamar disetujui)");
+        }
+        sb.append(".");
+        return sb.toString();
+    }
+
+    private void notifyOwnersOnNewReport(
+        LaporanKerusakan saved,
+        Pengguna pelapor,
+        FasilitasKamar fasilitas,
+        boolean fasilitasUmum,
+        boolean urgent,
+        boolean izinMasuk,
+        LocalDateTime now
+    ) {
+        String lokasi = fasilitasUmum ? "Fasilitas Umum" : "Kamar " + fasilitas.getKamar().getNomorKamar();
+        String urgencyTag = urgent ? "[DARURAT] " : "";
+        String izinNote = (!fasilitasUmum && izinMasuk) ? " Izin masuk kamar telah disetujui penghuni." : "";
+        String pelaporText = pelapor.getNamaLengkap() + " (" + lokasi + ")";
+
+        for (Pengguna owner : penggunaRepository.findByRoleOrderByNamaLengkapAsc(Role.OWNER)) {
+            notifikasiService.kirimNotifikasi(
+                owner,
+                saved,
+                urgencyTag + "Laporan Baru: " + saved.getJudulLaporan(),
+                pelaporText + " melaporkan kerusakan pada " + fasilitas.getNamaFasilitas() + "." + izinNote,
+                now
+            );
+        }
     }
 
     private void simpanRiwayat(
@@ -444,21 +597,21 @@ public class LaporanService {
         riwayat.setLaporan(laporan);
         riwayat.setPengguna(actor);
         riwayat.setStatusBaru(statusBaru);
-        riwayat.setCatatanPenanganan(catatanPenanganan);
+        riwayat.setCatatanPenanganan(catatanPenanganan == null ? "" : catatanPenanganan);
         riwayat.setFotoSesudahUrl(fotoSesudahUrl);
-        riwayat.setBiayaPerbaikan(biayaPerbaikan);
+        riwayat.setBiayaPerbaikan(biayaPerbaikan == null ? BigDecimal.ZERO : biayaPerbaikan);
         riwayat.setWaktuUpdate(waktuUpdate);
         riwayatRepository.save(riwayat);
     }
 
-    private Pengguna resolveOwnerActor(Long requestedPenggunaId) {
+    private Pengguna resolveOwnerActor(Integer requestedPenggunaId) {
         if (requestedPenggunaId != null) {
             Pengguna pengguna = penggunaRepository.findByIdPengguna(requestedPenggunaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Data owner tidak ditemukan."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Data pengelola tidak ditemukan."));
             if (pengguna.getRole() != Role.OWNER) {
                 throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Hanya pengguna dengan peran OWNER yang dapat memproses laporan."
+                    "Hanya pengguna dengan peran OWNER/Pengelola yang dapat memproses laporan."
                 );
             }
             return pengguna;
@@ -471,23 +624,27 @@ public class LaporanService {
         List<LaporanKerusakan> allReports,
         String statusParam,
         String searchQuery,
-        boolean includePelapor
+        boolean ownerMode
     ) {
         LaporanSummaryResponse summary = buildSummary(allReports);
         StatusTiket filterStatus = parseStatusFilter(statusParam);
         String keyword = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
 
-        List<LaporanKerusakan> filteredEntities = allReports.stream()
+        var stream = allReports.stream()
             .filter(item -> filterStatus == null || item.getStatusTiket() == filterStatus)
-            .filter(item -> keyword.isEmpty() || matchesKeyword(item, keyword, includePelapor))
-            .toList();
+            .filter(item -> keyword.isEmpty() || matchesKeyword(item, keyword, ownerMode));
 
+        if (ownerMode) {
+            stream = stream.sorted(ownerPriorityComparator());
+        }
+
+        List<LaporanKerusakan> filteredEntities = stream.toList();
         if (filteredEntities.isEmpty()) {
             return new LaporanListResponse(summary, List.of());
         }
 
-        List<Long> ids = filteredEntities.stream().map(LaporanKerusakan::getIdLaporan).toList();
-        Map<Long, List<RiwayatPenangananResponse>> riwayatByLaporan = riwayatRepository
+        List<Integer> ids = filteredEntities.stream().map(LaporanKerusakan::getIdLaporan).toList();
+        Map<Integer, List<RiwayatPenangananResponse>> riwayatByLaporan = riwayatRepository
             .findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(ids)
             .stream()
             .map(RiwayatPenangananResponse::from)
@@ -500,12 +657,28 @@ public class LaporanService {
         return new LaporanListResponse(summary, responses);
     }
 
+    private Comparator<LaporanKerusakan> ownerPriorityComparator() {
+        return Comparator
+            .comparingInt((LaporanKerusakan l) -> ACTIVE_STATUSES.contains(l.getStatusTiket()) ? 0 : 1)
+            .thenComparingInt(l -> l.isUrgent() ? 0 : 1)
+            .thenComparing(
+                Comparator.comparingInt((LaporanKerusakan l) -> l.getJumlahTerdampak() == null ? 1 : l.getJumlahTerdampak())
+                    .reversed()
+            )
+            .thenComparing(LaporanKerusakan::getTglLapor, Comparator.reverseOrder())
+            .thenComparing(LaporanKerusakan::getIdLaporan, Comparator.reverseOrder());
+    }
+
     private LaporanSummaryResponse buildSummary(List<LaporanKerusakan> reports) {
         long menunggu = 0;
         long diproses = 0;
         long selesai = 0;
         long ditolak = 0;
+        long darurat = 0;
         for (LaporanKerusakan item : reports) {
+            if (ACTIVE_STATUSES.contains(item.getStatusTiket()) && item.isUrgent()) {
+                darurat++;
+            }
             switch (item.getStatusTiket()) {
                 case MENUNGGU -> menunggu++;
                 case DIPROSES -> diproses++;
@@ -513,7 +686,7 @@ public class LaporanService {
                 case DITOLAK -> ditolak++;
             }
         }
-        return new LaporanSummaryResponse(reports.size(), menunggu, diproses, selesai, ditolak);
+        return new LaporanSummaryResponse(reports.size(), menunggu, diproses, selesai, ditolak, darurat);
     }
 
     private StatusTiket parseStatusFilter(String statusParam) {
@@ -521,9 +694,23 @@ public class LaporanService {
             return null;
         }
         try {
-            return StatusTiket.valueOf(statusParam.trim().toUpperCase(Locale.ROOT));
+            return StatusTiket.fromInput(statusParam);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status filter tidak valid: " + statusParam);
+        }
+    }
+
+    private TingkatUrgensi resolveUrgensi(String raw, Boolean isUrgent) {
+        if (isBlank(raw)) {
+            return Boolean.TRUE.equals(isUrgent) ? TingkatUrgensi.DARURAT : TingkatUrgensi.SEDANG;
+        }
+        try {
+            return TingkatUrgensi.fromInput(raw);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Tingkat urgensi harus Rendah, Sedang, Tinggi, atau Darurat."
+            );
         }
     }
 
@@ -532,20 +719,27 @@ public class LaporanService {
             return fallback;
         }
         try {
-            return KondisiFasilitas.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+            return KondisiFasilitas.fromInput(raw);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Kondisi fasilitas harus BAIK, PERLU_PERAWATAN, atau RUSAK."
+                "Kondisi fasilitas harus BAIK, RUSAK RINGAN, RUSAK BERAT, atau DALAM PERBAIKAN."
             );
         }
     }
 
-    private BigDecimal validateBiaya(BigDecimal biaya) {
-        if (biaya != null && biaya.compareTo(BigDecimal.ZERO) < 0) {
+    private BigDecimal validateBiayaNonNull(BigDecimal biaya) {
+        if (biaya == null) {
+            return BigDecimal.ZERO;
+        }
+        if (biaya.compareTo(BigDecimal.ZERO) < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Biaya perbaikan tidak boleh negatif.");
         }
         return biaya;
+    }
+
+    private boolean isFasilitasUmum(FasilitasKamar fasilitas) {
+        return fasilitas != null && fasilitas.getKamar() != null && fasilitas.getKamar().isFasilitasUmum();
     }
 
     private boolean matchesKeyword(LaporanKerusakan item, String keyword, boolean includePelapor) {

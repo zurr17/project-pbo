@@ -29,13 +29,16 @@
     <section class="page-body has-bottom-nav">
       <div class="greeting-block">
         <span class="owner-badge-pill" style="align-self:flex-start;">Owner / Pengelola Kost</span>
-        <h1 id="greetingText" class="greeting-title">Selamat pagi, Pak Soleh</h1>
-        <p class="greeting-subtitle">Kelola laporan kerusakan, biaya perbaikan, serta aset kamar kost.</p>
+        <h1 id="greetingText" class="greeting-title">Selamat pagi, Pengelola</h1>
+        <p class="greeting-subtitle">Kelola laporan kerusakan, jadwal pengerjaan, biaya perbaikan, dan aset kost.</p>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="section-header">
-          <h2 class="section-title">Ringkasan laporan</h2>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <h2 class="section-title">Ringkasan laporan</h2>
+            <span id="urgentAlertPill" class="priority-pill high" style="display:none;">0 Darurat</span>
+          </div>
           <a href="owner-laporan.html" class="text-link">Lihat semua</a>
         </div>
 
@@ -193,6 +196,13 @@
         document.getElementById('statMenunggu').textContent = ringkasan.menunggu ?? 0;
         document.getElementById('statDiproses').textContent = ringkasan.diproses ?? 0;
         document.getElementById('statSelesai').textContent = ringkasan.selesai ?? 0;
+        const urgentPill = document.getElementById('urgentAlertPill');
+        if (ringkasan.darurat && Number(ringkasan.darurat) > 0) {
+          urgentPill.textContent = `${ringkasan.darurat} Darurat`;
+          urgentPill.style.display = 'inline-flex';
+        } else {
+          urgentPill.style.display = 'none';
+        }
 
         if (!laporan || laporan.length === 0) {
           recentContainer.innerHTML = '<div class="empty-state">Belum ada laporan kerusakan yang masuk.</div>';

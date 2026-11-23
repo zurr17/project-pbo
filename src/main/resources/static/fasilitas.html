@@ -78,10 +78,16 @@
 
       function renderCard(item) {
         const meta = SarprasApp.getKondisiMeta(item.kondisi);
+        const locationPill = item.is_umum
+          ? '<span class="terdampak-pill" style="margin-bottom:4px;">Fasilitas Umum</span>'
+          : `<span class="priority-pill" style="margin-bottom:4px;">Kamar ${SarprasApp.escapeHtml(item.nomor_kamar)}</span>`;
         return `
           <article class="facility-card">
             <div class="facility-header">
               <div style="min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+                  ${locationPill}
+                </div>
                 <div class="report-code">${SarprasApp.escapeHtml(item.kode_aset)} &bull; ${SarprasApp.escapeHtml(item.nama_kategori)}</div>
                 <h3 class="facility-title" style="margin-top:4px;">${SarprasApp.escapeHtml(item.nama_fasilitas)}</h3>
                 <div class="facility-brand">${SarprasApp.escapeHtml(item.merk_tipe || 'Merk belum dicatat')}</div>
@@ -107,10 +113,8 @@
         const items = Array.isArray(list) ? list : [];
         fasilitasCountLabel.textContent = `${items.length} item`;
 
-        if (!user.id_kamar) {
-          fasilitasList.innerHTML = '<div class="empty-state">Anda belum terhubung ke nomor kamar. Silakan pilih kamar di halaman <a href="profil.html" class="text-link">Profil</a>.</div>';
-        } else if (items.length === 0) {
-          fasilitasList.innerHTML = '<div class="empty-state">Belum ada fasilitas tercatat pada kamar ini.</div>';
+        if (items.length === 0) {
+          fasilitasList.innerHTML = '<div class="empty-state">Belum ada fasilitas tercatat.</div>';
         } else {
           fasilitasList.innerHTML = items.map(renderCard).join('');
         }

@@ -22,22 +22,22 @@ public class NotifikasiController {
     }
 
     @GetMapping("/{idPengguna}")
-    public ResponseEntity<List<NotifikasiResponse>> listByPengguna(@PathVariable Long idPengguna) {
+    public ResponseEntity<List<NotifikasiResponse>> listByPengguna(@PathVariable Integer idPengguna) {
         return ResponseEntity.ok(notifikasiService.listByPengguna(idPengguna));
     }
 
     @GetMapping("/{idPengguna}/unread-count")
-    public ResponseEntity<Map<String, Long>> unreadCount(@PathVariable Long idPengguna) {
+    public ResponseEntity<Map<String, Long>> unreadCount(@PathVariable Integer idPengguna) {
         return ResponseEntity.ok(Map.of("unread", notifikasiService.countUnread(idPengguna)));
     }
 
     @PutMapping("/{id}/baca")
-    public ResponseEntity<NotifikasiResponse> markAsRead(@PathVariable Long id) {
+    public ResponseEntity<NotifikasiResponse> markAsRead(@PathVariable Integer id) {
         return ResponseEntity.ok(notifikasiService.markAsRead(id));
     }
 
     @PutMapping("/baca-semua/{idPengguna}")
-    public ResponseEntity<Map<String, String>> markAllAsRead(@PathVariable Long idPengguna) {
+    public ResponseEntity<Map<String, String>> markAllAsRead(@PathVariable Integer idPengguna) {
         notifikasiService.markAllAsRead(idPengguna);
         return ResponseEntity.ok(Map.of("message", "Semua notifikasi telah ditandai sudah dibaca."));
     }

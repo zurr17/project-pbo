@@ -33,7 +33,7 @@ public class KategoriFasilitasService {
     }
 
     @Transactional(readOnly = true)
-    public KategoriFasilitasResponse getById(Long id) {
+    public KategoriFasilitasResponse getById(Integer id) {
         KategoriFasilitas kategori = kategoriRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kategori fasilitas tidak ditemukan."));
         return KategoriFasilitasResponse.from(kategori, fasilitasRepository.countByKategoriIdKategori(id));
@@ -58,7 +58,7 @@ public class KategoriFasilitasService {
     }
 
     @Transactional
-    public KategoriFasilitasResponse update(Long id, KategoriFasilitasRequest req) {
+    public KategoriFasilitasResponse update(Integer id, KategoriFasilitasRequest req) {
         if (req == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data pembaruan kategori wajib diisi.");
         }
@@ -86,7 +86,7 @@ public class KategoriFasilitasService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Integer id) {
         KategoriFasilitas kategori = kategoriRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kategori fasilitas tidak ditemukan."));
         if (fasilitasRepository.countByKategoriIdKategori(id) > 0) {

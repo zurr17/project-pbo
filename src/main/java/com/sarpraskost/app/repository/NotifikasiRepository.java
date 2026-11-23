@@ -8,18 +8,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface NotifikasiRepository extends JpaRepository<Notifikasi, Long> {
+public interface NotifikasiRepository extends JpaRepository<Notifikasi, Integer> {
 
     @EntityGraph(attributePaths = {"laporan", "pengguna"})
-    List<Notifikasi> findByPenggunaIdPenggunaOrderByWaktuKirimDescIdNotifikasiDesc(Long idPengguna);
+    List<Notifikasi> findByPenggunaIdPenggunaOrderByWaktuKirimDescIdNotifikasiDesc(Integer idPengguna);
 
     @Query("SELECT n FROM Notifikasi n JOIN FETCH n.laporan JOIN FETCH n.pengguna WHERE n.idNotifikasi = :id")
-    Optional<Notifikasi> findDetailById(@Param("id") Long id);
+    Optional<Notifikasi> findDetailById(@Param("id") Integer id);
 
     @Query("SELECT COUNT(n) FROM Notifikasi n WHERE n.pengguna.idPengguna = :idPengguna AND n.isRead = false")
-    long countUnreadByPenggunaId(@Param("idPengguna") Long idPengguna);
+    long countUnreadByPenggunaId(@Param("idPengguna") Integer idPengguna);
 
-    void deleteByLaporanIdLaporan(Long idLaporan);
+    void deleteByLaporanIdLaporan(Integer idLaporan);
 
-    void deleteByPenggunaIdPengguna(Long idPengguna);
+    void deleteByPenggunaIdPengguna(Integer idPengguna);
 }

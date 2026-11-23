@@ -5,11 +5,12 @@ import com.sarpraskost.app.entity.Kamar;
 import com.sarpraskost.app.entity.StatusHunian;
 
 public record KamarResponse(
-    @JsonProperty("id_kamar") Long idKamar,
+    @JsonProperty("id_kamar") Integer idKamar,
     @JsonProperty("nomor_kamar") String nomorKamar,
     @JsonProperty("tipe_kamar") String tipeKamar,
-    Integer lantai,
+    Short lantai,
     @JsonProperty("status_hunian") StatusHunian statusHunian,
+    @JsonProperty("is_umum") boolean isUmum,
     @JsonProperty("jumlah_fasilitas") long jumlahFasilitas,
     @JsonProperty("jumlah_penghuni") long jumlahPenghuni
 ) {
@@ -20,6 +21,7 @@ public record KamarResponse(
             kamar.getTipeKamar(),
             kamar.getLantai(),
             kamar.getStatusHunian(),
+            kamar.isFasilitasUmum(),
             jumlahFasilitas,
             jumlahPenghuni
         );

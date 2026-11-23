@@ -18,7 +18,7 @@ public class Notifikasi {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_notifikasi")
-    private Long idNotifikasi;
+    private Integer idNotifikasi;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_pengguna", nullable = false)
@@ -28,10 +28,10 @@ public class Notifikasi {
     @JoinColumn(name = "id_laporan", nullable = false)
     private LaporanKerusakan laporan;
 
-    @Column(name = "judul_notif", nullable = false, length = 150)
+    @Column(name = "judul_notif", nullable = false, length = 100)
     private String judulNotif;
 
-    @Column(name = "pesan_notif", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "pesan_notif", nullable = false, columnDefinition = "text")
     private String pesanNotif;
 
     @Column(name = "is_read", nullable = false)
@@ -43,11 +43,11 @@ public class Notifikasi {
     public Notifikasi() {
     }
 
-    public Long getIdNotifikasi() {
+    public Integer getIdNotifikasi() {
         return idNotifikasi;
     }
 
-    public void setIdNotifikasi(Long idNotifikasi) {
+    public void setIdNotifikasi(Integer idNotifikasi) {
         this.idNotifikasi = idNotifikasi;
     }
 

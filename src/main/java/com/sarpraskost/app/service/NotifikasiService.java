@@ -28,7 +28,7 @@ public class NotifikasiService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotifikasiResponse> listByPengguna(Long idPengguna) {
+    public List<NotifikasiResponse> listByPengguna(Integer idPengguna) {
         if (!penggunaRepository.existsById(idPengguna)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pengguna tidak ditemukan.");
         }
@@ -39,7 +39,7 @@ public class NotifikasiService {
     }
 
     @Transactional(readOnly = true)
-    public long countUnread(Long idPengguna) {
+    public long countUnread(Integer idPengguna) {
         if (!penggunaRepository.existsById(idPengguna)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pengguna tidak ditemukan.");
         }
@@ -47,7 +47,7 @@ public class NotifikasiService {
     }
 
     @Transactional
-    public NotifikasiResponse markAsRead(Long idNotifikasi) {
+    public NotifikasiResponse markAsRead(Integer idNotifikasi) {
         Notifikasi notif = notifikasiRepository.findDetailById(idNotifikasi)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notifikasi tidak ditemukan."));
         if (!notif.isRead()) {
@@ -58,7 +58,7 @@ public class NotifikasiService {
     }
 
     @Transactional
-    public void markAllAsRead(Long idPengguna) {
+    public void markAllAsRead(Integer idPengguna) {
         if (!penggunaRepository.existsById(idPengguna)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Pengguna tidak ditemukan.");
         }
@@ -83,10 +83,16 @@ public class NotifikasiService {
         Notifikasi notif = new Notifikasi();
         notif.setPengguna(penerima);
         notif.setLaporan(laporan);
-        notif.setJudulNotif(judulNotif);
-        notif.setPesanNotif(pesanNotif);
+        notif.setJudulNotif(truncate(judulNotif, 100));
+        notif.setPesanNotif(pesanNotif == null ? "" : pesanNotif);
         notif.setRead(false);
         notif.setWaktuKirim(waktuKirim != null ? waktuKirim : LocalDateTime.now());
         notifikasiRepository.save(notif);
+    }
+
+    private String truncate(String text, int maxLen) {
+        if (text == null) return "";
+        String clean = text.trim();
+        return clean.length() <= maxLen ? clean : clean.substring(0, maxLen);
     }
 }

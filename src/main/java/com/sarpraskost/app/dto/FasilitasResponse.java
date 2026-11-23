@@ -8,12 +8,13 @@ import com.sarpraskost.app.entity.KondisiFasilitas;
 import java.time.LocalDate;
 
 public record FasilitasResponse(
-    @JsonProperty("id_fasilitas") Long idFasilitas,
-    @JsonProperty("id_kamar") Long idKamar,
+    @JsonProperty("id_fasilitas") Integer idFasilitas,
+    @JsonProperty("id_kamar") Integer idKamar,
     @JsonProperty("nomor_kamar") String nomorKamar,
     @JsonProperty("tipe_kamar") String tipeKamar,
-    Integer lantai,
-    @JsonProperty("id_kategori") Long idKategori,
+    Short lantai,
+    @JsonProperty("is_umum") boolean isUmum,
+    @JsonProperty("id_kategori") Integer idKategori,
     @JsonProperty("nama_kategori") String namaKategori,
     @JsonProperty("kode_aset") String kodeAset,
     @JsonProperty("nama_fasilitas") String namaFasilitas,
@@ -30,6 +31,7 @@ public record FasilitasResponse(
             kamar.getNomorKamar(),
             kamar.getTipeKamar(),
             kamar.getLantai(),
+            kamar.isFasilitasUmum(),
             kat.getIdKategori(),
             kat.getNamaKategori(),
             f.getKodeAset(),

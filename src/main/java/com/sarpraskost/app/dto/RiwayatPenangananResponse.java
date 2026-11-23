@@ -9,9 +9,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record RiwayatPenangananResponse(
-    @JsonProperty("id_riwayat") Long idRiwayat,
-    @JsonProperty("id_laporan") Long idLaporan,
-    @JsonProperty("id_pengguna") Long idPengguna,
+    @JsonProperty("id_riwayat") Integer idRiwayat,
+    @JsonProperty("id_laporan") Integer idLaporan,
+    @JsonProperty("id_pengguna") Integer idPengguna,
     @JsonProperty("nama_pengguna") String namaPengguna,
     @JsonProperty("role_pengguna") Role rolePengguna,
     @JsonProperty("status_baru") StatusTiket statusBaru,

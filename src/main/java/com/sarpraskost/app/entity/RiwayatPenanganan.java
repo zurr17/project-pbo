@@ -1,9 +1,9 @@
 package com.sarpraskost.app.entity;
 
+import com.sarpraskost.app.entity.converter.StatusTiketConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,7 +21,7 @@ public class RiwayatPenanganan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_riwayat")
-    private Long idRiwayat;
+    private Integer idRiwayat;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_laporan", nullable = false)
@@ -31,18 +31,18 @@ public class RiwayatPenanganan {
     @JoinColumn(name = "id_pengguna", nullable = false)
     private Pengguna pengguna;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status_baru", nullable = false, length = 30)
+    @Convert(converter = StatusTiketConverter.class)
+    @Column(name = "status_baru", nullable = false, length = 15)
     private StatusTiket statusBaru;
 
-    @Column(name = "catatan_penanganan", columnDefinition = "TEXT")
-    private String catatanPenanganan;
+    @Column(name = "catatan_penanganan", nullable = false, columnDefinition = "text")
+    private String catatanPenanganan = "";
 
     @Column(name = "foto_sesudah_url", length = 255)
     private String fotoSesudahUrl;
 
-    @Column(name = "biaya_perbaikan", precision = 12, scale = 2)
-    private BigDecimal biayaPerbaikan;
+    @Column(name = "biaya_perbaikan", nullable = false, precision = 12, scale = 2)
+    private BigDecimal biayaPerbaikan = BigDecimal.ZERO;
 
     @Column(name = "waktu_update", nullable = false)
     private LocalDateTime waktuUpdate;
@@ -50,11 +50,11 @@ public class RiwayatPenanganan {
     public RiwayatPenanganan() {
     }
 
-    public Long getIdRiwayat() {
+    public Integer getIdRiwayat() {
         return idRiwayat;
     }
 
-    public void setIdRiwayat(Long idRiwayat) {
+    public void setIdRiwayat(Integer idRiwayat) {
         this.idRiwayat = idRiwayat;
     }
 
@@ -87,7 +87,7 @@ public class RiwayatPenanganan {
     }
 
     public void setCatatanPenanganan(String catatanPenanganan) {
-        this.catatanPenanganan = catatanPenanganan;
+        this.catatanPenanganan = catatanPenanganan == null ? "" : catatanPenanganan;
     }
 
     public String getFotoSesudahUrl() {
@@ -103,7 +103,7 @@ public class RiwayatPenanganan {
     }
 
     public void setBiayaPerbaikan(BigDecimal biayaPerbaikan) {
-        this.biayaPerbaikan = biayaPerbaikan;
+        this.biayaPerbaikan = biayaPerbaikan == null ? BigDecimal.ZERO : biayaPerbaikan;
     }
 
     public LocalDateTime getWaktuUpdate() {

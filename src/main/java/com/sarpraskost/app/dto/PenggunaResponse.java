@@ -6,11 +6,11 @@ import com.sarpraskost.app.entity.Pengguna;
 import com.sarpraskost.app.entity.Role;
 
 public record PenggunaResponse(
-    @JsonProperty("id_pengguna") Long idPengguna,
-    @JsonProperty("id_kamar") Long idKamar,
+    @JsonProperty("id_pengguna") Integer idPengguna,
+    @JsonProperty("id_kamar") Integer idKamar,
     @JsonProperty("nomor_kamar") String nomorKamar,
     @JsonProperty("tipe_kamar") String tipeKamar,
-    Integer lantai,
+    Short lantai,
     @JsonProperty("nama_lengkap") String namaLengkap,
     String email,
     @JsonProperty("no_hp") String noHp,

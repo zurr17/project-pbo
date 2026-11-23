@@ -68,8 +68,10 @@
               type="tel"
               class="input-control"
               placeholder="Contoh: 081234567890"
+              required
             />
           </div>
+          <span class="form-hint">Wajib diisi &amp; unik untuk kontak penanganan darurat.</span>
         </div>
 
         <div class="form-group">
@@ -154,8 +156,9 @@
 
       try {
         const rooms = await SarprasApp.fetchKamar();
+        const privateRooms = (rooms || []).filter((r) => !r.is_umum && (r.nomor_kamar || '').toUpperCase() !== 'UMUM');
         kamarSelect.innerHTML = '<option value="">-- Pilih kamar (opsional) --</option>' +
-          (rooms || []).map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+          privateRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
       } catch {
         kamarSelect.innerHTML = '<option value="">-- Kamar belum tersedia --</option>';
       }
@@ -177,8 +180,8 @@
         const password = passwordInput.value;
         const confirmPassword = confirmPasswordInput.value;
 
-        if (!nama_lengkap || !email || !password) {
-          showError('Nama lengkap, email, dan kata sandi wajib diisi.');
+        if (!nama_lengkap || !email || !no_hp || !password) {
+          showError('Nama lengkap, email, nomor HP, dan kata sandi wajib diisi.');
           return;
         }
         if (password !== confirmPassword) {

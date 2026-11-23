@@ -14,12 +14,12 @@ public class KategoriFasilitas {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_kategori")
-    private Long idKategori;
+    private Integer idKategori;
 
-    @Column(name = "nama_kategori", nullable = false, unique = true, length = 100)
+    @Column(name = "nama_kategori", nullable = false, unique = true, length = 50)
     private String namaKategori;
 
-    @Column(name = "deskripsi", columnDefinition = "TEXT")
+    @Column(name = "deskripsi", columnDefinition = "text")
     private String deskripsi;
 
     public KategoriFasilitas() {
@@ -30,11 +30,11 @@ public class KategoriFasilitas {
         this.deskripsi = deskripsi;
     }
 
-    public Long getIdKategori() {
+    public Integer getIdKategori() {
         return idKategori;
     }
 
-    public void setIdKategori(Long idKategori) {
+    public void setIdKategori(Integer idKategori) {
         this.idKategori = idKategori;
     }
 

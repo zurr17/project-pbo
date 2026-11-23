@@ -8,7 +8,6 @@ import com.sarpraskost.app.repository.FasilitasKamarRepository;
 import com.sarpraskost.app.repository.KamarRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,7 @@ public class KamarService {
     }
 
     @Transactional(readOnly = true)
-    public KamarResponse getById(Long id) {
+    public KamarResponse getById(Integer id) {
         Kamar kamar = kamarRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kamar tidak ditemukan."));
         return toResponse(kamar);
@@ -58,6 +57,9 @@ public class KamarService {
         }
 
         String nomor = req.nomorKamar().trim();
+        if (nomor.length() > 10) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar maksimal 10 karakter.");
+        }
         if (kamarRepository.existsByNomorKamarIgnoreCase(nomor)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah terdaftar.");
         }
@@ -72,7 +74,7 @@ public class KamarService {
     }
 
     @Transactional
-    public KamarResponse update(Long id, KamarRequest req) {
+    public KamarResponse update(Integer id, KamarRequest req) {
         if (req == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data pembaruan kamar wajib diisi.");
         }
@@ -85,6 +87,9 @@ public class KamarService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar tidak boleh kosong.");
             }
             String nextNomor = req.nomorKamar().trim();
+            if (nextNomor.length() > 10) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar maksimal 10 karakter.");
+            }
             if (!nextNomor.equalsIgnoreCase(kamar.getNomorKamar())
                 && kamarRepository.existsByNomorKamarIgnoreCase(nextNomor)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah digunakan.");
@@ -114,7 +119,7 @@ public class KamarService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Integer id) {
         Kamar kamar = kamarRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kamar tidak ditemukan."));
 
@@ -145,11 +150,11 @@ public class KamarService {
             return fallback;
         }
         try {
-            return StatusHunian.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+            return StatusHunian.fromInput(raw);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Status hunian harus TERISI, KOSONG, atau PERBAIKAN."
+                "Status hunian tidak valid. Pilih TERISI, KOSONG, atau PERBAIKAN."
             );
         }
     }

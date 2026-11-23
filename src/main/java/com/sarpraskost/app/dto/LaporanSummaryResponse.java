@@ -5,6 +5,7 @@ public record LaporanSummaryResponse(
     long menunggu,
     long diproses,
     long selesai,
-    long ditolak
+    long ditolak,
+    long darurat
 ) {
 }

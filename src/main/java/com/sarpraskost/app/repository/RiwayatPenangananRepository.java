@@ -6,15 +6,15 @@ import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RiwayatPenangananRepository extends JpaRepository<RiwayatPenanganan, Long> {
+public interface RiwayatPenangananRepository extends JpaRepository<RiwayatPenanganan, Integer> {
 
     @EntityGraph(attributePaths = {"pengguna"})
-    List<RiwayatPenanganan> findByLaporanIdLaporanOrderByWaktuUpdateAscIdRiwayatAsc(Long idLaporan);
+    List<RiwayatPenanganan> findByLaporanIdLaporanOrderByWaktuUpdateAscIdRiwayatAsc(Integer idLaporan);
 
     @EntityGraph(attributePaths = {"pengguna"})
-    List<RiwayatPenanganan> findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(Collection<Long> laporanIds);
+    List<RiwayatPenanganan> findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(Collection<Integer> laporanIds);
 
-    void deleteByLaporanIdLaporan(Long idLaporan);
+    void deleteByLaporanIdLaporan(Integer idLaporan);
 
-    long countByPenggunaIdPengguna(Long idPengguna);
+    long countByPenggunaIdPengguna(Integer idPengguna);
 }

@@ -8,7 +8,7 @@ public record RegisterPenggunaRequest(
     String email,
     String password,
     @JsonProperty("no_hp") @JsonAlias("noHp") String noHp,
-    @JsonProperty("id_kamar") @JsonAlias("idKamar") Long idKamar,
+    @JsonProperty("id_kamar") @JsonAlias("idKamar") Integer idKamar,
     @JsonProperty("nomor_kamar") @JsonAlias("nomorKamar") String nomorKamar
 ) {
 }

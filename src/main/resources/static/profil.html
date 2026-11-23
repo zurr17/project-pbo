@@ -205,8 +205,9 @@
           SarprasApp.fetchKamar(),
           SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id_pengguna)}`)
         ]);
+        const privateRooms = (rooms || []).filter((r) => !r.is_umum && (r.nomor_kamar || '').toUpperCase() !== 'UMUM');
         profileKamarSelect.innerHTML = '<option value="">-- Belum memilih kamar --</option>' +
-          (rooms || []).map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+          privateRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
 
         currentUser = freshUser;
         SarprasApp.saveUser(freshUser);
@@ -229,8 +230,8 @@
         const idKamarRaw = profileKamarSelect.value;
         const password = profilePasswordInput.value;
 
-        if (!nama_lengkap) {
-          showError('Nama lengkap wajib diisi.');
+        if (!nama_lengkap || !no_hp) {
+          showError('Nama lengkap dan nomor HP wajib diisi.');
           return;
         }
 

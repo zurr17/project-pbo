@@ -18,7 +18,6 @@ import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import com.sarpraskost.app.util.PasswordHasher;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,7 +62,7 @@ public class PenggunaService {
     }
 
     @Transactional(readOnly = true)
-    public PenggunaResponse getById(Long id) {
+    public PenggunaResponse getById(Integer id) {
         Pengguna pengguna = penggunaRepository.findByIdPengguna(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pengguna tidak ditemukan."));
         return PenggunaResponse.from(pengguna);
@@ -71,10 +70,11 @@ public class PenggunaService {
 
     @Transactional
     public PenggunaResponse register(RegisterPenggunaRequest request) {
-        if (request == null || isBlank(request.namaLengkap()) || isBlank(request.email()) || isBlank(request.password())) {
+        if (request == null || isBlank(request.namaLengkap()) || isBlank(request.email())
+            || isBlank(request.password()) || isBlank(request.noHp())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Nama lengkap, email, dan kata sandi wajib diisi."
+                "Nama lengkap, email, nomor HP, dan kata sandi wajib diisi."
             );
         }
 
@@ -83,30 +83,35 @@ public class PenggunaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email sudah terdaftar.");
         }
 
+        String noHp = normalizeNoHp(request.noHp());
+        if (penggunaRepository.existsByNoHpIgnoreCase(noHp)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor HP sudah terdaftar.");
+        }
+
         Kamar kamar = resolveKamar(request.idKamar(), request.nomorKamar());
+        validateKamarPenghuni(kamar);
+
         Pengguna pengguna = new Pengguna(
             kamar,
             request.namaLengkap().trim(),
             email,
             PasswordHasher.hash(request.password()),
-            isBlank(request.noHp()) ? null : request.noHp().trim(),
+            noHp,
             Role.PENGHUNI
         );
 
         Pengguna saved = penggunaRepository.save(pengguna);
-        if (kamar != null && kamar.getStatusHunian() == StatusHunian.KOSONG) {
-            kamar.setStatusHunian(StatusHunian.TERISI);
-            kamarRepository.save(kamar);
-        }
+        markKamarTerisi(kamar);
         return PenggunaResponse.from(saved);
     }
 
     @Transactional
     public PenggunaResponse create(CreatePenggunaRequest request) {
-        if (request == null || isBlank(request.namaLengkap()) || isBlank(request.email()) || isBlank(request.password())) {
+        if (request == null || isBlank(request.namaLengkap()) || isBlank(request.email())
+            || isBlank(request.password()) || isBlank(request.noHp())) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Nama lengkap, email, dan kata sandi wajib diisi."
+                "Nama lengkap, email, nomor HP, dan kata sandi wajib diisi."
             );
         }
 
@@ -115,28 +120,31 @@ public class PenggunaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email sudah terdaftar.");
         }
 
+        String noHp = normalizeNoHp(request.noHp());
+        if (penggunaRepository.existsByNoHpIgnoreCase(noHp)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor HP sudah terdaftar.");
+        }
+
         Role role = isBlank(request.role()) ? Role.PENGHUNI : parseRole(request.role());
         Kamar kamar = role == Role.OWNER ? null : resolveKamar(request.idKamar(), request.nomorKamar());
+        validateKamarPenghuni(kamar);
 
         Pengguna pengguna = new Pengguna(
             kamar,
             request.namaLengkap().trim(),
             email,
             PasswordHasher.hash(request.password()),
-            isBlank(request.noHp()) ? null : request.noHp().trim(),
+            noHp,
             role
         );
 
         Pengguna saved = penggunaRepository.save(pengguna);
-        if (kamar != null && kamar.getStatusHunian() == StatusHunian.KOSONG) {
-            kamar.setStatusHunian(StatusHunian.TERISI);
-            kamarRepository.save(kamar);
-        }
+        markKamarTerisi(kamar);
         return PenggunaResponse.from(saved);
     }
 
     @Transactional
-    public PenggunaResponse update(Long id, UpdatePenggunaRequest request) {
+    public PenggunaResponse update(Integer id, UpdatePenggunaRequest request) {
         if (request == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data pembaruan profil wajib diisi.");
         }
@@ -152,7 +160,13 @@ public class PenggunaService {
         }
 
         if (request.noHp() != null) {
-            pengguna.setNoHp(isBlank(request.noHp()) ? null : request.noHp().trim());
+            String nextHp = normalizeNoHp(request.noHp());
+            penggunaRepository.findByNoHpIgnoreCase(nextHp).ifPresent(existing -> {
+                if (!existing.getIdPengguna().equals(pengguna.getIdPengguna())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor HP sudah digunakan pengguna lain.");
+                }
+            });
+            pengguna.setNoHp(nextHp);
         }
 
         if (!isBlank(request.role())) {
@@ -166,11 +180,9 @@ public class PenggunaService {
         Kamar oldKamar = pengguna.getKamar();
         if (pengguna.getRole() == Role.PENGHUNI && (request.idKamar() != null || request.nomorKamar() != null)) {
             Kamar nextKamar = resolveKamar(request.idKamar(), request.nomorKamar());
+            validateKamarPenghuni(nextKamar);
             pengguna.setKamar(nextKamar);
-            if (nextKamar != null && nextKamar.getStatusHunian() == StatusHunian.KOSONG) {
-                nextKamar.setStatusHunian(StatusHunian.TERISI);
-                kamarRepository.save(nextKamar);
-            }
+            markKamarTerisi(nextKamar);
         }
 
         if (!isBlank(request.password())) {
@@ -182,7 +194,8 @@ public class PenggunaService {
 
         if (oldKamar != null && (saved.getKamar() == null || !oldKamar.getIdKamar().equals(saved.getKamar().getIdKamar()))) {
             if (penggunaRepository.countByKamarIdKamar(oldKamar.getIdKamar()) == 0
-                && oldKamar.getStatusHunian() == StatusHunian.TERISI) {
+                && oldKamar.getStatusHunian() == StatusHunian.TERISI
+                && !oldKamar.isFasilitasUmum()) {
                 oldKamar.setStatusHunian(StatusHunian.KOSONG);
                 kamarRepository.save(oldKamar);
             }
@@ -192,7 +205,7 @@ public class PenggunaService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Integer id) {
         Pengguna pengguna = penggunaRepository.findByIdPengguna(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pengguna tidak ditemukan."));
 
@@ -216,13 +229,13 @@ public class PenggunaService {
         List<String> filesToDelete = new ArrayList<>();
 
         for (LaporanKerusakan laporan : ownedReports) {
-            if (laporan.getFotoUrl() != null) {
+            if (!isBlank(laporan.getFotoUrl())) {
                 filesToDelete.add(laporan.getFotoUrl());
             }
             List<RiwayatPenanganan> riwayatList =
                 riwayatRepository.findByLaporanIdLaporanOrderByWaktuUpdateAscIdRiwayatAsc(laporan.getIdLaporan());
             for (RiwayatPenanganan r : riwayatList) {
-                if (r.getFotoSesudahUrl() != null) {
+                if (!isBlank(r.getFotoSesudahUrl())) {
                     filesToDelete.add(r.getFotoSesudahUrl());
                 }
             }
@@ -236,7 +249,8 @@ public class PenggunaService {
         penggunaRepository.flush();
 
         if (oldKamar != null && penggunaRepository.countByKamarIdKamar(oldKamar.getIdKamar()) == 0
-            && oldKamar.getStatusHunian() == StatusHunian.TERISI) {
+            && oldKamar.getStatusHunian() == StatusHunian.TERISI
+            && !oldKamar.isFasilitasUmum()) {
             oldKamar.setStatusHunian(StatusHunian.KOSONG);
             kamarRepository.save(oldKamar);
         }
@@ -246,7 +260,34 @@ public class PenggunaService {
         }
     }
 
-    private Kamar resolveKamar(Long idKamar, String nomorKamar) {
+    private void validateKamarPenghuni(Kamar kamar) {
+        if (kamar != null && kamar.isFasilitasUmum()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Area Fasilitas Umum bukan kamar hunian dan tidak dapat dipilih sebagai kamar penghuni."
+            );
+        }
+    }
+
+    private void markKamarTerisi(Kamar kamar) {
+        if (kamar != null && kamar.getStatusHunian() == StatusHunian.KOSONG) {
+            kamar.setStatusHunian(StatusHunian.TERISI);
+            kamarRepository.save(kamar);
+        }
+    }
+
+    private String normalizeNoHp(String raw) {
+        if (isBlank(raw)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor HP wajib diisi.");
+        }
+        String clean = raw.trim();
+        if (clean.length() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor HP maksimal 20 karakter.");
+        }
+        return clean;
+    }
+
+    private Kamar resolveKamar(Integer idKamar, String nomorKamar) {
         if (idKamar != null) {
             return kamarRepository.findById(idKamar)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kamar tidak ditemukan."));
@@ -263,11 +304,11 @@ public class PenggunaService {
 
     private Role parseRole(String raw) {
         try {
-            return Role.valueOf(raw.trim().toUpperCase(Locale.ROOT));
+            return Role.fromInput(raw);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Role tidak valid. Hanya PENGHUNI atau OWNER yang diizinkan."
+                "Role tidak valid. Hanya PENGHUNI (Penghuni) atau OWNER (Pengelola) yang diizinkan."
             );
         }
     }

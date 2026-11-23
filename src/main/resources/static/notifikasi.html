@@ -60,10 +60,14 @@
 
           notifListEl.innerHTML = items.map((item) => {
             const statusMeta = SarprasApp.getStatusMeta(item.status_tiket);
+            const urgentClass = item.is_urgent ? 'urgent-card' : '';
             return `
-              <article class="notif-card ${item.is_read ? '' : 'unread'}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
+              <article class="notif-card ${item.is_read ? '' : 'unread'} ${urgentClass}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
                 <div class="report-card-top">
-                  <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
+                    ${item.is_urgent ? '<span class="priority-pill high">DARURAT</span>' : ''}
+                  </div>
                   <div style="display:flex;align-items:center;gap:6px;">
                     ${!item.is_read ? '<span class="priority-pill high">Baru</span>' : ''}
                     <span class="status-badge ${statusMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(statusMeta.label)}</span>

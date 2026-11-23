@@ -7,13 +7,18 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PenggunaRepository extends JpaRepository<Pengguna, Long> {
+public interface PenggunaRepository extends JpaRepository<Pengguna, Integer> {
 
     @EntityGraph(attributePaths = "kamar")
     Optional<Pengguna> findByEmailIgnoreCase(String email);
 
     @EntityGraph(attributePaths = "kamar")
-    Optional<Pengguna> findByIdPengguna(Long idPengguna);
+    Optional<Pengguna> findByNoHpIgnoreCase(String noHp);
+
+    boolean existsByNoHpIgnoreCase(String noHp);
+
+    @EntityGraph(attributePaths = "kamar")
+    Optional<Pengguna> findByIdPengguna(Integer idPengguna);
 
     @EntityGraph(attributePaths = "kamar")
     Optional<Pengguna> findFirstByKamarNomorKamarIgnoreCaseAndRole(String nomorKamar, Role role);
@@ -28,5 +33,5 @@ public interface PenggunaRepository extends JpaRepository<Pengguna, Long> {
 
     long countByRole(Role role);
 
-    long countByKamarIdKamar(Long idKamar);
+    long countByKamarIdKamar(Integer idKamar);
 }

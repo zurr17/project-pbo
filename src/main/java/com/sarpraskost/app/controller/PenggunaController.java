@@ -45,20 +45,20 @@ public class PenggunaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PenggunaResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<PenggunaResponse> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(penggunaService.getById(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PenggunaResponse> update(
-        @PathVariable Long id,
+        @PathVariable Integer id,
         @RequestBody UpdatePenggunaRequest request
     ) {
         return ResponseEntity.ok(penggunaService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
         penggunaService.delete(id);
         return ResponseEntity.ok(Map.of("message", "Akun berhasil dihapus."));
     }

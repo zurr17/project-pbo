@@ -62,6 +62,8 @@
         </a>
       </div>
 
+      <div id="umumBannerSection" class="umum-banner-section" style="display:none;"></div>
+
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="section-header">
           <h2 class="section-title">Laporan saya</h2>
@@ -137,7 +139,7 @@
           </svg>
           <div>
             <div style="font-size:13px;font-weight:600;color:#172554;margin-bottom:4px;">Pemeliharaan fasilitas berkala</div>
-            <div style="font-size:12px;color:#64748B;line-height:1.5;">Laporkan setiap kendala fasilitas kamar agar segera diverifikasi dan ditangani oleh Pak Soleh.</div>
+            <div style="font-size:12px;color:#64748B;line-height:1.5;">Laporkan setiap kendala fasilitas kamar atau fasilitas bersama agar segera dijadwalkan dan ditangani oleh pengelola kost.</div>
           </div>
         </div>
       </div>
@@ -206,6 +208,84 @@
       }
 
       SarprasApp.updateBellUnreadBadge(user.id_pengguna);
+
+      const umumSection = document.getElementById('umumBannerSection');
+      const votedKeyPrefix = `sarpraskost_terdampak_${user.id_pengguna}_`;
+
+      async function loadActiveUmumBanner() {
+        try {
+          const items = await SarprasApp.fetchActiveFasilitasUmum();
+          if (!items || items.length === 0) {
+            umumSection.style.display = 'none';
+            umumSection.innerHTML = '';
+            return;
+          }
+          umumSection.style.display = 'flex';
+          umumSection.innerHTML = `
+            <div class="section-header">
+              <h2 class="section-title">Gangguan Fasilitas Umum Aktif</h2>
+              <span class="priority-pill medium">${items.length} aktif</span>
+            </div>
+            ${items.map((item) => {
+              const stMeta = SarprasApp.getStatusMeta(item.status_tiket);
+              const voted = sessionStorage.getItem(votedKeyPrefix + item.id_laporan) === '1';
+              const scheduleHtml = item.jadwal_pengerjaan
+                ? `<div style="font-size:11px;color:#1E40AF;font-weight:600;">Jadwal perbaikan: ${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(item.jadwal_pengerjaan))} WIB</div>`
+                : '';
+              return `
+                <article class="umum-alert-card" data-umum-card="${item.id_laporan}">
+                  <div class="umum-alert-header">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                      <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
+                      ${item.is_urgent ? '<span class="priority-pill high">DARURAT</span>' : ''}
+                      <span class="terdampak-pill" data-count-pill="${item.id_laporan}">${Number(item.jumlah_terdampak || 1)} terdampak</span>
+                    </div>
+                    <span class="status-badge ${stMeta.className}">
+                      <span class="status-dot"></span>${SarprasApp.escapeHtml(stMeta.label)}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 class="umum-alert-title">${SarprasApp.escapeHtml(item.judul_laporan)}</h3>
+                    <div class="umum-alert-sub">${SarprasApp.escapeHtml(item.nama_fasilitas)} (${SarprasApp.escapeHtml(item.kode_aset)}) &bull; ${SarprasApp.escapeHtml(item.deskripsi_kerusakan)}</div>
+                    ${scheduleHtml}
+                  </div>
+                  <div style="display:flex;gap:8px;align-items:center;">
+                    <button type="button" class="btn btn-primary btn-sm" style="flex:1;" data-terdampak-btn="${item.id_laporan}" ${voted ? 'disabled' : ''}>
+                      ${voted ? 'Sudah Ditandai Terdampak' : 'Saya Terdampak (+1)'}
+                    </button>
+                    <a href="detail-laporan.html?id=${encodeURIComponent(item.id_laporan)}" class="btn btn-outline btn-sm" style="width:auto;padding:0 12px;">Detail</a>
+                  </div>
+                </article>
+              `;
+            }).join('')}
+          `;
+        } catch {
+          umumSection.style.display = 'none';
+        }
+      }
+
+      umumSection.addEventListener('click', async (e) => {
+        const btn = e.target.closest('[data-terdampak-btn]');
+        if (!btn || btn.disabled) return;
+        const laporanId = btn.getAttribute('data-terdampak-btn');
+        btn.disabled = true;
+        btn.textContent = 'Mencatat...';
+        try {
+          const updated = await SarprasApp.tambahTerdampak(laporanId);
+          sessionStorage.setItem(votedKeyPrefix + laporanId, '1');
+          const countEl = umumSection.querySelector(`[data-count-pill="${laporanId}"]`);
+          if (countEl) {
+            countEl.textContent = `${Number(updated.jumlah_terdampak || 1)} terdampak`;
+          }
+          btn.textContent = 'Sudah Ditandai Terdampak';
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Saya Terdampak (+1)';
+          alert(err.message || 'Gagal mencatat terdampak.');
+        }
+      });
+
+      loadActiveUmumBanner();
 
       const recentContainer = document.getElementById('recentReportsList');
       try {

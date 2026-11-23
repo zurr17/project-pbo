@@ -9,7 +9,7 @@ public record CreatePenggunaRequest(
     String password,
     @JsonProperty("no_hp") @JsonAlias("noHp") String noHp,
     String role,
-    @JsonProperty("id_kamar") @JsonAlias("idKamar") Long idKamar,
+    @JsonProperty("id_kamar") @JsonAlias("idKamar") Integer idKamar,
     @JsonProperty("nomor_kamar") @JsonAlias("nomorKamar") String nomorKamar
 ) {
 }

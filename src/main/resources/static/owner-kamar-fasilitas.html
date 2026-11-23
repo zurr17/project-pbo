@@ -198,8 +198,9 @@
             <div class="input-wrap">
               <select id="kondisiFasilitasSelect" class="input-control">
                 <option value="BAIK">Baik</option>
-                <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
-                <option value="RUSAK">Rusak</option>
+                <option value="RUSAK_RINGAN">Rusak Ringan</option>
+                <option value="RUSAK_BERAT">Rusak Berat</option>
+                <option value="DALAM_PERBAIKAN">Dalam Perbaikan</option>
               </select>
             </div>
           </div>
@@ -300,14 +301,18 @@
         }
         kamarListEl.innerHTML = kamarCache.map((k) => {
           const meta = SarprasApp.getStatusHunianMeta(k.status_hunian);
+          const roomTitle = k.is_umum ? 'Area Fasilitas Umum (UMUM)' : `Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}`;
+          const badgeHtml = k.is_umum
+            ? '<span class="terdampak-pill">Fasilitas Bersama</span>'
+            : `<span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>`;
           return `
             <article class="facility-card">
               <div class="facility-header">
                 <div style="min-width:0;">
-                  <h3 class="facility-title">Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}</h3>
+                  <h3 class="facility-title">${roomTitle}</h3>
                   <div class="facility-brand">Tipe ${SarprasApp.escapeHtml(k.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(k.lantai)}</div>
                 </div>
-                <span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>
+                ${badgeHtml}
               </div>
               <div class="kv-row">
                 <span class="kv-label">Penghuni / Aset</span>
@@ -351,11 +356,12 @@
         }
         fasilitasListEl.innerHTML = fasilitasCache.map((f) => {
           const meta = SarprasApp.getKondisiMeta(f.kondisi);
+          const lokasiStr = f.is_umum ? 'Fasilitas Umum' : `Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
           return `
             <article class="facility-card">
               <div class="facility-header">
                 <div style="min-width:0;">
-                  <div class="report-code">${SarprasApp.escapeHtml(f.kode_aset)} &bull; Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}</div>
+                  <div class="report-code">${SarprasApp.escapeHtml(f.kode_aset)} &bull; ${lokasiStr}</div>
                   <h3 class="facility-title" style="margin-top:4px;">${SarprasApp.escapeHtml(f.nama_fasilitas)}</h3>
                   <div class="facility-brand">${SarprasApp.escapeHtml(f.nama_kategori)} &bull; ${SarprasApp.escapeHtml(f.merk_tipe || '-')}</div>
                 </div>

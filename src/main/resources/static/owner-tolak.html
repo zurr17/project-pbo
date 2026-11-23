@@ -111,7 +111,7 @@
         document.getElementById('pageKodeSub').textContent = laporan.kode_tiket;
         document.getElementById('summaryKode').textContent = laporan.kode_tiket;
         document.getElementById('summaryPenghuni').textContent =
-          `${laporan.nama_pelapor} • Kamar ${laporan.nomor_kamar}`;
+          `${laporan.nama_pelapor} • ${laporan.is_umum ? 'Fasilitas Umum' : 'Kamar ' + laporan.nomor_kamar}`;
         document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
         document.getElementById('summaryLokasi').textContent =
           `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`;

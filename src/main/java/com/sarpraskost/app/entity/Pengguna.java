@@ -1,9 +1,9 @@
 package com.sarpraskost.app.entity;
 
+import com.sarpraskost.app.entity.converter.RoleConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,27 +19,27 @@ public class Pengguna {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_pengguna")
-    private Long idPengguna;
+    private Integer idPengguna;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_kamar")
-    private Kamar kamar;
-
-    @Column(name = "nama_lengkap", nullable = false, length = 120)
+    @Column(name = "nama_lengkap", nullable = false, length = 80)
     private String namaLengkap;
 
-    @Column(name = "email", nullable = false, unique = true, length = 150)
+    @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
+
+    @Column(name = "no_hp", nullable = false, unique = true, length = 20)
+    private String noHp;
 
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "no_hp", length = 30)
-    private String noHp;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false, length = 30)
+    @Convert(converter = RoleConverter.class)
+    @Column(name = "role", nullable = false, length = 15)
     private Role role;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_kamar")
+    private Kamar kamar;
 
     public Pengguna() {
     }
@@ -60,20 +60,12 @@ public class Pengguna {
         this.role = role;
     }
 
-    public Long getIdPengguna() {
+    public Integer getIdPengguna() {
         return idPengguna;
     }
 
-    public void setIdPengguna(Long idPengguna) {
+    public void setIdPengguna(Integer idPengguna) {
         this.idPengguna = idPengguna;
-    }
-
-    public Kamar getKamar() {
-        return kamar;
-    }
-
-    public void setKamar(Kamar kamar) {
-        this.kamar = kamar;
     }
 
     public String getNamaLengkap() {
@@ -92,14 +84,6 @@ public class Pengguna {
         this.email = email;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
     public String getNoHp() {
         return noHp;
     }
@@ -108,11 +92,27 @@ public class Pengguna {
         this.noHp = noHp;
     }
 
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
     public Role getRole() {
         return role;
     }
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public Kamar getKamar() {
+        return kamar;
+    }
+
+    public void setKamar(Kamar kamar) {
+        this.kamar = kamar;
     }
 }

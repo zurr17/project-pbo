@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 
 public record FasilitasRequest(
-    @JsonProperty("id_kamar") @JsonAlias("idKamar") Long idKamar,
-    @JsonProperty("id_kategori") @JsonAlias("idKategori") Long idKategori,
+    @JsonProperty("id_kamar") @JsonAlias("idKamar") Integer idKamar,
+    @JsonProperty("id_kategori") @JsonAlias("idKategori") Integer idKategori,
     @JsonProperty("kode_aset") @JsonAlias("kodeAset") String kodeAset,
     @JsonProperty("nama_fasilitas") @JsonAlias("namaFasilitas") String namaFasilitas,
     @JsonProperty("merk_tipe") @JsonAlias("merkTipe") String merkTipe,

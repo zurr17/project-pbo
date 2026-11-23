@@ -22,6 +22,7 @@
 
     <section id="detailContent" class="page-body has-bottom-action">
       <div id="detailError" class="error-banner" role="alert"></div>
+      <div id="urgentPriorityBanner" class="info-banner danger" style="display:none;"></div>
 
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
@@ -144,8 +145,22 @@
         document.getElementById('detailMeta').textContent = `${laporan.nama_kategori} • ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
         document.getElementById('detailTitle').textContent = laporan.judul_laporan;
         document.getElementById('detailDesc').textContent = laporan.deskripsi_kerusakan || '-';
-        document.getElementById('detailLokasi').textContent =
-          `Kamar ${laporan.nomor_kamar} (${laporan.tipe_kamar} • Lantai ${laporan.lantai})`;
+        document.getElementById('detailLokasi').textContent = laporan.is_umum
+          ? `Fasilitas Umum / Bersama • ${Number(laporan.jumlah_terdampak || 1)} penghuni terdampak`
+          : `Kamar ${laporan.nomor_kamar} (${laporan.tipe_kamar} • Lantai ${laporan.lantai})`;
+
+        const urgentBanner = document.getElementById('urgentPriorityBanner');
+        if (laporan.is_urgent) {
+          const izinNote = laporan.is_umum
+            ? 'Gangguan darurat pada area Fasilitas Umum.'
+            : (laporan.izin_masuk_kamar
+                ? 'Penghuni SUDAH menyetujui izin masuk kamar untuk perbaikan darurat.'
+                : 'Izin masuk kamar belum tercentang.');
+          urgentBanner.innerHTML = `<div><strong>PRIORITAS DARURAT</strong> &bull; ${SarprasApp.escapeHtml(izinNote)}</div>`;
+          urgentBanner.style.display = 'flex';
+        } else {
+          urgentBanner.style.display = 'none';
+        }
 
         const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('detailStatusBadge');
@@ -155,10 +170,12 @@
         const namaPelapor = laporan.nama_pelapor || 'Penghuni Kost';
         document.getElementById('residentAvatar').textContent = namaPelapor.trim().charAt(0).toUpperCase() || 'P';
         document.getElementById('detailPenghuniNama').textContent = namaPelapor;
+        const kamarShort = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
         document.getElementById('detailPenghuniMeta').textContent =
-          `Kamar ${laporan.nomor_kamar} • ${laporan.no_hp_pelapor || 'No. HP belum diisi'}`;
+          `${kamarShort} • ${laporan.no_hp_pelapor || 'No. HP belum diisi'}`;
 
         const kMeta = SarprasApp.getKondisiMeta(laporan.kondisi_fasilitas);
+        const uMeta = SarprasApp.getUrgensiMeta(laporan.tingkat_urgensi, laporan.is_urgent);
         document.getElementById('assetDetailCard').innerHTML = `
           <div class="kv-row">
             <span class="kv-label">Aset Fasilitas</span>
@@ -169,9 +186,30 @@
             <span class="kv-value">${SarprasApp.escapeHtml(laporan.kode_aset)} &bull; ${SarprasApp.escapeHtml(laporan.merk_tipe || '-')}</span>
           </div>
           <div class="kv-row">
-            <span class="kv-label">Kondisi Aset Saat Ini</span>
-            <span class="status-badge ${kMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(kMeta.label)}</span>
+            <span class="kv-label">Kondisi &amp; Urgensi</span>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+              <span class="status-badge ${kMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(kMeta.label)}</span>
+              <span class="priority-pill ${uMeta.className}">${SarprasApp.escapeHtml(uMeta.label)}</span>
+            </div>
           </div>
+          ${(laporan.is_umum || Number(laporan.jumlah_terdampak) > 1) ? `
+            <div class="kv-row">
+              <span class="kv-label">Jumlah Terdampak</span>
+              <span class="terdampak-pill">${Number(laporan.jumlah_terdampak || 1)} orang terdampak</span>
+            </div>
+          ` : ''}
+          ${laporan.jadwal_pengerjaan ? `
+            <div class="kv-row">
+              <span class="kv-label">Jadwal Pengerjaan</span>
+              <span class="schedule-pill">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span>
+            </div>
+          ` : ''}
+          ${!laporan.is_umum && laporan.is_urgent ? `
+            <div class="kv-row">
+              <span class="kv-label">Izin Masuk Kamar</span>
+              <span class="kv-value">${laporan.izin_masuk_kamar ? 'Disetujui penghuni' : 'Tidak'}</span>
+            </div>
+          ` : ''}
           ${laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0 ? `
             <div class="kv-row">
               <span class="kv-label">Biaya Perbaikan</span>

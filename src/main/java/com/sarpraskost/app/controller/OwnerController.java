@@ -44,7 +44,7 @@ public class OwnerController {
 
     @PutMapping("/laporan/{id}/proses")
     public ResponseEntity<LaporanResponse> prosesLaporan(
-        @PathVariable Long id,
+        @PathVariable Integer id,
         @RequestBody(required = false) OwnerProsesRequest request
     ) {
         return ResponseEntity.ok(laporanService.prosesLaporan(id, request));
@@ -52,7 +52,7 @@ public class OwnerController {
 
     @PutMapping("/laporan/{id}/tolak")
     public ResponseEntity<LaporanResponse> tolakLaporan(
-        @PathVariable Long id,
+        @PathVariable Integer id,
         @RequestBody OwnerTolakRequest request
     ) {
         return ResponseEntity.ok(laporanService.tolakLaporan(id, request));
@@ -60,9 +60,9 @@ public class OwnerController {
 
     @PutMapping(value = "/laporan/{id}/selesai", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<LaporanResponse> selesaikanLaporan(
-        @PathVariable Long id,
-        @RequestParam(value = "id_pengguna", required = false) Long idPenggunaSnake,
-        @RequestParam(value = "id_owner", required = false) Long idOwnerAlias,
+        @PathVariable Integer id,
+        @RequestParam(value = "id_pengguna", required = false) Integer idPenggunaSnake,
+        @RequestParam(value = "id_owner", required = false) Integer idOwnerAlias,
         @RequestParam(value = "catatan_penanganan", required = false) String catatanSnake,
         @RequestParam(value = "catatanPenanganan", required = false) String catatanCamel,
         @RequestParam(value = "biaya_perbaikan", required = false) String biayaRaw,
@@ -71,7 +71,7 @@ public class OwnerController {
         @RequestParam(value = "fotoSesudah", required = false) MultipartFile fotoSesudahCamel,
         @RequestParam(value = "foto", required = false) MultipartFile fotoFallback
     ) {
-        Long idPengguna = idPenggunaSnake != null ? idPenggunaSnake : idOwnerAlias;
+        Integer idPengguna = idPenggunaSnake != null ? idPenggunaSnake : idOwnerAlias;
         String catatan = catatanSnake != null ? catatanSnake : catatanCamel;
         BigDecimal biaya = parseBiaya(biayaRaw);
         MultipartFile bukti = selectPhoto(fotoSesudah, fotoSesudahCamel, fotoFallback);

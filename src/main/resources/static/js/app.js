@@ -24,7 +24,7 @@ const SarprasApp = (() => {
 
   function getDashboardUrlByRole(role) {
     const normalized = (role || '').toUpperCase();
-    if (normalized === 'OWNER') return 'owner-home.html';
+    if (normalized === 'OWNER' || normalized === 'PENGELOLA') return 'owner-home.html';
     return 'home.html';
   }
 
@@ -50,7 +50,8 @@ const SarprasApp = (() => {
   function requireOwnerAuth() {
     const user = requireAuth();
     if (!user) return null;
-    if ((user.role || '').toUpperCase() !== 'OWNER') {
+    const roleUpper = (user.role || '').toUpperCase();
+    if (roleUpper !== 'OWNER' && roleUpper !== 'PENGELOLA') {
       window.location.href = getDashboardUrlByRole(user.role);
       return null;
     }
@@ -121,14 +122,33 @@ const SarprasApp = (() => {
   }
 
   function getKondisiMeta(kondisi) {
-    switch ((kondisi || '').toUpperCase()) {
+    switch ((kondisi || '').toUpperCase().replace(/\s+/g, '_')) {
+      case 'RUSAK_RINGAN':
       case 'PERLU_PERAWATAN':
-        return { label: 'Perlu Perawatan', className: 'status-menunggu' };
+        return { label: 'Rusak Ringan', className: 'status-menunggu' };
+      case 'DALAM_PERBAIKAN':
+        return { label: 'Dalam Perbaikan', className: 'status-diproses' };
+      case 'RUSAK_BERAT':
       case 'RUSAK':
-        return { label: 'Rusak', className: 'status-ditolak' };
+        return { label: 'Rusak Berat', className: 'status-ditolak' };
       case 'BAIK':
       default:
         return { label: 'Baik', className: 'status-selesai' };
+    }
+  }
+
+  function getUrgensiMeta(urgensi, isUrgent) {
+    const key = isUrgent ? 'DARURAT' : (urgensi || 'SEDANG').toUpperCase();
+    switch (key) {
+      case 'DARURAT':
+        return { label: 'DARURAT', className: 'high' };
+      case 'TINGGI':
+        return { label: 'Tinggi', className: 'high' };
+      case 'RENDAH':
+        return { label: 'Rendah', className: 'low' };
+      case 'SEDANG':
+      default:
+        return { label: 'Sedang', className: 'medium' };
     }
   }
 
@@ -151,7 +171,7 @@ const SarprasApp = (() => {
         <path d="M10.4665 5.49932C11.0397 4.5836 11.446 3.57353 11.6665 2.51599C12.0832 4.59932 13.3332 6.59932 14.9999 7.93266C16.6665 9.26599 17.4999 10.8493 17.4999 12.516C17.5046 13.6679 17.1673 14.7953 16.5305 15.7552C15.8938 16.7152 14.9864 17.4645 13.9233 17.9081C12.8602 18.3517 11.6894 18.4697 10.5592 18.2471C9.42898 18.0244 8.39031 17.4713 7.57487 16.6577M5.83333 13.5829C7.66667 13.5829 9.16667 12.0579 9.16667 10.2079C9.16667 9.24122 8.69167 8.32455 7.74167 7.54955C6.79167 6.77455 6.075 5.62455 5.83333 4.41622C5.59167 5.62455 4.88333 6.78289 3.925 7.54955C2.96667 8.31622 2.5 9.24955 2.5 10.2079C2.5 12.0579 4 13.5829 5.83333 13.5829Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>`;
     }
-    if (k.includes('elektronik') || k.includes('listrik') || k.includes('lampu') || k.includes('ac')) {
+    if (k.includes('elektronik') || k.includes('listrik') || k.includes('lampu') || k.includes('ac') || k.includes('wifi')) {
       return `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M12.5 11.6668C12.6667 10.8334 13.0833 10.25 13.75 9.58328C14.5833 8.83322 15 7.7498 15 6.66638C15 5.3402 14.4732 4.06833 13.5355 3.13057C12.5979 2.19281 11.3261 1.66599 10 1.66599C8.67392 1.66599 7.40215 2.19281 6.46447 3.13057C5.52678 4.06833 5 5.3402 5 6.66638C5 7.49978 5.16667 8.49986 6.25 9.58328C6.83333 10.1667 7.33333 10.8334 7.5 11.6668M7.5 15.0004H12.5M8.33333 18.334H11.6667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>`;
@@ -168,12 +188,29 @@ const SarprasApp = (() => {
 
   function renderReportCard(laporan) {
     const statusMeta = getStatusMeta(laporan.status_tiket);
+    const statusUpper = (laporan.status_tiket || '').toUpperCase();
+    const isActiveUrgent = laporan.is_urgent && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
     const tanggal = formatDateIndo(laporan.tgl_lapor);
     const assetLine = `${laporan.nama_fasilitas || '-'} (${laporan.nama_kategori || '-'})`;
+    const urgentPill = laporan.is_urgent
+      ? '<span class="priority-pill high">DARURAT</span>'
+      : '';
+    const terdampakCount = Number(laporan.jumlah_terdampak || 1);
+    const terdampakPill = (laporan.is_umum || terdampakCount > 1)
+      ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
+      : '';
+    const scheduleLine = laporan.jadwal_pengerjaan
+      ? `<div class="report-sub" style="color:#1E40AF;font-weight:600;">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</div>`
+      : '';
+
     return `
-      <a class="report-card" href="detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
+      <a class="report-card ${isActiveUrgent ? 'urgent-card' : ''}" href="detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
         <div class="report-card-top">
-          <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;">
+            <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
+            ${urgentPill}
+            ${terdampakPill}
+          </div>
           <span class="status-badge ${statusMeta.className}">
             <span class="status-dot"></span>
             ${escapeHtml(statusMeta.label)}
@@ -186,6 +223,7 @@ const SarprasApp = (() => {
           <div class="report-card-text">
             <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
             <div class="report-sub">${escapeHtml(assetLine)} &bull; ${escapeHtml(tanggal)}</div>
+            ${scheduleLine}
           </div>
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -197,19 +235,37 @@ const SarprasApp = (() => {
 
   function renderOwnerReportCard(laporan) {
     const statusMeta = getStatusMeta(laporan.status_tiket);
+    const statusUpper = (laporan.status_tiket || '').toUpperCase();
+    const isActiveUrgent = laporan.is_urgent && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
     const tanggal = formatDateIndo(laporan.tgl_lapor);
+    const kamarLabel = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar || '-'}`;
     const pelapor = laporan.nama_pelapor
-      ? `${laporan.nama_pelapor} (Kamar ${laporan.nomor_kamar || '-'})`
-      : `Kamar ${laporan.nomor_kamar || '-'}`;
+      ? `${laporan.nama_pelapor} (${kamarLabel})`
+      : kamarLabel;
+
+    const urgentPill = laporan.is_urgent
+      ? '<span class="priority-pill high">DARURAT</span>'
+      : (String(laporan.tingkat_urgensi || '').toUpperCase() === 'TINGGI'
+          ? '<span class="priority-pill medium">Prioritas Tinggi</span>'
+          : '');
+    const terdampakCount = Number(laporan.jumlah_terdampak || 1);
+    const terdampakPill = (laporan.is_umum || terdampakCount > 1)
+      ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
+      : '';
     const biayaBadge = laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0
       ? `<span class="priority-pill">${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`
       : '';
+    const scheduleLine = laporan.jadwal_pengerjaan
+      ? `<div class="report-sub" style="color:#1E40AF;font-weight:600;">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</div>`
+      : '';
 
     return `
-      <a class="report-card" href="owner-detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
+      <a class="report-card ${isActiveUrgent ? 'urgent-card' : ''}" href="owner-detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
         <div class="report-card-top">
-          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;">
             <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
+            ${urgentPill}
+            ${terdampakPill}
             ${biayaBadge}
           </div>
           <span class="status-badge ${statusMeta.className}">
@@ -225,6 +281,7 @@ const SarprasApp = (() => {
             <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
             <div class="report-sub">${escapeHtml(pelapor)} &bull; ${escapeHtml(tanggal)}</div>
             <div class="report-sub" style="color:#2563EB;font-weight:500;">${escapeHtml(laporan.nama_fasilitas || '-')} (${escapeHtml(laporan.kode_aset || '-')})</div>
+            ${scheduleLine}
           </div>
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -392,6 +449,14 @@ const SarprasApp = (() => {
     return requestJson(`/fasilitas/penghuni/${encodeURIComponent(idPengguna)}`);
   }
 
+  async function fetchActiveFasilitasUmum() {
+    return requestJson('/laporan/fasilitas-umum/aktif');
+  }
+
+  async function tambahTerdampak(idLaporan) {
+    return requestJson(`/laporan/${encodeURIComponent(idLaporan)}/terdampak`, { method: 'POST' });
+  }
+
   async function fetchPenghuniLaporan(idPengguna, status = '', query = '') {
     const params = new URLSearchParams();
     if (status && status !== 'SEMUA') params.set('status', status);
@@ -440,6 +505,7 @@ const SarprasApp = (() => {
     formatRupiah,
     getStatusMeta,
     getKondisiMeta,
+    getUrgensiMeta,
     getStatusHunianMeta,
     getCategoryIconSvg,
     renderReportCard,
@@ -455,6 +521,8 @@ const SarprasApp = (() => {
     fetchKategori,
     fetchFasilitas,
     fetchFasilitasByPenghuni,
+    fetchActiveFasilitasUmum,
+    tambahTerdampak,
     fetchPenghuniLaporan,
     fetchOwnerDashboard,
     fetchOwnerLaporan,

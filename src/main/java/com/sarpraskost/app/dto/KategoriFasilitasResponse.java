@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sarpraskost.app.entity.KategoriFasilitas;
 
 public record KategoriFasilitasResponse(
-    @JsonProperty("id_kategori") Long idKategori,
+    @JsonProperty("id_kategori") Integer idKategori,
     @JsonProperty("nama_kategori") String namaKategori,
     String deskripsi,
     @JsonProperty("jumlah_fasilitas") long jumlahFasilitas

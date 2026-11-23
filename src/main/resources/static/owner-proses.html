@@ -42,7 +42,21 @@
           <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
             <path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round" />
           </svg>
-          <span id="modeBannerText">Catat rencana penanganan dan estimasi biaya perbaikan untuk laporan ini.</span>
+          <span id="modeBannerText">Tetapkan jadwal pengerjaan pasti, rencana penanganan, dan estimasi biaya untuk laporan ini.</span>
+        </div>
+
+        <div id="jadwalGroup" class="form-group">
+          <label class="form-label" for="jadwalInput">Jadwal pengerjaan (tanggal &amp; waktu pasti)</label>
+          <div class="input-wrap">
+            <input
+              id="jadwalInput"
+              name="jadwal_pengerjaan"
+              type="datetime-local"
+              class="input-control"
+              required
+            />
+          </div>
+          <span class="form-hint">Wajib diisi. Jadwal ini otomatis dikirimkan ke notifikasi penghuni.</span>
         </div>
 
         <div class="form-group">
@@ -78,9 +92,10 @@
           <label class="form-label" for="kondisiSelect">Pembaruan kondisi aset fasilitas</label>
           <div class="input-wrap">
             <select id="kondisiSelect" name="kondisi_fasilitas" class="input-control">
-              <option value="PERLU_PERAWATAN">Perlu Perawatan</option>
+              <option value="DALAM_PERBAIKAN">Dalam Perbaikan</option>
               <option value="BAIK">Baik (Normal)</option>
-              <option value="RUSAK">Rusak</option>
+              <option value="RUSAK_RINGAN">Rusak Ringan</option>
+              <option value="RUSAK_BERAT">Rusak Berat</option>
             </select>
           </div>
         </div>
@@ -134,6 +149,8 @@
       const tabModeProses = document.getElementById('tabModeProses');
       const tabModeSelesai = document.getElementById('tabModeSelesai');
       const modeBannerText = document.getElementById('modeBannerText');
+      const jadwalGroup = document.getElementById('jadwalGroup');
+      const jadwalInput = document.getElementById('jadwalInput');
       const catatanInput = document.getElementById('catatanInput');
       const biayaInput = document.getElementById('biayaInput');
       const kondisiSelect = document.getElementById('kondisiSelect');
@@ -166,12 +183,14 @@
         const isSelesai = mode === 'selesai';
         tabModeProses.classList.toggle('active', !isSelesai);
         tabModeSelesai.classList.toggle('active', isSelesai);
+        jadwalGroup.style.display = isSelesai ? 'none' : 'flex';
+        jadwalInput.required = !isSelesai;
         fotoSesudahGroup.style.display = isSelesai ? 'flex' : 'none';
-        kondisiSelect.value = isSelesai ? 'BAIK' : 'PERLU_PERAWATAN';
+        kondisiSelect.value = isSelesai ? 'BAIK' : 'DALAM_PERBAIKAN';
         pageTitle.textContent = isSelesai ? 'Selesaikan laporan' : 'Proses laporan';
         modeBannerText.textContent = isSelesai
           ? 'Catat hasil perbaikan, biaya aktual, dan unggah foto bukti setelah diperbaiki. Kondisi aset akan diperbarui.'
-          : 'Setujui laporan untuk memulai perbaikan dan catat estimasi biaya. Penghuni akan langsung menerima notifikasi.';
+          : 'Setujui laporan, tetapkan jadwal pengerjaan pasti, dan catat estimasi biaya. Penghuni langsung menerima notifikasi.';
         submitBtn.textContent = isSelesai ? 'Selesaikan & Simpan Bukti' : 'Setujui & Proses Laporan';
       }
 
@@ -232,11 +251,27 @@
         const laporan = await SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`);
         document.getElementById('pageKodeSub').textContent = laporan.kode_tiket;
         document.getElementById('summaryKode').textContent = laporan.kode_tiket;
+        const lokasiShort = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
         document.getElementById('summaryPenghuni').textContent =
-          `${laporan.nama_pelapor} • Kamar ${laporan.nomor_kamar}`;
+          `${laporan.nama_pelapor} • ${lokasiShort}`;
+        const extraTags = [];
+        if (laporan.is_urgent) extraTags.push('[DARURAT]');
+        if (laporan.is_umum || Number(laporan.jumlah_terdampak) > 1) extraTags.push(`${Number(laporan.jumlah_terdampak || 1)} terdampak`);
+        if (!laporan.is_umum && laporan.izin_masuk_kamar) extraTags.push('Izin masuk disetujui');
         document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
         document.getElementById('summaryLokasi').textContent =
-          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`;
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`
+          + (extraTags.length ? ` • ${extraTags.join(' • ')}` : '');
+
+        if (laporan.jadwal_pengerjaan) {
+          jadwalInput.value = String(laporan.jadwal_pengerjaan).slice(0, 16);
+        } else {
+          const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
+          const yyyy = tomorrow.getFullYear();
+          const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+          const dd = String(tomorrow.getDate()).padStart(2, '0');
+          jadwalInput.value = `${yyyy}-${mm}-${dd}T09:00`;
+        }
 
         if (!params.get('mode') && (laporan.status_tiket || '').toUpperCase() === 'DIPROSES') {
           applyMode('selesai');
@@ -255,9 +290,14 @@
         const catatan = catatanInput.value.trim();
         const biayaVal = biayaInput.value.trim();
         const kondisi = kondisiSelect.value;
+        const jadwalVal = jadwalInput.value.trim();
 
         if (!catatan) {
           showError('Catatan penanganan wajib diisi.');
+          return;
+        }
+        if (activeMode !== 'selesai' && !jadwalVal) {
+          showError('Jadwal pengerjaan (tanggal dan waktu pasti) wajib diisi.');
           return;
         }
 
@@ -290,7 +330,8 @@
             const payload = {
               id_pengguna: user.id_pengguna,
               catatan_penanganan: catatan,
-              kondisi_fasilitas: kondisi
+              kondisi_fasilitas: kondisi,
+              jadwal_pengerjaan: jadwalVal.length === 16 ? `${jadwalVal}:00` : jadwalVal
             };
             if (biayaVal !== '') {
               payload.biaya_perbaikan = Number(biayaVal);

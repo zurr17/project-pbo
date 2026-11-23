@@ -1,9 +1,9 @@
 package com.sarpraskost.app.entity;
 
+import com.sarpraskost.app.entity.converter.KondisiFasilitasConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +20,23 @@ public class FasilitasKamar {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_fasilitas")
-    private Long idFasilitas;
+    private Integer idFasilitas;
+
+    @Column(name = "kode_aset", nullable = false, unique = true, length = 20)
+    private String kodeAset;
+
+    @Column(name = "nama_fasilitas", nullable = false, length = 80)
+    private String namaFasilitas;
+
+    @Column(name = "merk_tipe", length = 60)
+    private String merkTipe;
+
+    @Convert(converter = KondisiFasilitasConverter.class)
+    @Column(name = "kondisi", nullable = false, length = 20)
+    private KondisiFasilitas kondisi = KondisiFasilitas.BAIK;
+
+    @Column(name = "tgl_pasang")
+    private LocalDate tglPasang;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_kamar", nullable = false)
@@ -29,22 +45,6 @@ public class FasilitasKamar {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_kategori", nullable = false)
     private KategoriFasilitas kategori;
-
-    @Column(name = "kode_aset", nullable = false, unique = true, length = 50)
-    private String kodeAset;
-
-    @Column(name = "nama_fasilitas", nullable = false, length = 120)
-    private String namaFasilitas;
-
-    @Column(name = "merk_tipe", length = 120)
-    private String merkTipe;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "kondisi", nullable = false, length = 30)
-    private KondisiFasilitas kondisi;
-
-    @Column(name = "tgl_pasang")
-    private LocalDate tglPasang;
 
     public FasilitasKamar() {
     }
@@ -63,32 +63,16 @@ public class FasilitasKamar {
         this.kodeAset = kodeAset;
         this.namaFasilitas = namaFasilitas;
         this.merkTipe = merkTipe;
-        this.kondisi = kondisi;
+        this.kondisi = kondisi == null ? KondisiFasilitas.BAIK : kondisi;
         this.tglPasang = tglPasang;
     }
 
-    public Long getIdFasilitas() {
+    public Integer getIdFasilitas() {
         return idFasilitas;
     }
 
-    public void setIdFasilitas(Long idFasilitas) {
+    public void setIdFasilitas(Integer idFasilitas) {
         this.idFasilitas = idFasilitas;
-    }
-
-    public Kamar getKamar() {
-        return kamar;
-    }
-
-    public void setKamar(Kamar kamar) {
-        this.kamar = kamar;
-    }
-
-    public KategoriFasilitas getKategori() {
-        return kategori;
-    }
-
-    public void setKategori(KategoriFasilitas kategori) {
-        this.kategori = kategori;
     }
 
     public String getKodeAset() {
@@ -129,5 +113,21 @@ public class FasilitasKamar {
 
     public void setTglPasang(LocalDate tglPasang) {
         this.tglPasang = tglPasang;
+    }
+
+    public Kamar getKamar() {
+        return kamar;
+    }
+
+    public void setKamar(Kamar kamar) {
+        this.kamar = kamar;
+    }
+
+    public KategoriFasilitas getKategori() {
+        return kategori;
+    }
+
+    public void setKategori(KategoriFasilitas kategori) {
+        this.kategori = kategori;
     }
 }
