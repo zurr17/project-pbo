@@ -69,8 +69,9 @@
       if (!user) return;
 
       if (user.nomor_kamar) {
+        const gedungTxt = user.gedung ? `${user.gedung} • ` : '';
         document.getElementById('fasilitasRoomSub').textContent =
-          `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} (Lantai ${user.lantai || '-'})`;
+          `${gedungTxt}Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} (Lantai ${user.lantai || '-'})`;
       }
 
       const fasilitasList = document.getElementById('fasilitasList');

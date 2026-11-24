@@ -43,6 +43,20 @@
               <option value="">Memuat daftar fasilitas...</option>
             </select>
           </div>
+          <div id="fasilitasLainnyaGroup" class="form-group" style="display:none;margin-top:8px;">
+            <label class="form-label" for="fasilitasLainnyaInput">Nama fasilitas yang rusak <span style="color:#DC2626;">*</span></label>
+            <div class="input-wrap">
+              <input
+                id="fasilitasLainnyaInput"
+                name="nama_fasilitas_lainnya"
+                type="text"
+                class="input-control"
+                placeholder="Tuliskan nama fasilitas yang rusak..."
+                maxlength="80"
+              />
+            </div>
+            <span class="form-hint">Fasilitas baru akan otomatis dicatat sesuai lokasi yang dipilih.</span>
+          </div>
           <div id="assetPreview" class="asset-preview-box" style="display:none;"></div>
         </div>
 
@@ -155,6 +169,8 @@
       const preselectedFasilitasId = params.get('fasilitasId');
 
       const fasilitasSelect = document.getElementById('fasilitasSelect');
+      const fasilitasLainnyaGroup = document.getElementById('fasilitasLainnyaGroup');
+      const fasilitasLainnyaInput = document.getElementById('fasilitasLainnyaInput');
       const assetPreview = document.getElementById('assetPreview');
       const umumExistingWarning = document.getElementById('umumExistingWarning');
       const umumExistingDetail = document.getElementById('umumExistingDetail');
@@ -208,27 +224,25 @@
         locKamarBtn.classList.toggle('active', targetLoc === 'KAMAR');
         locUmumBtn.classList.toggle('active', targetLoc === 'UMUM');
         locHintText.textContent = targetLoc === 'UMUM'
-          ? 'Menampilkan aset Fasilitas Umum / Bersama. Jika sudah ada tiket aktif, gunakan tombol Saya Terdampak (+1).'
-          : `Menampilkan aset di Kamar ${user.nomor_kamar || '-'}. Untuk area bersama, pilih tab Fasilitas Umum / Bersama.`;
+          ? 'Menampilkan aset Fasilitas Umum / Bersama. Jika tidak ada di daftar, pilih Lainnya di bagian paling bawah.'
+          : `Menampilkan aset di Kamar ${user.nomor_kamar || '-'}. Jika tidak ada di daftar, pilih Lainnya di bagian paling bawah.`;
 
         const filtered = targetLoc === 'UMUM'
           ? fasilitasList.filter((f) => f.is_umum)
           : fasilitasList.filter((f) => !f.is_umum);
 
-        if (filtered.length === 0) {
-          fasilitasSelect.innerHTML = targetLoc === 'UMUM'
-            ? '<option value="">Belum ada aset fasilitas umum terdaftar</option>'
-            : '<option value="">Belum ada aset kamar terdaftar (coba tab Fasilitas Umum)</option>';
-        } else {
-          fasilitasSelect.innerHTML = '<option value="">-- Pilih fasilitas yang rusak --</option>' +
-            filtered.map((f) => {
-              const active = f.is_umum
-                ? activeUmumList.find((u) => Number(u.id_fasilitas) === Number(f.id_fasilitas))
-                : null;
-              const tag = active ? ` [Sudah Dilaporkan: ${active.jumlah_terdampak} terdampak]` : '';
-              return `<option value="${f.id_fasilitas}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}${SarprasApp.escapeHtml(tag)}</option>`;
-            }).join('');
-        }
+        const itemOptions = filtered.map((f) => {
+          const active = f.is_umum
+            ? activeUmumList.find((u) => Number(u.id_fasilitas) === Number(f.id_fasilitas))
+            : null;
+          const tag = active ? ` [Sudah Dilaporkan: ${active.jumlah_terdampak} terdampak]` : '';
+          return `<option value="${f.id_fasilitas}">${SarprasApp.escapeHtml(f.nama_fasilitas)} (${SarprasApp.escapeHtml(f.nama_kategori)}) — ${SarprasApp.escapeHtml(f.kode_aset)}${SarprasApp.escapeHtml(tag)}</option>`;
+        }).join('');
+
+        fasilitasSelect.innerHTML =
+          '<option value="">-- Pilih fasilitas yang rusak --</option>' +
+          itemOptions +
+          '<option value="LAINNYA">Lainnya (Tulis nama fasilitas...)</option>';
 
         if (preferredId && filtered.some((f) => String(f.id_fasilitas) === String(preferredId))) {
           fasilitasSelect.value = String(preferredId);
@@ -251,9 +265,12 @@
       }
 
       function syncUrgentControls() {
-        const selectedId = Number(fasilitasSelect.value);
-        const item = fasilitasList.find((f) => f.id_fasilitas === selectedId);
-        const isUmum = item ? Boolean(item.is_umum) : false;
+        const val = fasilitasSelect.value;
+        const selectedId = Number(val);
+        const item = val === 'LAINNYA' ? null : fasilitasList.find((f) => f.id_fasilitas === selectedId);
+        const isUmum = val === 'LAINNYA'
+          ? selectedLocation === 'UMUM'
+          : (item ? Boolean(item.is_umum) : selectedLocation === 'UMUM');
         const urgent = isUrgentCheckbox.checked;
 
         urgentBoxCard.classList.toggle('urgent-active', urgent);
@@ -283,7 +300,23 @@
 
       function updateAssetPreview() {
         hideError();
-        const selectedId = Number(fasilitasSelect.value);
+        const val = fasilitasSelect.value;
+        if (val === 'LAINNYA') {
+          fasilitasLainnyaGroup.style.display = 'flex';
+          fasilitasLainnyaInput.required = true;
+          assetPreview.style.display = 'none';
+          umumExistingWarning.classList.remove('visible');
+          currentMatchedUmum = null;
+          duplicateBlocked = false;
+          setNewTicketFieldsDisabled(false);
+          syncUrgentControls();
+          return;
+        }
+
+        fasilitasLainnyaGroup.style.display = 'none';
+        fasilitasLainnyaInput.required = false;
+
+        const selectedId = Number(val);
         const item = fasilitasList.find((f) => f.id_fasilitas === selectedId);
         if (!item) {
           assetPreview.style.display = 'none';
@@ -300,7 +333,7 @@
         assetPreview.innerHTML = `
           <div class="kv-row">
             <span class="kv-label">Lokasi Aset</span>
-            <span class="kv-value">${item.is_umum ? 'Fasilitas Umum / Bersama' : 'Kamar ' + SarprasApp.escapeHtml(item.nomor_kamar)}</span>
+            <span class="kv-value">${item.is_umum ? 'Fasilitas Umum / Bersama' : (item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' • ' : '') + 'Kamar ' + SarprasApp.escapeHtml(item.nomor_kamar)}</span>
           </div>
           <div class="kv-row">
             <span class="kv-label">Kode Aset</span>
@@ -368,22 +401,14 @@
         fasilitasList = fasilitasRes || [];
         activeUmumList = umumRes || [];
 
-        if (fasilitasList.length === 0) {
-          fasilitasSelect.innerHTML = '<option value="">Belum ada fasilitas terdaftar</option>';
-          setNewTicketFieldsDisabled(true);
-          showError('Belum ada data fasilitas kamar maupun umum. Hubungi Pengelola kost.');
-        } else {
-          const preselectedItem = preselectedFasilitasId
-            ? fasilitasList.find((f) => String(f.id_fasilitas) === String(preselectedFasilitasId))
-            : null;
-          const hasRoomAssets = fasilitasList.some((f) => !f.is_umum);
-          const initialLoc = (params.get('lokasi') || '').toUpperCase() === 'UMUM'
-            || (preselectedItem && preselectedItem.is_umum)
-            || !hasRoomAssets
-            ? 'UMUM'
-            : 'KAMAR';
-          populateFasilitasSelect(initialLoc, preselectedFasilitasId);
-        }
+        const preselectedItem = preselectedFasilitasId
+          ? fasilitasList.find((f) => String(f.id_fasilitas) === String(preselectedFasilitasId))
+          : null;
+        const initialLoc = (params.get('lokasi') || '').toUpperCase() === 'UMUM'
+          || (preselectedItem && preselectedItem.is_umum)
+          ? 'UMUM'
+          : 'KAMAR';
+        populateFasilitasSelect(initialLoc, preselectedFasilitasId);
       } catch (err) {
         fasilitasSelect.innerHTML = '<option value="">Gagal memuat fasilitas</option>';
         submitBtn.disabled = true;
@@ -444,15 +469,26 @@
         }
 
         const idFasilitas = fasilitasSelect.value;
+        const isLainnya = idFasilitas === 'LAINNYA';
+        const namaFasilitasLainnya = fasilitasLainnyaInput.value.trim();
         const judulLaporan = judulInput.value.trim();
         const deskripsiKerusakan = deskripsiInput.value.trim();
-        const selectedAsset = fasilitasList.find((f) => String(f.id_fasilitas) === String(idFasilitas));
-        const isUmum = selectedAsset ? Boolean(selectedAsset.is_umum) : false;
+        const selectedAsset = isLainnya
+          ? null
+          : fasilitasList.find((f) => String(f.id_fasilitas) === String(idFasilitas));
+        const isUmum = isLainnya
+          ? selectedLocation === 'UMUM'
+          : (selectedAsset ? Boolean(selectedAsset.is_umum) : false);
         const isUrgent = isUrgentCheckbox.checked;
         const izinMasuk = izinMasukCheckbox.checked;
 
         if (!idFasilitas || !judulLaporan || !deskripsiKerusakan) {
           showError('Fasilitas yang rusak, judul laporan, dan deskripsi kerusakan wajib diisi.');
+          return;
+        }
+        if (isLainnya && !namaFasilitasLainnya) {
+          showError('Tuliskan nama fasilitas yang rusak pada kolom Lainnya.');
+          fasilitasLainnyaInput.focus();
           return;
         }
         if (!isUmum && isUrgent && !izinMasuk) {
@@ -462,7 +498,12 @@
 
         const formData = new FormData();
         formData.append('id_pengguna', user.id_pengguna);
-        formData.append('id_fasilitas', idFasilitas);
+        formData.append('lokasi_laporan', selectedLocation);
+        if (isLainnya) {
+          formData.append('nama_fasilitas_lainnya', namaFasilitasLainnya);
+        } else {
+          formData.append('id_fasilitas', idFasilitas);
+        }
         formData.append('judul_laporan', judulLaporan);
         formData.append('deskripsi_kerusakan', deskripsiKerusakan);
         formData.append('tingkat_urgensi', tingkatUrgensiSelect.value);

@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -95,13 +96,14 @@ class SarpraskostApiTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nama_lengkap").value("Raka Pratama"))
             .andExpect(jsonPath("$.role").value("PENGHUNI"))
-            .andExpect(jsonPath("$.nomor_kamar").value("A-101"))
+            .andExpect(jsonPath("$.gedung").value("Gedung 1"))
+            .andExpect(jsonPath("$.nomor_kamar").value("101"))
             .andExpect(jsonPath("$.redirect_url").value("home.html"))
             .andExpect(jsonPath("$.password_hash").doesNotExist());
 
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"A-101\",\"password\":\"123\"}"))
+                .content("{\"email\":\"101\",\"password\":\"123\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nama_lengkap").value("Raka Pratama"));
 
@@ -125,11 +127,31 @@ class SarpraskostApiTests {
     void seededMasterDataPenghuniReportsAndActiveUmumExistWithoutReporterIdentity() throws Exception {
         Pengguna raka = penggunaRepository.findByEmailIgnoreCase("raka@kost.id").orElseThrow();
 
-        mockMvc.perform(get("/api/kamar"))
+        MvcResult kamarListRes = mockMvc.perform(get("/api/kamar"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("A-101")))
-            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("B-202")))
-            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("UMUM")));
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("101")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("108")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("213")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("313")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("109")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("311")))
+            .andExpect(jsonPath("$[*].nomor_kamar", hasItem("UMUM")))
+            .andReturn();
+
+        JsonNode kamarArr = objectMapper.readTree(kamarListRes.getResponse().getContentAsString());
+        int g1Count = 0;
+        int g2Count = 0;
+        for (JsonNode k : kamarArr) {
+            String gedung = k.get("gedung").asText();
+            if ("Gedung 1".equals(gedung)) g1Count++;
+            if ("Gedung 2".equals(gedung)) {
+                g2Count++;
+                assertEquals("PEMBANGUNAN", k.get("status_hunian").asText());
+                assertFalse(k.get("tersedia").asBoolean());
+            }
+        }
+        assertEquals(34, g1Count, "Gedung 1 must have 34 active rooms");
+        assertEquals(31, g2Count, "Gedung 2 must have 31 under-construction rooms");
 
         mockMvc.perform(get("/api/kategori"))
             .andExpect(status().isOk())
@@ -311,6 +333,15 @@ class SarpraskostApiTests {
                     .content(String.format(
                         "{\"nama_lengkap\":\"Invalid Umum\",\"email\":\"invalid-%s@kost.com\",\"password\":\"123\",\"no_hp\":\"0819000%s\",\"id_kamar\":%d}",
                         suffix, suffix.substring(0, 4), umumKamar.getIdKamar()
+                    )))
+                .andExpect(status().isBadRequest());
+
+            Kamar gedung2Kamar = kamarRepository.findByGedungIgnoreCaseAndNomorKamarIgnoreCase("Gedung 2", "101").orElseThrow();
+            mockMvc.perform(post("/api/users/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(String.format(
+                        "{\"nama_lengkap\":\"Invalid Gedung2\",\"email\":\"invalid-g2-%s@kost.com\",\"password\":\"123\",\"no_hp\":\"0819111%s\",\"id_kamar\":%d}",
+                        suffix, suffix.substring(0, 4), gedung2Kamar.getIdKamar()
                     )))
                 .andExpect(status().isBadRequest());
 
@@ -736,5 +767,67 @@ class SarpraskostApiTests {
             "is_urgent",
             "izin_masuk_kamar"
         )), "Expected new columns in laporan_kerusakan, found: " + laporanCols);
+    }
+
+    @Test
+    void customLainnyaFacilityCreationWorksForKamarAndUmum() throws Exception {
+        Pengguna raka = penggunaRepository.findByEmailIgnoreCase("raka@kost.id").orElseThrow();
+        String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        Integer lapKamarId = null;
+        Integer fasKamarId = null;
+        Integer lapUmumId = null;
+        Integer fasUmumId = null;
+
+        try {
+            // 1. Blank custom name when Lainnya selected must return 400
+            mockMvc.perform(multipart("/api/laporan")
+                    .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                    .param("lokasi_laporan", "KAMAR")
+                    .param("nama_fasilitas_lainnya", "   ")
+                    .param("judul_laporan", "Tanpa nama fasilitas")
+                    .param("deskripsi_kerusakan", "Harusnya gagal validasi."))
+                .andExpect(status().isBadRequest());
+
+            // 2. Lainnya on KAMAR succeeds & creates new FasilitasKamar
+            MvcResult kamarRes = mockMvc.perform(multipart("/api/laporan")
+                    .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                    .param("lokasi_laporan", "KAMAR")
+                    .param("nama_fasilitas_lainnya", "Gorden Jendela " + suffix)
+                    .param("judul_laporan", "Pengait gorden patah")
+                    .param("deskripsi_kerusakan", "Batang gorden lepas dari bracket dinding."))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nama_fasilitas").value("Gorden Jendela " + suffix))
+                .andExpect(jsonPath("$.nama_kategori").value("Lainnya"))
+                .andExpect(jsonPath("$.is_umum").value(false))
+                .andReturn();
+            JsonNode kJson = objectMapper.readTree(kamarRes.getResponse().getContentAsString());
+            lapKamarId = kJson.get("id_laporan").asInt();
+            fasKamarId = kJson.get("id_fasilitas").asInt();
+
+            // 3. Lainnya on UMUM succeeds & attaches to UMUM room
+            MvcResult umumRes = mockMvc.perform(multipart("/api/laporan")
+                    .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                    .param("lokasi_laporan", "UMUM")
+                    .param("nama_fasilitas_lainnya", "Lampu Lorong Depan " + suffix)
+                    .param("judul_laporan", "Lampu lorong padam")
+                    .param("deskripsi_kerusakan", "Area depan tangga lantai 1 gelap di malam hari."))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nama_fasilitas").value("Lampu Lorong Depan " + suffix))
+                .andExpect(jsonPath("$.nama_kategori").value("Lainnya"))
+                .andExpect(jsonPath("$.is_umum").value(true))
+                .andReturn();
+            JsonNode uJson = objectMapper.readTree(umumRes.getResponse().getContentAsString());
+            lapUmumId = uJson.get("id_laporan").asInt();
+            fasUmumId = uJson.get("id_fasilitas").asInt();
+        } finally {
+            safeDeleteLaporan(lapKamarId);
+            safeDeleteLaporan(lapUmumId);
+            if (fasKamarId != null && fasilitasRepository.existsById(fasKamarId)) {
+                fasilitasRepository.deleteById(fasKamarId);
+            }
+            if (fasUmumId != null && fasilitasRepository.existsById(fasUmumId)) {
+                fasilitasRepository.deleteById(fasUmumId);
+            }
+        }
     }
 }

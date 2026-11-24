@@ -64,8 +64,15 @@ public class LaporanController {
         @RequestParam(value = "id_pengguna", required = false) Integer idPenggunaSnake,
         @RequestParam(value = "penghuni_id", required = false) Integer penghuniIdAlias,
         @RequestParam(value = "idPengguna", required = false) Integer idPenggunaCamel,
-        @RequestParam(value = "id_fasilitas", required = false) Integer idFasilitasSnake,
-        @RequestParam(value = "idFasilitas", required = false) Integer idFasilitasCamel,
+        @RequestParam(value = "id_fasilitas", required = false) String idFasilitasSnake,
+        @RequestParam(value = "idFasilitas", required = false) String idFasilitasCamel,
+        @RequestParam(value = "lokasi_laporan", required = false) String lokasiSnake,
+        @RequestParam(value = "lokasiLaporan", required = false) String lokasiCamel,
+        @RequestParam(value = "lokasi", required = false) String lokasiShort,
+        @RequestParam(value = "nama_fasilitas_lainnya", required = false) String customNamaSnake,
+        @RequestParam(value = "namaFasilitasLainnya", required = false) String customNamaCamel,
+        @RequestParam(value = "fasilitas_lainnya", required = false) String customNamaAlt,
+        @RequestParam(value = "fasilitasLainnya", required = false) String customNamaAltCamel,
         @RequestParam(value = "judul_laporan", required = false) String judulSnake,
         @RequestParam(value = "judulLaporan", required = false) String judulCamel,
         @RequestParam(value = "deskripsi_kerusakan", required = false) String deskripsiSnake,
@@ -80,7 +87,12 @@ public class LaporanController {
         @RequestParam(value = "file", required = false) MultipartFile file
     ) {
         Integer idPengguna = firstNonNull(idPenggunaSnake, penghuniIdAlias, idPenggunaCamel);
-        Integer idFasilitas = firstNonNull(idFasilitasSnake, idFasilitasCamel, null);
+        Integer idFasilitas = parseOptionalInt(firstNonNullStr(idFasilitasSnake, idFasilitasCamel));
+        String lokasiLaporan = firstNonNullStr(lokasiSnake, firstNonNullStr(lokasiCamel, lokasiShort));
+        String namaFasilitasLainnya = firstNonNullStr(
+            firstNonNullStr(customNamaSnake, customNamaCamel),
+            firstNonNullStr(customNamaAlt, customNamaAltCamel)
+        );
         String judul = firstNonNullStr(judulSnake, judulCamel);
         String deskripsi = firstNonNullStr(deskripsiSnake, deskripsiShort);
         String tingkatUrgensi = firstNonNullStr(tingkatUrgensiSnake, tingkatUrgensiCamel);
@@ -91,6 +103,8 @@ public class LaporanController {
         LaporanResponse created = laporanService.createLaporan(
             idPengguna,
             idFasilitas,
+            lokasiLaporan,
+            namaFasilitasLainnya,
             judul,
             deskripsi,
             tingkatUrgensi,
@@ -119,6 +133,22 @@ public class LaporanController {
         if (a != null) return a;
         if (b != null) return b;
         return c;
+    }
+
+    private Integer parseOptionalInt(String raw) {
+        if (raw == null) return null;
+        String clean = raw.trim();
+        if (clean.isEmpty() || "null".equalsIgnoreCase(clean) || "LAINNYA".equalsIgnoreCase(clean)) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(clean);
+        } catch (NumberFormatException ex) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Format id_fasilitas tidak valid: " + raw
+            );
+        }
     }
 
     private String firstNonNullStr(String a, String b) {

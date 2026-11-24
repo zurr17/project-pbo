@@ -158,6 +158,8 @@ const SarprasApp = (() => {
         return { label: 'Terisi', className: 'status-diproses' };
       case 'PERBAIKAN':
         return { label: 'Perbaikan', className: 'status-menunggu' };
+      case 'PEMBANGUNAN':
+        return { label: 'On Progress Pembangunan', className: 'status-menunggu' };
       case 'KOSONG':
       default:
         return { label: 'Kosong', className: 'status-selesai' };
@@ -191,7 +193,9 @@ const SarprasApp = (() => {
     const statusUpper = (laporan.status_tiket || '').toUpperCase();
     const isActiveUrgent = laporan.is_urgent && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
     const tanggal = formatDateIndo(laporan.tgl_lapor);
-    const lokasiLabel = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar || '-'}`;
+    const lokasiLabel = laporan.is_umum
+      ? 'Fasilitas Umum'
+      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}`;
     const assetLine = `${laporan.nama_fasilitas || '-'} • ${lokasiLabel}`;
     const urgentPill = laporan.is_urgent
       ? '<span class="priority-pill high">DARURAT</span>'
@@ -272,7 +276,9 @@ const SarprasApp = (() => {
     const statusUpper = (laporan.status_tiket || '').toUpperCase();
     const isActiveUrgent = laporan.is_urgent && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
     const tanggal = formatDateIndo(laporan.tgl_lapor);
-    const kamarLabel = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar || '-'}`;
+    const kamarLabel = laporan.is_umum
+      ? 'Fasilitas Umum'
+      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}`;
     const pelapor = laporan.nama_pelapor
       ? `${laporan.nama_pelapor} (${kamarLabel})`
       : kamarLabel;

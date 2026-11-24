@@ -261,10 +261,22 @@ public class PenggunaService {
     }
 
     private void validateKamarPenghuni(Kamar kamar) {
-        if (kamar != null && kamar.isFasilitasUmum()) {
+        if (kamar == null) {
+            return;
+        }
+        if (kamar.isFasilitasUmum()) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Area Fasilitas Umum bukan kamar hunian dan tidak dapat dipilih sebagai kamar penghuni."
+            );
+        }
+        if (!kamar.isTersediaUntukPenghuni()) {
+            String alasan = !isBlank(kamar.getKeterangan())
+                ? kamar.getKeterangan()
+                : kamar.getStatusHunian().getDbValue();
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Kamar " + kamar.getNomorKamar() + " (" + kamar.getGedung() + ") belum tersedia untuk ditempati: " + alasan
             );
         }
     }
@@ -293,10 +305,12 @@ public class PenggunaService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kamar tidak ditemukan."));
         }
         if (!isBlank(nomorKamar)) {
-            return kamarRepository.findByNomorKamarIgnoreCase(nomorKamar.trim())
+            String trimmed = nomorKamar.trim();
+            return kamarRepository.findByGedungIgnoreCaseAndNomorKamarIgnoreCase("Gedung 1", trimmed)
+                .or(() -> kamarRepository.findFirstByNomorKamarIgnoreCaseOrderByGedungAscIdKamarAsc(trimmed))
                 .orElseThrow(() -> new ResponseStatusException(
                     HttpStatus.NOT_FOUND,
-                    "Kamar dengan nomor " + nomorKamar.trim() + " tidak ditemukan."
+                    "Kamar dengan nomor " + trimmed + " tidak ditemukan."
                 ));
         }
         return null;

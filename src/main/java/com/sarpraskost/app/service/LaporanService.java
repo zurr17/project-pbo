@@ -1,26 +1,5 @@
 package com.sarpraskost.app.service;
 
-import com.sarpraskost.app.dto.FasilitasUmumAktifResponse;
-import com.sarpraskost.app.dto.LaporanListResponse;
-import com.sarpraskost.app.dto.LaporanResponse;
-import com.sarpraskost.app.dto.LaporanSummaryResponse;
-import com.sarpraskost.app.dto.OwnerProsesRequest;
-import com.sarpraskost.app.dto.OwnerTolakRequest;
-import com.sarpraskost.app.dto.RiwayatPenangananResponse;
-import com.sarpraskost.app.dto.UpdateLaporanRequest;
-import com.sarpraskost.app.entity.FasilitasKamar;
-import com.sarpraskost.app.entity.KondisiFasilitas;
-import com.sarpraskost.app.entity.LaporanKerusakan;
-import com.sarpraskost.app.entity.Pengguna;
-import com.sarpraskost.app.entity.RiwayatPenanganan;
-import com.sarpraskost.app.entity.Role;
-import com.sarpraskost.app.entity.StatusTiket;
-import com.sarpraskost.app.entity.TingkatUrgensi;
-import com.sarpraskost.app.repository.FasilitasKamarRepository;
-import com.sarpraskost.app.repository.LaporanKerusakanRepository;
-import com.sarpraskost.app.repository.NotifikasiRepository;
-import com.sarpraskost.app.repository.PenggunaRepository;
-import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,11 +10,39 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.sarpraskost.app.dto.FasilitasUmumAktifResponse;
+import com.sarpraskost.app.dto.LaporanListResponse;
+import com.sarpraskost.app.dto.LaporanResponse;
+import com.sarpraskost.app.dto.LaporanSummaryResponse;
+import com.sarpraskost.app.dto.OwnerProsesRequest;
+import com.sarpraskost.app.dto.OwnerTolakRequest;
+import com.sarpraskost.app.dto.RiwayatPenangananResponse;
+import com.sarpraskost.app.dto.UpdateLaporanRequest;
+import com.sarpraskost.app.entity.FasilitasKamar;
+import com.sarpraskost.app.entity.Kamar;
+import com.sarpraskost.app.entity.KategoriFasilitas;
+import com.sarpraskost.app.entity.KondisiFasilitas;
+import com.sarpraskost.app.entity.LaporanKerusakan;
+import com.sarpraskost.app.entity.Pengguna;
+import com.sarpraskost.app.entity.RiwayatPenanganan;
+import com.sarpraskost.app.entity.Role;
+import com.sarpraskost.app.entity.StatusHunian;
+import com.sarpraskost.app.entity.StatusTiket;
+import com.sarpraskost.app.entity.TingkatUrgensi;
+import com.sarpraskost.app.repository.FasilitasKamarRepository;
+import com.sarpraskost.app.repository.KamarRepository;
+import com.sarpraskost.app.repository.KategoriFasilitasRepository;
+import com.sarpraskost.app.repository.LaporanKerusakanRepository;
+import com.sarpraskost.app.repository.NotifikasiRepository;
+import com.sarpraskost.app.repository.PenggunaRepository;
+import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 
 @Service
 public class LaporanService {
@@ -50,6 +57,9 @@ public class LaporanService {
     private final LaporanKerusakanRepository laporanRepository;
     private final PenggunaRepository penggunaRepository;
     private final FasilitasKamarRepository fasilitasRepository;
+    private final KamarRepository kamarRepository;
+    private final KategoriFasilitasRepository kategoriRepository;
+    private final FasilitasService fasilitasService;
     private final RiwayatPenangananRepository riwayatRepository;
     private final NotifikasiRepository notifikasiRepository;
     private final NotifikasiService notifikasiService;
@@ -59,6 +69,9 @@ public class LaporanService {
         LaporanKerusakanRepository laporanRepository,
         PenggunaRepository penggunaRepository,
         FasilitasKamarRepository fasilitasRepository,
+        KamarRepository kamarRepository,
+        KategoriFasilitasRepository kategoriRepository,
+        FasilitasService fasilitasService,
         RiwayatPenangananRepository riwayatRepository,
         NotifikasiRepository notifikasiRepository,
         NotifikasiService notifikasiService,
@@ -67,6 +80,9 @@ public class LaporanService {
         this.laporanRepository = laporanRepository;
         this.penggunaRepository = penggunaRepository;
         this.fasilitasRepository = fasilitasRepository;
+        this.kamarRepository = kamarRepository;
+        this.kategoriRepository = kategoriRepository;
+        this.fasilitasService = fasilitasService;
         this.riwayatRepository = riwayatRepository;
         this.notifikasiRepository = notifikasiRepository;
         this.notifikasiService = notifikasiService;
@@ -154,11 +170,35 @@ public class LaporanService {
         Boolean izinMasukKamarParam,
         MultipartFile foto
     ) {
+        return createLaporan(
+            idPengguna,
+            idFasilitas,
+            null,
+            null,
+            judulLaporan,
+            deskripsiKerusakan,
+            tingkatUrgensiRaw,
+            isUrgentParam,
+            izinMasukKamarParam,
+            foto
+        );
+    }
+
+    @Transactional
+    public synchronized LaporanResponse createLaporan(
+        Integer idPengguna,
+        Integer idFasilitas,
+        String lokasiLaporan,
+        String namaFasilitasLainnya,
+        String judulLaporan,
+        String deskripsiKerusakan,
+        String tingkatUrgensiRaw,
+        Boolean isUrgentParam,
+        Boolean izinMasukKamarParam,
+        MultipartFile foto
+    ) {
         if (idPengguna == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id_pengguna wajib diisi.");
-        }
-        if (idFasilitas == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Fasilitas wajib dipilih.");
         }
         if (isBlank(judulLaporan)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Judul laporan wajib diisi.");
@@ -169,8 +209,27 @@ public class LaporanService {
 
         Pengguna pelapor = penggunaRepository.findByIdPengguna(idPengguna)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Data penghuni tidak ditemukan."));
-        FasilitasKamar fasilitas = fasilitasRepository.findDetailById(idFasilitas)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas tidak ditemukan."));
+
+        TingkatUrgensi urgensi = resolveUrgensi(tingkatUrgensiRaw, isUrgentParam);
+        boolean urgent = Boolean.TRUE.equals(isUrgentParam) || urgensi == TingkatUrgensi.DARURAT;
+        if (urgent && urgensi != TingkatUrgensi.DARURAT && isBlank(tingkatUrgensiRaw)) {
+            urgensi = TingkatUrgensi.DARURAT;
+        }
+        boolean izinMasuk = Boolean.TRUE.equals(izinMasukKamarParam);
+
+        FasilitasKamar fasilitas;
+        if (idFasilitas != null) {
+            fasilitas = fasilitasRepository.findDetailById(idFasilitas)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Fasilitas tidak ditemukan."));
+        } else {
+            if (isBlank(namaFasilitasLainnya)) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Fasilitas wajib dipilih atau tuliskan nama fasilitas yang rusak pada kolom Lainnya."
+                );
+            }
+            fasilitas = resolveOrCreateCustomFasilitas(pelapor, lokasiLaporan, namaFasilitasLainnya.trim(), urgent);
+        }
 
         boolean fasilitasUmum = isFasilitasUmum(fasilitas);
         validatePelaporFacilityAccess(pelapor, fasilitas, fasilitasUmum);
@@ -187,13 +246,6 @@ public class LaporanService {
                 );
             });
         }
-
-        TingkatUrgensi urgensi = resolveUrgensi(tingkatUrgensiRaw, isUrgentParam);
-        boolean urgent = Boolean.TRUE.equals(isUrgentParam) || urgensi == TingkatUrgensi.DARURAT;
-        if (urgent && urgensi != TingkatUrgensi.DARURAT && isBlank(tingkatUrgensiRaw)) {
-            urgensi = TingkatUrgensi.DARURAT;
-        }
-        boolean izinMasuk = Boolean.TRUE.equals(izinMasukKamarParam);
 
         if (!fasilitasUmum && urgent && !izinMasuk) {
             throw new ResponseStatusException(
@@ -232,6 +284,54 @@ public class LaporanService {
         notifyOwnersOnNewReport(saved, pelapor, fasilitas, fasilitasUmum, urgent, izinMasuk, now);
 
         return getLaporanById(saved.getIdLaporan());
+    }
+
+    private FasilitasKamar resolveOrCreateCustomFasilitas(
+        Pengguna pelapor,
+        String lokasiLaporan,
+        String namaFasilitas,
+        boolean urgent
+    ) {
+        if (namaFasilitas.length() > 80) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama fasilitas maksimal 80 karakter.");
+        }
+
+        boolean isUmumLokasi = "UMUM".equalsIgnoreCase(lokasiLaporan != null ? lokasiLaporan.trim() : "")
+            || (!"KAMAR".equalsIgnoreCase(lokasiLaporan != null ? lokasiLaporan.trim() : "") && pelapor.getKamar() == null);
+
+        Kamar targetKamar;
+        if (isUmumLokasi) {
+            targetKamar = kamarRepository.findByNomorKamarIgnoreCase("UMUM")
+                .orElseGet(() -> kamarRepository.save(
+                    new Kamar("Umum", "UMUM", "Fasilitas Umum", (short) 1, StatusHunian.TERISI, null)
+                ));
+        } else {
+            if (pelapor.getKamar() == null) {
+                throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Anda belum memilih kamar pribadi. Silakan pilih tab Fasilitas Umum / Bersama atau atur kamar di Profil."
+                );
+            }
+            targetKamar = pelapor.getKamar();
+        }
+
+        KategoriFasilitas kategoriLainnya = kategoriRepository.findByNamaKategoriIgnoreCase("Lainnya")
+            .orElseGet(() -> kategoriRepository.save(new KategoriFasilitas(
+                "Lainnya",
+                "Fasilitas tambahan yang dilaporkan di luar daftar aset inventaris utama"
+            )));
+
+        String kodeAset = fasilitasService.generateNextKodeAset(targetKamar);
+        FasilitasKamar customFasilitas = new FasilitasKamar(
+            targetKamar,
+            kategoriLainnya,
+            kodeAset,
+            namaFasilitas,
+            "Input Penghuni (Lainnya)",
+            urgent ? KondisiFasilitas.RUSAK_BERAT : KondisiFasilitas.RUSAK_RINGAN,
+            LocalDate.now()
+        );
+        return fasilitasRepository.save(customFasilitas);
     }
 
     @Transactional
@@ -681,7 +781,7 @@ public class LaporanService {
                 return ownerMode
                     ? LaporanResponse.from(item, entries)
                     : LaporanResponse.forPenghuni(item, entries, false);
-            })
+            }) 
             .toList();
 
         return new LaporanListResponse(summary, responses);

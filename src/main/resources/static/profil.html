@@ -175,8 +175,9 @@
         profileHeroNama.textContent = u.nama_lengkap || '-';
         profileRoleBadge.textContent = u.role || 'PENGHUNI';
         profileHeroEmail.textContent = u.email || '-';
+        const gedungTxt = u.gedung ? `${u.gedung} • ` : '';
         profileHeroKamar.textContent = u.nomor_kamar
-          ? `Kamar ${u.nomor_kamar} (${u.tipe_kamar || ''} • Lantai ${u.lantai || '-'})`
+          ? `${gedungTxt}Kamar ${u.nomor_kamar} (${u.tipe_kamar || ''} • Lantai ${u.lantai || '-'})`
           : 'Kamar belum dipilih';
         profileEmailDisplay.textContent = u.email || '-';
         profileNamaInput.value = u.nama_lengkap || '';
@@ -205,9 +206,18 @@
           SarprasApp.fetchKamar(),
           SarprasApp.requestJson(`/users/${encodeURIComponent(currentUser.id_pengguna)}`)
         ]);
-        const privateRooms = (rooms || []).filter((r) => !r.is_umum && (r.nomor_kamar || '').toUpperCase() !== 'UMUM');
+        const availableRooms = (rooms || []).filter((r) => {
+          const gedung = (r.gedung || 'Gedung 1').toLowerCase();
+          const st = (r.status_hunian || '').toUpperCase();
+          return !r.is_umum
+            && (r.nomor_kamar || '').toUpperCase() !== 'UMUM'
+            && gedung === 'gedung 1'
+            && st !== 'PEMBANGUNAN'
+            && st !== 'PERBAIKAN'
+            && r.tersedia !== false;
+        });
         profileKamarSelect.innerHTML = '<option value="">-- Belum memilih kamar --</option>' +
-          privateRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Gedung 1 &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
 
         currentUser = freshUser;
         SarprasApp.saveUser(freshUser);

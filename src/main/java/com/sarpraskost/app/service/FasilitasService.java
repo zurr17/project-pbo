@@ -213,15 +213,40 @@ public class FasilitasService {
     }
 
     public String generateNextKodeAset(Kamar kamar) {
+        if (kamar.isFasilitasUmum()) {
+            String prefix = "UMM-";
+            int maxSeq = nextSequenceForPrefix(prefix);
+            return prefix + String.format("%03d", maxSeq + 1);
+        }
+        String gedungCode = resolveGedungCode(kamar.getGedung());
         String rawClean = kamar.getNomorKamar().replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
-        String cleanNomor = rawClean.length() > 8 ? rawClean.substring(0, 8) : rawClean;
-        String prefix = (kamar.isFasilitasUmum() ? "UMM-" : "AST-" + cleanNomor + "-");
-        int maxSeq = fasilitasRepo.findByKodeAsetStartingWith(prefix).stream()
+        String cleanNomor = rawClean.length() > 6 ? rawClean.substring(0, 6) : rawClean;
+        String prefix = "AST-" + gedungCode + cleanNomor + "-";
+        int maxSeq = nextSequenceForPrefix(prefix);
+        return prefix + String.format("%02d", maxSeq + 1);
+    }
+
+    private String resolveGedungCode(String gedung) {
+        if (isBlank(gedung)) {
+            return "G1";
+        }
+        String upper = gedung.trim().toUpperCase(Locale.ROOT);
+        if (upper.contains("1")) {
+            return "G1";
+        }
+        if (upper.contains("2")) {
+            return "G2";
+        }
+        String clean = upper.replaceAll("[^A-Z0-9]", "");
+        return clean.length() > 2 ? clean.substring(0, 2) : clean;
+    }
+
+    private int nextSequenceForPrefix(String prefix) {
+        return fasilitasRepo.findByKodeAsetStartingWith(prefix).stream()
             .map(FasilitasKamar::getKodeAset)
             .mapToInt(code -> extractSequence(code, prefix))
             .max()
             .orElse(0);
-        return prefix + String.format(kamar.isFasilitasUmum() ? "%03d" : "%02d", maxSeq + 1);
     }
 
     private int extractSequence(String code, String prefix) {

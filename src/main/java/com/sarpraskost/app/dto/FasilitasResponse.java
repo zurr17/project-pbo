@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public record FasilitasResponse(
     @JsonProperty("id_fasilitas") Integer idFasilitas,
     @JsonProperty("id_kamar") Integer idKamar,
+    String gedung,
     @JsonProperty("nomor_kamar") String nomorKamar,
     @JsonProperty("tipe_kamar") String tipeKamar,
     Short lantai,
@@ -28,6 +29,7 @@ public record FasilitasResponse(
         return new FasilitasResponse(
             f.getIdFasilitas(),
             kamar.getIdKamar(),
+            kamar.getGedung(),
             kamar.getNomorKamar(),
             kamar.getTipeKamar(),
             kamar.getLantai(),

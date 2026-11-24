@@ -85,10 +85,12 @@ public class DataSeeder implements CommandLineRunner {
     private void ensureFasilitasUmumAssets() {
         Kamar kamarUmum = kamarRepository.findByNomorKamarIgnoreCase("UMUM")
             .orElseGet(() -> kamarRepository.save(new Kamar(
+                "Umum",
                 "UMUM",
                 "Fasilitas Umum",
                 (short) 1,
-                StatusHunian.TERISI
+                StatusHunian.TERISI,
+                "Area fasilitas bersama penghuni Kost Lodaya 9"
             )));
 
         KategoriFasilitas katElektronik = kategoriRepository.findByNamaKategoriIgnoreCase("Elektronik")
@@ -194,19 +196,55 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedBaseSqlEquivalentData() {
-        Kamar k1 = kamarRepository.save(new Kamar("A-101", "VIP AC", (short) 1, StatusHunian.TERISI));
-        Kamar k2 = kamarRepository.save(new Kamar("A-102", "Reguler", (short) 1, StatusHunian.TERISI));
-        Kamar k3 = kamarRepository.save(new Kamar("B-201", "VIP AC", (short) 2, StatusHunian.TERISI));
-        kamarRepository.save(new Kamar("B-202", "Reguler", (short) 2, StatusHunian.KOSONG));
+        // Gedung 1: 34 kamar aktif (Lantai 1: 101-108, Lantai 2: 201-213, Lantai 3: 301-313)
+        Kamar k101 = null;
+        Kamar k102 = null;
+        Kamar k201 = null;
+
+        for (int num = 101; num <= 108; num++) {
+            String nomor = String.valueOf(num);
+            String tipe = num <= 104 ? "VIP AC" : "Reguler";
+            StatusHunian status = (num == 101 || num == 102) ? StatusHunian.TERISI : StatusHunian.KOSONG;
+            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 1, status, null));
+            if (num == 101) k101 = saved;
+            if (num == 102) k102 = saved;
+        }
+        for (int num = 201; num <= 213; num++) {
+            String nomor = String.valueOf(num);
+            String tipe = num <= 205 ? "VIP AC" : "Reguler";
+            StatusHunian status = (num == 201) ? StatusHunian.TERISI : StatusHunian.KOSONG;
+            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 2, status, null));
+            if (num == 201) k201 = saved;
+        }
+        for (int num = 301; num <= 313; num++) {
+            String nomor = String.valueOf(num);
+            String tipe = num <= 304 ? "VIP AC" : "Reguler";
+            kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 3, StatusHunian.KOSONG, null));
+        }
+
+        // Gedung 2: 31 kamar pembangunan (Lantai 1: 101-109, Lantai 2: 201-211, Lantai 3: 301-311)
+        String progressNote = "On Progress Pembangunan - Perkiraan Ready Awal Juli";
+        for (int num = 101; num <= 109; num++) {
+            String tipe = num <= 103 ? "VIP AC" : "Reguler";
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 1, StatusHunian.PEMBANGUNAN, progressNote));
+        }
+        for (int num = 201; num <= 211; num++) {
+            String tipe = num <= 204 ? "VIP AC" : "Reguler";
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 2, StatusHunian.PEMBANGUNAN, progressNote));
+        }
+        for (int num = 301; num <= 311; num++) {
+            String tipe = num <= 304 ? "VIP AC" : "Reguler";
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 3, StatusHunian.PEMBANGUNAN, progressNote));
+        }
 
         Pengguna raka = penggunaRepository.save(new Pengguna(
-            k1, "Raka Pratama", "raka@kost.id", PasswordHasher.hash("123"), "0812-3456-7890", Role.PENGHUNI
+            k101, "Raka Pratama", "raka@kost.id", PasswordHasher.hash("123"), "0812-3456-7890", Role.PENGHUNI
         ));
         Pengguna nadia = penggunaRepository.save(new Pengguna(
-            k2, "Nadia Putri", "nadia@kost.id", PasswordHasher.hash("123"), "0857-9876-5432", Role.PENGHUNI
+            k102, "Nadia Putri", "nadia@kost.id", PasswordHasher.hash("123"), "0857-9876-5432", Role.PENGHUNI
         ));
         Pengguna dimas = penggunaRepository.save(new Pengguna(
-            k3, "Dimas Anggara", "dimas@kost.id", PasswordHasher.hash("123"), "0896-1122-3344", Role.PENGHUNI
+            k201, "Dimas Anggara", "dimas@kost.id", PasswordHasher.hash("123"), "0896-1122-3344", Role.PENGHUNI
         ));
         Pengguna budi = penggunaRepository.save(new Pengguna(
             null, "Budi Santoso", "budi.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
@@ -226,16 +264,16 @@ public class DataSeeder implements CommandLineRunner {
         ));
 
         FasilitasKamar f1 = fasilitasRepository.save(new FasilitasKamar(
-            k1, katElektronik, "AST-001", "AC Split 1 PK", "Daikin FTC25", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
+            k101, katElektronik, "AST-001", "AC Split 1 PK", "Daikin FTC25", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
         ));
         fasilitasRepository.save(new FasilitasKamar(
-            k1, katKelistrikan, "AST-002", "Lampu LED 18W", "Philips MyCare", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
+            k101, katKelistrikan, "AST-002", "Lampu LED 18W", "Philips MyCare", KondisiFasilitas.BAIK, LocalDate.of(2025, 6, 15)
         ));
         FasilitasKamar f3 = fasilitasRepository.save(new FasilitasKamar(
-            k2, katSanitasi, "AST-003", "Keran Wastafel", "Onda V688", KondisiFasilitas.DALAM_PERBAIKAN, LocalDate.of(2025, 7, 1)
+            k102, katSanitasi, "AST-003", "Keran Wastafel", "Onda V688", KondisiFasilitas.DALAM_PERBAIKAN, LocalDate.of(2025, 7, 1)
         ));
         FasilitasKamar f4 = fasilitasRepository.save(new FasilitasKamar(
-            k3, katFurnitur, "AST-004", "Lemari Pakaian 2 Pintu", "Olympic", KondisiFasilitas.RUSAK_RINGAN, LocalDate.of(2025, 5, 20)
+            k201, katFurnitur, "AST-004", "Lemari Pakaian 2 Pintu", "Olympic", KondisiFasilitas.RUSAK_RINGAN, LocalDate.of(2025, 5, 20)
         ));
 
         LaporanKerusakan l1 = new LaporanKerusakan();
@@ -307,7 +345,7 @@ public class DataSeeder implements CommandLineRunner {
         n1.setPengguna(budi);
         n1.setLaporan(l1);
         n1.setJudulNotif("Laporan Baru: AC Tidak Dingin");
-        n1.setPesanNotif("Penghuni kamar A-101 melaporkan kerusakan pada AC Split 1 PK.");
+        n1.setPesanNotif("Penghuni kamar 101 (Gedung 1) melaporkan kerusakan pada AC Split 1 PK.");
         n1.setRead(true);
         n1.setWaktuKirim(LocalDateTime.of(2026, 11, 1, 8, 31));
 
@@ -323,7 +361,7 @@ public class DataSeeder implements CommandLineRunner {
         n3.setPengguna(budi);
         n3.setLaporan(l2);
         n3.setJudulNotif("Laporan Darurat Masuk");
-        n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar A-102. Izin masuk kamar telah disetujui.");
+        n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar 102 (Gedung 1). Izin masuk kamar telah disetujui.");
         n3.setRead(false);
         n3.setWaktuKirim(LocalDateTime.of(2026, 11, 3, 7, 46));
         notifikasiRepository.saveAll(List.of(n1, n2, n3));

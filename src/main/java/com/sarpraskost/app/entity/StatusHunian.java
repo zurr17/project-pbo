@@ -5,7 +5,8 @@ import java.util.Locale;
 public enum StatusHunian {
     TERISI("Terisi"),
     KOSONG("Kosong"),
-    PERBAIKAN("Perbaikan");
+    PERBAIKAN("Perbaikan"),
+    PEMBANGUNAN("Pembangunan");
 
     private final String dbValue;
 
@@ -26,6 +27,7 @@ public enum StatusHunian {
             case "terisi" -> TERISI;
             case "kosong" -> KOSONG;
             case "perbaikan" -> PERBAIKAN;
+            case "pembangunan", "on progress", "on_progress", "on progress pembangunan", "dalam pembangunan" -> PEMBANGUNAN;
             default -> throw new IllegalArgumentException("Status hunian tidak valid: " + raw);
         };
     }

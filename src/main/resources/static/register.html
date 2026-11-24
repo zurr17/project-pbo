@@ -16,7 +16,7 @@
       </a>
       <div class="app-bar-titles">
         <h1 class="app-bar-title">Daftar Akun</h1>
-        <p class="app-bar-subtitle">Registrasi penghuni Kost Cendana</p>
+        <p class="app-bar-subtitle">Registrasi penghuni Kost Lodaya 9</p>
       </div>
     </header>
 
@@ -156,9 +156,18 @@
 
       try {
         const rooms = await SarprasApp.fetchKamar();
-        const privateRooms = (rooms || []).filter((r) => !r.is_umum && (r.nomor_kamar || '').toUpperCase() !== 'UMUM');
-        kamarSelect.innerHTML = '<option value="">-- Pilih kamar (opsional) --</option>' +
-          privateRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+        const availableRooms = (rooms || []).filter((r) => {
+          const gedung = (r.gedung || 'Gedung 1').toLowerCase();
+          const st = (r.status_hunian || '').toUpperCase();
+          return !r.is_umum
+            && (r.nomor_kamar || '').toUpperCase() !== 'UMUM'
+            && gedung === 'gedung 1'
+            && st !== 'PEMBANGUNAN'
+            && st !== 'PERBAIKAN'
+            && r.tersedia !== false;
+        });
+        kamarSelect.innerHTML = '<option value="">-- Pilih kamar Gedung 1 (opsional) --</option>' +
+          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Gedung 1 &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
       } catch {
         kamarSelect.innerHTML = '<option value="">-- Kamar belum tersedia --</option>';
       }

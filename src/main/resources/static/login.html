@@ -33,7 +33,7 @@
                 name="email"
                 type="text"
                 class="input-control"
-                placeholder="raka@kost.id atau A-101"
+                placeholder="raka@kost.id atau 101"
                 autocomplete="username"
                 required
               />
@@ -79,11 +79,9 @@
 
       <div class="helper-card">
         <div class="helper-card-title">Belum memiliki akun?</div>
-        <div class="helper-card-text">Buat akun penghuni baru secara mandiri atau gunakan akun demo di bawah ini.</div>
+        <div class="helper-card-text">Buat akun penghuni baru secara mandiri di bawah ini.</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
           <a href="register.html" class="demo-chip-btn" style="margin-top:0;background:#2563EB;color:#FFFFFF;border-color:#2563EB;">Daftar Akun Baru</a>
-          <button type="button" id="fillDemoBtn" class="demo-chip-btn" style="margin-top:0;">Demo Penghuni (raka@kost.id / 123)</button>
-          <button type="button" id="fillDemoOwnerBtn" class="demo-chip-btn" style="margin-top:0;">Demo Owner (budi.pengelola@kost.id / 123)</button>
         </div>
       </div>
     </section>
@@ -98,8 +96,6 @@
       const loginError = document.getElementById('loginError');
       const loginBtn = document.getElementById('loginBtn');
       const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-      const fillDemoBtn = document.getElementById('fillDemoBtn');
-      const fillDemoOwnerBtn = document.getElementById('fillDemoOwnerBtn');
       const forgotPassBtn = document.getElementById('forgotPassBtn');
 
       function showError(msg) {
@@ -117,20 +113,8 @@
         passwordInput.type = isPassword ? 'text' : 'password';
       });
 
-      fillDemoBtn.addEventListener('click', () => {
-        emailInput.value = 'raka@kost.id';
-        passwordInput.value = '123';
-        hideError();
-      });
-
-      fillDemoOwnerBtn.addEventListener('click', () => {
-        emailInput.value = 'budi.pengelola@kost.id';
-        passwordInput.value = '123';
-        hideError();
-      });
-
       forgotPassBtn.addEventListener('click', () => {
-        showError('Silakan hubungi pengelola Kost Cendana (Budi Santoso) untuk mereset kata sandi akun Anda.');
+        showError('Silakan hubungi pengelola Kost Lodaya 9 (Budi Santoso) untuk mereset kata sandi akun Anda.');
       });
 
       loginForm.addEventListener('submit', async (e) => {

@@ -9,9 +9,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "kamar")
+@Table(
+    name = "kamar",
+    uniqueConstraints = {
+        @UniqueConstraint(name = "kamar_gedung_nomor_key", columnNames = {"gedung", "nomor_kamar"})
+    }
+)
 public class Kamar {
 
     @Id
@@ -19,7 +25,10 @@ public class Kamar {
     @Column(name = "id_kamar")
     private Integer idKamar;
 
-    @Column(name = "nomor_kamar", nullable = false, unique = true, length = 10)
+    @Column(name = "gedung", nullable = false, length = 20)
+    private String gedung = "Gedung 1";
+
+    @Column(name = "nomor_kamar", nullable = false, length = 10)
     private String nomorKamar;
 
     @Column(name = "lantai", nullable = false, columnDefinition = "smallint")
@@ -32,24 +41,49 @@ public class Kamar {
     @Column(name = "status_hunian", nullable = false, length = 15)
     private StatusHunian statusHunian = StatusHunian.KOSONG;
 
+    @Column(name = "keterangan", columnDefinition = "text")
+    private String keterangan;
+
     public Kamar() {
     }
 
     public Kamar(String nomorKamar, String tipeKamar, Short lantai, StatusHunian statusHunian) {
+        this("Gedung 1", nomorKamar, tipeKamar, lantai, statusHunian, null);
+    }
+
+    public Kamar(String nomorKamar, String tipeKamar, Integer lantai, StatusHunian statusHunian) {
+        this("Gedung 1", nomorKamar, tipeKamar, lantai == null ? null : lantai.shortValue(), statusHunian, null);
+    }
+
+    public Kamar(
+        String gedung,
+        String nomorKamar,
+        String tipeKamar,
+        Short lantai,
+        StatusHunian statusHunian,
+        String keterangan
+    ) {
+        this.gedung = (gedung == null || gedung.trim().isEmpty()) ? "Gedung 1" : gedung.trim();
         this.nomorKamar = nomorKamar;
         this.tipeKamar = tipeKamar;
         this.lantai = lantai;
         this.statusHunian = statusHunian == null ? StatusHunian.KOSONG : statusHunian;
-    }
-
-    public Kamar(String nomorKamar, String tipeKamar, Integer lantai, StatusHunian statusHunian) {
-        this(nomorKamar, tipeKamar, lantai == null ? null : lantai.shortValue(), statusHunian);
+        this.keterangan = (keterangan == null || keterangan.trim().isEmpty()) ? null : keterangan.trim();
     }
 
     @Transient
     public boolean isFasilitasUmum() {
         return (nomorKamar != null && "UMUM".equalsIgnoreCase(nomorKamar.trim()))
-            || (tipeKamar != null && tipeKamar.toLowerCase().contains("umum"));
+            || (tipeKamar != null && tipeKamar.toLowerCase().contains("umum"))
+            || (gedung != null && "UMUM".equalsIgnoreCase(gedung.trim()));
+    }
+
+    @Transient
+    public boolean isTersediaUntukPenghuni() {
+        return !isFasilitasUmum()
+            && "Gedung 1".equalsIgnoreCase(gedung)
+            && statusHunian != StatusHunian.PEMBANGUNAN
+            && statusHunian != StatusHunian.PERBAIKAN;
     }
 
     public Integer getIdKamar() {
@@ -58,6 +92,14 @@ public class Kamar {
 
     public void setIdKamar(Integer idKamar) {
         this.idKamar = idKamar;
+    }
+
+    public String getGedung() {
+        return gedung;
+    }
+
+    public void setGedung(String gedung) {
+        this.gedung = (gedung == null || gedung.trim().isEmpty()) ? "Gedung 1" : gedung.trim();
     }
 
     public String getNomorKamar() {
@@ -90,5 +132,13 @@ public class Kamar {
 
     public void setStatusHunian(StatusHunian statusHunian) {
         this.statusHunian = statusHunian;
+    }
+
+    public String getKeterangan() {
+        return keterangan;
+    }
+
+    public void setKeterangan(String keterangan) {
+        this.keterangan = (keterangan == null || keterangan.trim().isEmpty()) ? null : keterangan.trim();
     }
 }

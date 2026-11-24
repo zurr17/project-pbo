@@ -1,5 +1,31 @@
--- Migrasi tambahan untuk menyesuaikan tabel `laporan_kerusakan` dari dump `db_sapraskost`
--- dengan aturan bisnis terbaru (Fasilitas Umum +1 Terdampak, Penjadwalan Pasti, Akses Darurat).
+-- Migrasi tambahan untuk menyesuaikan schema PostgreSQL Sarpraskost (Kost Lodaya 9)
+-- Menambahkan identitas gedung & keterangan pembangunan pada tabel `kamar`, serta kolom aturan bisnis pada `laporan_kerusakan`.
+
+ALTER TABLE public.kamar
+    ADD COLUMN IF NOT EXISTS gedung character varying(20) NOT NULL DEFAULT 'Gedung 1',
+    ADD COLUMN IF NOT EXISTS keterangan text;
+
+ALTER TABLE public.kamar
+    DROP CONSTRAINT IF EXISTS kamar_nomor_kamar_key;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'kamar_gedung_nomor_key'
+    ) THEN
+        ALTER TABLE public.kamar
+            ADD CONSTRAINT kamar_gedung_nomor_key UNIQUE (gedung, nomor_kamar);
+    END IF;
+END $$;
+
+ALTER TABLE public.kamar
+    DROP CONSTRAINT IF EXISTS kamar_status_hunian_check;
+
+ALTER TABLE public.kamar
+    ADD CONSTRAINT kamar_status_hunian_check
+    CHECK ((status_hunian)::text = ANY ((ARRAY['Terisi'::character varying, 'Kosong'::character varying, 'Perbaikan'::character varying, 'Pembangunan'::character varying])::text[]));
 
 ALTER TABLE public.laporan_kerusakan
     ADD COLUMN IF NOT EXISTS jumlah_terdampak integer NOT NULL DEFAULT 1,
@@ -20,14 +46,17 @@ BEGIN
     END IF;
 END $$;
 
--- Update data existing yang tingkat_urgensi = 'Darurat' agar flag is_urgent konsisten
 UPDATE public.laporan_kerusakan
 SET is_urgent = true
 WHERE tingkat_urgensi = 'Darurat' AND is_urgent = false;
 
--- Pastikan kamar khusus Fasilitas Umum dan beberapa aset bersama tersedia bila belum ada
-INSERT INTO public.kamar (nomor_kamar, lantai, tipe_kamar, status_hunian)
-SELECT 'UMUM', 1, 'Fasilitas Umum', 'Terisi'
+UPDATE public.kamar
+SET gedung = 'Umum',
+    keterangan = COALESCE(keterangan, 'Area fasilitas bersama penghuni Kost Lodaya 9')
+WHERE UPPER(nomor_kamar) = 'UMUM';
+
+INSERT INTO public.kamar (gedung, nomor_kamar, lantai, tipe_kamar, status_hunian, keterangan)
+SELECT 'Umum', 'UMUM', 1, 'Fasilitas Umum', 'Terisi', 'Area fasilitas bersama penghuni Kost Lodaya 9'
 WHERE NOT EXISTS (
     SELECT 1 FROM public.kamar WHERE UPPER(nomor_kamar) = 'UMUM'
 );

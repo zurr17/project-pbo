@@ -33,8 +33,21 @@
       <!-- TAB: KAMAR -->
       <div id="panelKamar" class="form-stack">
         <div class="section-header">
-          <h2 class="section-title">Daftar Kamar</h2>
+          <h2 class="section-title">Daftar Kamar Kost Lodaya 9</h2>
           <button type="button" id="openCreateKamarBtn" class="btn btn-primary btn-sm" style="width:auto;">+ Tambah Kamar</button>
+        </div>
+        <div id="kamarSummaryBanner" class="info-banner" style="margin-bottom:0;">
+          <span>Memuat ringkasan Gedung 1 &amp; Gedung 2...</span>
+        </div>
+        <div class="form-group">
+          <div class="input-wrap">
+            <select id="filterGedungSelect" class="input-control" aria-label="Filter gedung kamar">
+              <option value="ALL">Semua Gedung (Gedung 1, Gedung 2 &amp; Umum)</option>
+              <option value="Gedung 1">Gedung 1 (34 Kamar Aktif / Tersedia)</option>
+              <option value="Gedung 2">Gedung 2 (31 Kamar - On Progress Pembangunan)</option>
+              <option value="Umum">Fasilitas Umum / Bersama</option>
+            </select>
+          </div>
         </div>
         <div id="kamarList" class="report-list">
           <div class="loading-state">Memuat data kamar...</div>
@@ -112,12 +125,22 @@
           <input type="hidden" id="kamarIdInput" />
           <div id="kamarFormError" class="error-banner" role="alert"></div>
           <div class="form-group">
+            <label class="form-label" for="gedungKamarSelect">Gedung</label>
+            <div class="input-wrap">
+              <select id="gedungKamarSelect" class="input-control">
+                <option value="Gedung 1">Gedung 1</option>
+                <option value="Gedung 2">Gedung 2</option>
+                <option value="Umum">Umum</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
             <label class="form-label" for="nomorKamarInput">Nomor kamar</label>
-            <div class="input-wrap"><input id="nomorKamarInput" type="text" class="input-control" placeholder="Contoh: A-02" required /></div>
+            <div class="input-wrap"><input id="nomorKamarInput" type="text" class="input-control" placeholder="Contoh: 101" required /></div>
           </div>
           <div class="form-group">
             <label class="form-label" for="tipeKamarInput">Tipe kamar</label>
-            <div class="input-wrap"><input id="tipeKamarInput" type="text" class="input-control" placeholder="Contoh: VIP / Reguler" required /></div>
+            <div class="input-wrap"><input id="tipeKamarInput" type="text" class="input-control" placeholder="Contoh: VIP AC / Reguler" required /></div>
           </div>
           <div class="form-group">
             <label class="form-label" for="lantaiInput">Lantai</label>
@@ -130,8 +153,13 @@
                 <option value="KOSONG">Kosong</option>
                 <option value="TERISI">Terisi</option>
                 <option value="PERBAIKAN">Perbaikan</option>
+                <option value="PEMBANGUNAN">On Progress Pembangunan</option>
               </select>
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="keteranganKamarInput">Keterangan status (opsional)</label>
+            <div class="input-wrap"><input id="keteranganKamarInput" type="text" class="input-control" placeholder="Contoh: On Progress Pembangunan - Perkiraan Ready Awal Juli" /></div>
           </div>
           <button type="submit" id="saveKamarBtn" class="btn btn-primary">Simpan Kamar</button>
         </form>
@@ -255,6 +283,8 @@
       const kategoriListEl = document.getElementById('kategoriList');
       const fasilitasListEl = document.getElementById('fasilitasList');
       const filterKamarSelect = document.getElementById('filterKamarSelect');
+      const filterGedungSelect = document.getElementById('filterGedungSelect');
+      const kamarSummaryBanner = document.getElementById('kamarSummaryBanner');
 
       let kamarCache = [];
       let kategoriCache = [];
@@ -285,13 +315,17 @@
       });
 
       function syncDropdownOptions() {
+        const formatOpt = (k) => k.is_umum
+          ? 'Area Fasilitas Umum (UMUM)'
+          : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} • Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} (${SarprasApp.escapeHtml(k.tipe_kamar)})`;
+
         const currentFilter = filterKamarSelect.value;
         filterKamarSelect.innerHTML = '<option value="">Semua Kamar</option>' +
-          kamarCache.map((k) => `<option value="${k.id_kamar}">Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} (${SarprasApp.escapeHtml(k.tipe_kamar)})</option>`).join('');
+          kamarCache.map((k) => `<option value="${k.id_kamar}">${formatOpt(k)}</option>`).join('');
         filterKamarSelect.value = currentFilter;
 
         document.getElementById('fasilitasKamarSelect').innerHTML =
-          kamarCache.map((k) => `<option value="${k.id_kamar}">Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} (${SarprasApp.escapeHtml(k.tipe_kamar)})</option>`).join('');
+          kamarCache.map((k) => `<option value="${k.id_kamar}">${formatOpt(k)}</option>`).join('');
         document.getElementById('fasilitasKategoriSelect').innerHTML =
           kategoriCache.map((c) => `<option value="${c.id_kategori}">${SarprasApp.escapeHtml(c.nama_kategori)}</option>`).join('');
       }
@@ -322,23 +356,40 @@
       }
 
       function renderKamarList() {
-        if (kamarCache.length === 0) {
-          kamarListEl.innerHTML = '<div class="empty-state">Belum ada data kamar.</div>';
+        const nonUmumRooms = kamarCache.filter((k) => !k.is_umum);
+        const g1Count = nonUmumRooms.filter((k) => (k.gedung || '').toLowerCase() === 'gedung 1').length;
+        const g2Count = nonUmumRooms.filter((k) => (k.gedung || '').toLowerCase() === 'gedung 2').length;
+        kamarSummaryBanner.innerHTML = `<span>Total <strong>${nonUmumRooms.length} kamar hunian</strong> &bull; Gedung 1: <strong>${g1Count} aktif</strong> &bull; Gedung 2: <strong>${g2Count} on progress pembangunan</strong> (siap awal Juli)</span>`;
+
+        const selectedGedung = filterGedungSelect.value;
+        const filteredRooms = kamarCache.filter((k) => {
+          if (selectedGedung === 'ALL') return true;
+          if (selectedGedung === 'Umum') return k.is_umum;
+          return (k.gedung || '').toLowerCase() === selectedGedung.toLowerCase();
+        });
+
+        if (filteredRooms.length === 0) {
+          kamarListEl.innerHTML = '<div class="empty-state">Belum ada data kamar untuk filter ini.</div>';
           return;
         }
-        kamarListEl.innerHTML = kamarCache.map((k) => {
+        kamarListEl.innerHTML = filteredRooms.map((k) => {
           const meta = SarprasApp.getStatusHunianMeta(k.status_hunian);
-          const roomTitle = k.is_umum ? 'Area Fasilitas Umum (UMUM)' : `Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}`;
+          const roomTitle = k.is_umum
+            ? 'Area Fasilitas Umum (UMUM)'
+            : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} • Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}`;
           const badgeHtml = k.is_umum
             ? '<span class="terdampak-pill">Fasilitas Bersama</span>'
             : `<span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>`;
+          const progressNotice = k.keterangan && !k.is_umum
+            ? `<div style="padding:8px 10px;border-radius:10px;background:#FEF3C7;border:1px solid #FDE68A;color:#92400E;font-size:11px;font-weight:600;">${SarprasApp.escapeHtml(k.keterangan)}</div>`
+            : '';
           const activeBadgesHtml = renderActiveReportBadges(activeReportsByKamar.get(k.id_kamar));
           return `
             <article class="facility-card">
               <div class="facility-header">
                 <div style="min-width:0;">
                   <h3 class="facility-title">${roomTitle}</h3>
-                  <div class="facility-brand">Tipe ${SarprasApp.escapeHtml(k.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(k.lantai)}</div>
+                  <div class="facility-brand">${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} &bull; Tipe ${SarprasApp.escapeHtml(k.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(k.lantai)}</div>
                 </div>
                 ${badgeHtml}
               </div>
@@ -346,6 +397,7 @@
                 <span class="kv-label">Penghuni / Aset</span>
                 <span class="kv-value">${k.jumlah_penghuni} penghuni &bull; ${k.jumlah_fasilitas} aset</span>
               </div>
+              ${progressNotice}
               ${activeBadgesHtml}
               <div class="action-row">
                 <button type="button" class="btn btn-secondary btn-sm" data-edit-kamar="${k.id_kamar}">Edit</button>
@@ -385,7 +437,9 @@
         }
         fasilitasListEl.innerHTML = fasilitasCache.map((f) => {
           const meta = SarprasApp.getKondisiMeta(f.kondisi);
-          const lokasiStr = f.is_umum ? 'Fasilitas Umum' : `Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
+          const lokasiStr = f.is_umum
+            ? 'Fasilitas Umum'
+            : `${f.gedung ? SarprasApp.escapeHtml(f.gedung) + ' • ' : ''}Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
           const activeBadgesHtml = renderActiveReportBadges(activeReportsByFasilitas.get(f.id_fasilitas));
           return `
             <article class="facility-card">
@@ -448,6 +502,8 @@
         }
       }
 
+      filterGedungSelect.addEventListener('change', renderKamarList);
+
       filterKamarSelect.addEventListener('change', async () => {
         try {
           fasilitasCache = await SarprasApp.fetchFasilitas(filterKamarSelect.value, '');
@@ -462,10 +518,12 @@
         document.getElementById('kamarSheetTitle').textContent = 'Tambah Kamar';
         document.getElementById('kamarFormError').classList.remove('visible');
         document.getElementById('kamarIdInput').value = '';
+        document.getElementById('gedungKamarSelect').value = 'Gedung 1';
         document.getElementById('nomorKamarInput').value = '';
         document.getElementById('tipeKamarInput').value = '';
         document.getElementById('lantaiInput').value = '1';
         document.getElementById('statusHunianSelect').value = 'KOSONG';
+        document.getElementById('keteranganKamarInput').value = '';
         SarprasApp.openSheet('kamarSheet');
       });
 
@@ -477,10 +535,12 @@
           document.getElementById('kamarSheetTitle').textContent = 'Edit Kamar';
           document.getElementById('kamarFormError').classList.remove('visible');
           document.getElementById('kamarIdInput').value = item.id_kamar;
+          document.getElementById('gedungKamarSelect').value = item.gedung || 'Gedung 1';
           document.getElementById('nomorKamarInput').value = item.nomor_kamar;
           document.getElementById('tipeKamarInput').value = item.tipe_kamar;
           document.getElementById('lantaiInput').value = item.lantai;
           document.getElementById('statusHunianSelect').value = item.status_hunian;
+          document.getElementById('keteranganKamarInput').value = item.keterangan || '';
           SarprasApp.openSheet('kamarSheet');
           return;
         }
@@ -503,10 +563,12 @@
         errEl.classList.remove('visible');
         const id = document.getElementById('kamarIdInput').value;
         const payload = {
+          gedung: document.getElementById('gedungKamarSelect').value,
           nomor_kamar: document.getElementById('nomorKamarInput').value.trim(),
           tipe_kamar: document.getElementById('tipeKamarInput').value.trim(),
           lantai: Number(document.getElementById('lantaiInput').value),
-          status_hunian: document.getElementById('statusHunianSelect').value
+          status_hunian: document.getElementById('statusHunianSelect').value,
+          keterangan: document.getElementById('keteranganKamarInput').value.trim()
         };
         try {
           await SarprasApp.requestJson(id ? `/kamar/${encodeURIComponent(id)}` : '/kamar', {

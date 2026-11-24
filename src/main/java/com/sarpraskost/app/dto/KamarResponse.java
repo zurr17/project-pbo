@@ -6,10 +6,13 @@ import com.sarpraskost.app.entity.StatusHunian;
 
 public record KamarResponse(
     @JsonProperty("id_kamar") Integer idKamar,
+    String gedung,
     @JsonProperty("nomor_kamar") String nomorKamar,
     @JsonProperty("tipe_kamar") String tipeKamar,
     Short lantai,
     @JsonProperty("status_hunian") StatusHunian statusHunian,
+    String keterangan,
+    @JsonProperty("tersedia") boolean tersedia,
     @JsonProperty("is_umum") boolean isUmum,
     @JsonProperty("jumlah_fasilitas") long jumlahFasilitas,
     @JsonProperty("jumlah_penghuni") long jumlahPenghuni
@@ -17,10 +20,13 @@ public record KamarResponse(
     public static KamarResponse from(Kamar kamar, long jumlahFasilitas, long jumlahPenghuni) {
         return new KamarResponse(
             kamar.getIdKamar(),
+            kamar.getGedung(),
             kamar.getNomorKamar(),
             kamar.getTipeKamar(),
             kamar.getLantai(),
             kamar.getStatusHunian(),
+            kamar.getKeterangan(),
+            kamar.isTersediaUntukPenghuni(),
             kamar.isFasilitasUmum(),
             jumlahFasilitas,
             jumlahPenghuni

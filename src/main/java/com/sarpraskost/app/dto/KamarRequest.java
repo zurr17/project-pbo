@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record KamarRequest(
+    String gedung,
     @JsonProperty("nomor_kamar") @JsonAlias("nomorKamar") String nomorKamar,
     @JsonProperty("tipe_kamar") @JsonAlias("tipeKamar") String tipeKamar,
     Short lantai,
-    @JsonProperty("status_hunian") @JsonAlias("statusHunian") String statusHunian
+    @JsonProperty("status_hunian") @JsonAlias("statusHunian") String statusHunian,
+    String keterangan
 ) {
 }

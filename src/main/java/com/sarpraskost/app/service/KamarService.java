@@ -32,7 +32,7 @@ public class KamarService {
 
     @Transactional(readOnly = true)
     public List<KamarResponse> listAll() {
-        return kamarRepository.findAllByOrderByNomorKamarAsc().stream()
+        return kamarRepository.findAllByOrderByGedungAscLantaiAscNomorKamarAsc().stream()
             .map(this::toResponse)
             .toList();
     }
@@ -60,15 +60,31 @@ public class KamarService {
         if (nomor.length() > 10) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar maksimal 10 karakter.");
         }
-        if (kamarRepository.existsByNomorKamarIgnoreCase(nomor)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah terdaftar.");
+        String gedung = isBlank(req.gedung())
+            ? ("UMUM".equalsIgnoreCase(nomor) ? "Umum" : "Gedung 1")
+            : req.gedung().trim();
+        if (gedung.length() > 20) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama gedung maksimal 20 karakter.");
+        }
+        if (kamarRepository.existsByGedungIgnoreCaseAndNomorKamarIgnoreCase(gedung, nomor)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah terdaftar di " + gedung + ".");
         }
 
+        StatusHunian status = parseStatusHunian(
+            req.statusHunian(),
+            "Gedung 2".equalsIgnoreCase(gedung) ? StatusHunian.PEMBANGUNAN : StatusHunian.KOSONG
+        );
+        String keterangan = isBlank(req.keterangan()) && status == StatusHunian.PEMBANGUNAN
+            ? "On Progress Pembangunan - Perkiraan Ready Awal Juli"
+            : (req.keterangan() == null ? null : req.keterangan().trim());
+
         Kamar kamar = new Kamar(
+            gedung,
             nomor,
             req.tipeKamar().trim(),
             req.lantai(),
-            parseStatusHunian(req.statusHunian(), StatusHunian.KOSONG)
+            status,
+            keterangan
         );
         return toResponse(kamarRepository.save(kamar));
     }
@@ -82,20 +98,34 @@ public class KamarService {
         Kamar kamar = kamarRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kamar tidak ditemukan."));
 
+        String nextGedung = kamar.getGedung();
+        if (req.gedung() != null) {
+            if (isBlank(req.gedung())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gedung tidak boleh kosong.");
+            }
+            nextGedung = req.gedung().trim();
+            if (nextGedung.length() > 20) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama gedung maksimal 20 karakter.");
+            }
+        }
+
+        String nextNomor = kamar.getNomorKamar();
         if (req.nomorKamar() != null) {
             if (isBlank(req.nomorKamar())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar tidak boleh kosong.");
             }
-            String nextNomor = req.nomorKamar().trim();
+            nextNomor = req.nomorKamar().trim();
             if (nextNomor.length() > 10) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nomor kamar maksimal 10 karakter.");
             }
-            if (!nextNomor.equalsIgnoreCase(kamar.getNomorKamar())
-                && kamarRepository.existsByNomorKamarIgnoreCase(nextNomor)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah digunakan.");
-            }
-            kamar.setNomorKamar(nextNomor);
         }
+
+        if ((!nextGedung.equalsIgnoreCase(kamar.getGedung()) || !nextNomor.equalsIgnoreCase(kamar.getNomorKamar()))
+            && kamarRepository.existsByGedungIgnoreCaseAndNomorKamarIgnoreCase(nextGedung, nextNomor)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah digunakan di " + nextGedung + ".");
+        }
+        kamar.setGedung(nextGedung);
+        kamar.setNomorKamar(nextNomor);
 
         if (req.tipeKamar() != null) {
             if (isBlank(req.tipeKamar())) {
@@ -113,6 +143,12 @@ public class KamarService {
 
         if (!isBlank(req.statusHunian())) {
             kamar.setStatusHunian(parseStatusHunian(req.statusHunian(), kamar.getStatusHunian()));
+        }
+
+        if (req.keterangan() != null) {
+            kamar.setKeterangan(req.keterangan());
+        } else if (kamar.getStatusHunian() == StatusHunian.PEMBANGUNAN && isBlank(kamar.getKeterangan())) {
+            kamar.setKeterangan("On Progress Pembangunan - Perkiraan Ready Awal Juli");
         }
 
         return toResponse(kamarRepository.save(kamar));
@@ -154,7 +190,7 @@ public class KamarService {
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Status hunian tidak valid. Pilih TERISI, KOSONG, atau PERBAIKAN."
+                "Status hunian tidak valid. Pilih TERISI, KOSONG, PERBAIKAN, atau PEMBANGUNAN."
             );
         }
     }
