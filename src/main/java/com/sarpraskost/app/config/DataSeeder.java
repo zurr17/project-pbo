@@ -74,9 +74,17 @@ public class DataSeeder implements CommandLineRunner {
 
     private void upgradeLegacyPlaceholderPasswords() {
         for (Pengguna user : penggunaRepository.findAll()) {
+            boolean dirty = false;
             String stored = user.getPasswordHash();
             if (stored == null || !stored.contains(":")) {
                 user.setPasswordHash(PasswordHasher.hash("123"));
+                dirty = true;
+            }
+            if ("Budi Santoso".equalsIgnoreCase(user.getNamaLengkap())) {
+                user.setNamaLengkap("Pak Soleh");
+                dirty = true;
+            }
+            if (dirty) {
                 penggunaRepository.save(user);
             }
         }
@@ -239,8 +247,8 @@ public class DataSeeder implements CommandLineRunner {
         Pengguna dimas = penggunaRepository.save(new Pengguna(
             k201, "Dimas Anggara", "dimas@kost.id", PasswordHasher.hash("123"), "0896-1122-3344", Role.PENGHUNI
         ));
-        Pengguna budi = penggunaRepository.save(new Pengguna(
-            null, "Budi Santoso", "budi.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
+        Pengguna pakSoleh = penggunaRepository.save(new Pengguna(
+            null, "Pak Soleh", "budi.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
         ));
 
         KategoriFasilitas katElektronik = kategoriRepository.save(new KategoriFasilitas(
@@ -310,7 +318,7 @@ public class DataSeeder implements CommandLineRunner {
 
         RiwayatPenanganan r1 = new RiwayatPenanganan();
         r1.setLaporan(l1);
-        r1.setPengguna(budi);
+        r1.setPengguna(pakSoleh);
         r1.setStatusBaru(StatusTiket.DIPROSES);
         r1.setCatatanPenanganan("Pengelola melakukan pengecekan tekanan freon dan evaporator.");
         r1.setBiayaPerbaikan(BigDecimal.ZERO);
@@ -318,7 +326,7 @@ public class DataSeeder implements CommandLineRunner {
 
         RiwayatPenanganan r2 = new RiwayatPenanganan();
         r2.setLaporan(l1);
-        r2.setPengguna(budi);
+        r2.setPengguna(pakSoleh);
         r2.setStatusBaru(StatusTiket.SELESAI);
         r2.setCatatanPenanganan("Pengisian ulang freon R32 dan pembersihan filter AC selesai.");
         r2.setFotoSesudahUrl("/uploads/selesai/s001.jpg");
@@ -327,7 +335,7 @@ public class DataSeeder implements CommandLineRunner {
 
         RiwayatPenanganan r3 = new RiwayatPenanganan();
         r3.setLaporan(l2);
-        r3.setPengguna(budi);
+        r3.setPengguna(pakSoleh);
         r3.setStatusBaru(StatusTiket.DIPROSES);
         r3.setCatatanPenanganan("Penutupan katup air sementara dan pembelian unit keran baru.");
         r3.setBiayaPerbaikan(new BigDecimal("45000.00"));
@@ -335,7 +343,7 @@ public class DataSeeder implements CommandLineRunner {
         riwayatRepository.saveAll(List.of(r1, r2, r3));
 
         Notifikasi n1 = new Notifikasi();
-        n1.setPengguna(budi);
+        n1.setPengguna(pakSoleh);
         n1.setLaporan(l1);
         n1.setJudulNotif("Laporan Baru: AC Tidak Dingin");
         n1.setPesanNotif("Penghuni kamar 101 (Gedung 1) melaporkan kerusakan pada AC Split 1 PK.");
@@ -351,7 +359,7 @@ public class DataSeeder implements CommandLineRunner {
         n2.setWaktuKirim(LocalDateTime.of(2026, 11, 2, 14, 1));
 
         Notifikasi n3 = new Notifikasi();
-        n3.setPengguna(budi);
+        n3.setPengguna(pakSoleh);
         n3.setLaporan(l2);
         n3.setJudulNotif("Laporan Darurat Masuk");
         n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar 102 (Gedung 1). Izin masuk kamar telah disetujui.");

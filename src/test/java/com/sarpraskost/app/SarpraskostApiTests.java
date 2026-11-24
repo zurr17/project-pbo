@@ -111,7 +111,7 @@ class SarpraskostApiTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"budi.pengelola@kost.id\",\"password\":\"123\"}"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nama_lengkap").value("Budi Santoso"))
+            .andExpect(jsonPath("$.nama_lengkap").value("Pak Soleh"))
             .andExpect(jsonPath("$.role").value("OWNER"))
             .andExpect(jsonPath("$.redirect_url").value("owner-home.html"))
             .andExpect(jsonPath("$.password_hash").doesNotExist());
