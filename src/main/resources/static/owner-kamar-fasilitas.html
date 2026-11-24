@@ -139,10 +139,6 @@
             <div class="input-wrap"><input id="nomorKamarInput" type="text" class="input-control" placeholder="Contoh: 101" required /></div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="tipeKamarInput">Tipe kamar</label>
-            <div class="input-wrap"><input id="tipeKamarInput" type="text" class="input-control" placeholder="Contoh: VIP AC / Reguler" required /></div>
-          </div>
-          <div class="form-group">
             <label class="form-label" for="lantaiInput">Lantai</label>
             <div class="input-wrap"><input id="lantaiInput" type="number" min="1" class="input-control" value="1" required /></div>
           </div>
@@ -317,7 +313,7 @@
       function syncDropdownOptions() {
         const formatOpt = (k) => k.is_umum
           ? 'Area Fasilitas Umum (UMUM)'
-          : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} • Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} (${SarprasApp.escapeHtml(k.tipe_kamar)})`;
+          : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} • Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} • Lantai ${SarprasApp.escapeHtml(k.lantai)}`;
 
         const currentFilter = filterKamarSelect.value;
         filterKamarSelect.innerHTML = '<option value="">Semua Kamar</option>' +
@@ -389,7 +385,7 @@
               <div class="facility-header">
                 <div style="min-width:0;">
                   <h3 class="facility-title">${roomTitle}</h3>
-                  <div class="facility-brand">${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} &bull; Tipe ${SarprasApp.escapeHtml(k.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(k.lantai)}</div>
+                  <div class="facility-brand">${k.is_umum ? 'Area Bersama &bull; Lantai ' + SarprasApp.escapeHtml(k.lantai) : SarprasApp.escapeHtml(k.gedung || 'Gedung 1') + ' &bull; Kamar ' + SarprasApp.escapeHtml(k.nomor_kamar) + ' &bull; Lantai ' + SarprasApp.escapeHtml(k.lantai)}</div>
                 </div>
                 ${badgeHtml}
               </div>
@@ -520,7 +516,6 @@
         document.getElementById('kamarIdInput').value = '';
         document.getElementById('gedungKamarSelect').value = 'Gedung 1';
         document.getElementById('nomorKamarInput').value = '';
-        document.getElementById('tipeKamarInput').value = '';
         document.getElementById('lantaiInput').value = '1';
         document.getElementById('statusHunianSelect').value = 'KOSONG';
         document.getElementById('keteranganKamarInput').value = '';
@@ -537,7 +532,6 @@
           document.getElementById('kamarIdInput').value = item.id_kamar;
           document.getElementById('gedungKamarSelect').value = item.gedung || 'Gedung 1';
           document.getElementById('nomorKamarInput').value = item.nomor_kamar;
-          document.getElementById('tipeKamarInput').value = item.tipe_kamar;
           document.getElementById('lantaiInput').value = item.lantai;
           document.getElementById('statusHunianSelect').value = item.status_hunian;
           document.getElementById('keteranganKamarInput').value = item.keterangan || '';
@@ -565,7 +559,6 @@
         const payload = {
           gedung: document.getElementById('gedungKamarSelect').value,
           nomor_kamar: document.getElementById('nomorKamarInput').value.trim(),
-          tipe_kamar: document.getElementById('tipeKamarInput').value.trim(),
           lantai: Number(document.getElementById('lantaiInput').value),
           status_hunian: document.getElementById('statusHunianSelect').value,
           keterangan: document.getElementById('keteranganKamarInput').value.trim()

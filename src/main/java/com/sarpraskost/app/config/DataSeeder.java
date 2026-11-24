@@ -203,38 +203,31 @@ public class DataSeeder implements CommandLineRunner {
 
         for (int num = 101; num <= 108; num++) {
             String nomor = String.valueOf(num);
-            String tipe = num <= 104 ? "VIP AC" : "Reguler";
             StatusHunian status = (num == 101 || num == 102) ? StatusHunian.TERISI : StatusHunian.KOSONG;
-            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 1, status, null));
+            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, "Standar", (short) 1, status, null));
             if (num == 101) k101 = saved;
             if (num == 102) k102 = saved;
         }
         for (int num = 201; num <= 213; num++) {
             String nomor = String.valueOf(num);
-            String tipe = num <= 205 ? "VIP AC" : "Reguler";
             StatusHunian status = (num == 201) ? StatusHunian.TERISI : StatusHunian.KOSONG;
-            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 2, status, null));
+            Kamar saved = kamarRepository.save(new Kamar("Gedung 1", nomor, "Standar", (short) 2, status, null));
             if (num == 201) k201 = saved;
         }
         for (int num = 301; num <= 313; num++) {
-            String nomor = String.valueOf(num);
-            String tipe = num <= 304 ? "VIP AC" : "Reguler";
-            kamarRepository.save(new Kamar("Gedung 1", nomor, tipe, (short) 3, StatusHunian.KOSONG, null));
+            kamarRepository.save(new Kamar("Gedung 1", String.valueOf(num), "Standar", (short) 3, StatusHunian.KOSONG, null));
         }
 
         // Gedung 2: 31 kamar pembangunan (Lantai 1: 101-109, Lantai 2: 201-211, Lantai 3: 301-311)
         String progressNote = "On Progress Pembangunan - Perkiraan Ready Awal Juli";
         for (int num = 101; num <= 109; num++) {
-            String tipe = num <= 103 ? "VIP AC" : "Reguler";
-            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 1, StatusHunian.PEMBANGUNAN, progressNote));
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), "Standar", (short) 1, StatusHunian.PEMBANGUNAN, progressNote));
         }
         for (int num = 201; num <= 211; num++) {
-            String tipe = num <= 204 ? "VIP AC" : "Reguler";
-            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 2, StatusHunian.PEMBANGUNAN, progressNote));
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), "Standar", (short) 2, StatusHunian.PEMBANGUNAN, progressNote));
         }
         for (int num = 301; num <= 311; num++) {
-            String tipe = num <= 304 ? "VIP AC" : "Reguler";
-            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), tipe, (short) 3, StatusHunian.PEMBANGUNAN, progressNote));
+            kamarRepository.save(new Kamar("Gedung 2", String.valueOf(num), "Standar", (short) 3, StatusHunian.PEMBANGUNAN, progressNote));
         }
 
         Pengguna raka = penggunaRepository.save(new Pengguna(

@@ -46,10 +46,10 @@ public class KamarService {
 
     @Transactional
     public KamarResponse create(KamarRequest req) {
-        if (req == null || isBlank(req.nomorKamar()) || isBlank(req.tipeKamar()) || req.lantai() == null) {
+        if (req == null || isBlank(req.nomorKamar()) || req.lantai() == null) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
-                "Nomor kamar, tipe kamar, dan lantai wajib diisi."
+                "Nomor kamar dan lantai wajib diisi."
             );
         }
         if (req.lantai() < 1) {
@@ -70,6 +70,11 @@ public class KamarService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Nomor kamar sudah terdaftar di " + gedung + ".");
         }
 
+        String defaultTipe = ("Umum".equalsIgnoreCase(gedung) || "UMUM".equalsIgnoreCase(nomor))
+            ? "Fasilitas Umum"
+            : "Standar";
+        String tipe = isBlank(req.tipeKamar()) ? defaultTipe : req.tipeKamar().trim();
+
         StatusHunian status = parseStatusHunian(
             req.statusHunian(),
             "Gedung 2".equalsIgnoreCase(gedung) ? StatusHunian.PEMBANGUNAN : StatusHunian.KOSONG
@@ -81,7 +86,7 @@ public class KamarService {
         Kamar kamar = new Kamar(
             gedung,
             nomor,
-            req.tipeKamar().trim(),
+            tipe,
             req.lantai(),
             status,
             keterangan

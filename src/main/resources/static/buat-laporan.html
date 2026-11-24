@@ -196,7 +196,8 @@
       const laporanForm = document.getElementById('laporanForm');
 
       if (user.nomor_kamar) {
-        document.getElementById('roomSubtitle').textContent = `Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} & Fasilitas Umum`;
+        const gedungTxt = user.gedung ? `${user.gedung} • ` : '';
+        document.getElementById('roomSubtitle').textContent = `${gedungTxt}Kamar ${user.nomor_kamar} • Lantai ${user.lantai || '-'} & Fasilitas Umum`;
       }
 
       let fasilitasList = [];
@@ -225,7 +226,7 @@
         locUmumBtn.classList.toggle('active', targetLoc === 'UMUM');
         locHintText.textContent = targetLoc === 'UMUM'
           ? 'Menampilkan aset Fasilitas Umum / Bersama. Jika tidak ada di daftar, pilih Lainnya di bagian paling bawah.'
-          : `Menampilkan aset di Kamar ${user.nomor_kamar || '-'}. Jika tidak ada di daftar, pilih Lainnya di bagian paling bawah.`;
+          : `Menampilkan aset di ${user.gedung ? user.gedung + ' • ' : ''}Kamar ${user.nomor_kamar || '-'} • Lantai ${user.lantai || '-'}. Jika tidak ada di daftar, pilih Lainnya di bagian paling bawah.`;
 
         const filtered = targetLoc === 'UMUM'
           ? fasilitasList.filter((f) => f.is_umum)
@@ -333,7 +334,7 @@
         assetPreview.innerHTML = `
           <div class="kv-row">
             <span class="kv-label">Lokasi Aset</span>
-            <span class="kv-value">${item.is_umum ? 'Fasilitas Umum / Bersama' : (item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' • ' : '') + 'Kamar ' + SarprasApp.escapeHtml(item.nomor_kamar)}</span>
+            <span class="kv-value">${item.is_umum ? 'Fasilitas Umum / Bersama' : (item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' • ' : '') + 'Kamar ' + SarprasApp.escapeHtml(item.nomor_kamar) + ' • Lantai ' + SarprasApp.escapeHtml(item.lantai || '-')}</span>
           </div>
           <div class="kv-row">
             <span class="kv-label">Kode Aset</span>

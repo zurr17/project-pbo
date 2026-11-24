@@ -137,7 +137,7 @@
             && r.tersedia !== false;
         });
         kamarSelect.innerHTML = '<option value="">-- Pilih kamar Gedung 1 (opsional) --</option>' +
-          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Gedung 1 &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">${SarprasApp.escapeHtml(r.gedung || 'Gedung 1')} &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)}</option>`).join('');
       } catch {
         kamarSelect.innerHTML = '<option value="">-- Kamar belum tersedia --</option>';
       }

@@ -205,7 +205,7 @@
         document.getElementById('detailDesc').textContent = laporan.deskripsi_kerusakan;
         document.getElementById('detailLokasi').textContent = laporan.is_umum
           ? 'Fasilitas Umum / Bersama (Kost Lodaya 9)'
-          : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar} (${laporan.tipe_kamar} • Lantai ${laporan.lantai})`;
+          : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar} • Lantai ${laporan.lantai}`;
 
         const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('detailStatusBadge');

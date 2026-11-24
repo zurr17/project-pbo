@@ -195,7 +195,7 @@ const SarprasApp = (() => {
     const tanggal = formatDateIndo(laporan.tgl_lapor);
     const lokasiLabel = laporan.is_umum
       ? 'Fasilitas Umum'
-      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}`;
+      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' • Lt. ' + laporan.lantai : ''}`;
     const assetLine = `${laporan.nama_fasilitas || '-'} • ${lokasiLabel}`;
     const urgentPill = laporan.is_urgent
       ? '<span class="priority-pill high">DARURAT</span>'
@@ -278,7 +278,7 @@ const SarprasApp = (() => {
     const tanggal = formatDateIndo(laporan.tgl_lapor);
     const kamarLabel = laporan.is_umum
       ? 'Fasilitas Umum'
-      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}`;
+      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' • Lt. ' + laporan.lantai : ''}`;
     const pelapor = laporan.nama_pelapor
       ? `${laporan.nama_pelapor} (${kamarLabel})`
       : kamarLabel;

@@ -177,7 +177,7 @@
         profileHeroEmail.textContent = u.email || '-';
         const gedungTxt = u.gedung ? `${u.gedung} • ` : '';
         profileHeroKamar.textContent = u.nomor_kamar
-          ? `${gedungTxt}Kamar ${u.nomor_kamar} (${u.tipe_kamar || ''} • Lantai ${u.lantai || '-'})`
+          ? `${gedungTxt}Kamar ${u.nomor_kamar} • Lantai ${u.lantai || '-'}`
           : 'Kamar belum dipilih';
         profileEmailDisplay.textContent = u.email || '-';
         profileNamaInput.value = u.nama_lengkap || '';
@@ -217,7 +217,7 @@
             && r.tersedia !== false;
         });
         profileKamarSelect.innerHTML = '<option value="">-- Belum memilih kamar --</option>' +
-          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">Gedung 1 &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} (${SarprasApp.escapeHtml(r.tipe_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)})</option>`).join('');
+          availableRooms.map((r) => `<option value="${SarprasApp.escapeHtml(r.id_kamar)}">${SarprasApp.escapeHtml(r.gedung || 'Gedung 1')} &bull; Kamar ${SarprasApp.escapeHtml(r.nomor_kamar)} &bull; Lantai ${SarprasApp.escapeHtml(r.lantai)}</option>`).join('');
 
         currentUser = freshUser;
         SarprasApp.saveUser(freshUser);

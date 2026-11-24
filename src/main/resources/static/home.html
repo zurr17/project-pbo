@@ -193,7 +193,7 @@
         document.getElementById('greetingText').textContent = `${SarprasApp.getGreetingByHour()}, ${u.nama_lengkap}`;
         document.getElementById('heroKamar').textContent = u.nomor_kamar ? `Kamar ${u.nomor_kamar}` : 'Belum ada kamar';
         const gedungTxt = u.gedung ? `${u.gedung} • ` : '';
-        const roomMeta = u.tipe_kamar ? `${gedungTxt}Tipe ${u.tipe_kamar} • Lantai ${u.lantai}` : 'Kost Lodaya 9';
+        const roomMeta = u.nomor_kamar ? `${gedungTxt}Kamar ${u.nomor_kamar} • Lantai ${u.lantai || '-'}` : 'Kost Lodaya 9';
         document.getElementById('heroResident').textContent = `${u.nama_lengkap} • ${roomMeta}`;
       }
 

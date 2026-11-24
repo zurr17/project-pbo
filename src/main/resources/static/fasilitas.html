@@ -71,7 +71,7 @@
       if (user.nomor_kamar) {
         const gedungTxt = user.gedung ? `${user.gedung} • ` : '';
         document.getElementById('fasilitasRoomSub').textContent =
-          `${gedungTxt}Kamar ${user.nomor_kamar} • ${user.tipe_kamar || ''} (Lantai ${user.lantai || '-'})`;
+          `${gedungTxt}Kamar ${user.nomor_kamar} • Lantai ${user.lantai || '-'}`;
       }
 
       const fasilitasList = document.getElementById('fasilitasList');
@@ -81,7 +81,7 @@
         const meta = SarprasApp.getKondisiMeta(item.kondisi);
         const locationPill = item.is_umum
           ? '<span class="terdampak-pill" style="margin-bottom:4px;">Fasilitas Umum</span>'
-          : `<span class="priority-pill" style="margin-bottom:4px;">Kamar ${SarprasApp.escapeHtml(item.nomor_kamar)}</span>`;
+          : `<span class="priority-pill" style="margin-bottom:4px;">${item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' • ' : ''}Kamar ${SarprasApp.escapeHtml(item.nomor_kamar)} • Lt. ${SarprasApp.escapeHtml(item.lantai || '-')}</span>`;
         return `
           <article class="facility-card">
             <div class="facility-header">
