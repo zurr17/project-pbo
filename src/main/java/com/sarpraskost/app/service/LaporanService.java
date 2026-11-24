@@ -22,7 +22,6 @@ import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -123,6 +122,11 @@ public class LaporanService {
 
     @Transactional(readOnly = true)
     public LaporanResponse getLaporanById(Integer id) {
+        return getLaporanById(id, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public LaporanResponse getLaporanById(Integer id, String viewer, Integer viewerId) {
         LaporanKerusakan laporan = laporanRepository.findDetailById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Laporan tidak ditemukan."));
         List<RiwayatPenangananResponse> riwayat = riwayatRepository
@@ -130,6 +134,12 @@ public class LaporanService {
             .stream()
             .map(RiwayatPenangananResponse::from)
             .toList();
+
+        if ("PENGHUNI".equalsIgnoreCase(viewer)) {
+            boolean maskReporter = isFasilitasUmum(laporan.getFasilitas())
+                && (viewerId == null || !viewerId.equals(laporan.getPengguna().getIdPengguna()));
+            return LaporanResponse.forPenghuni(laporan, riwayat, maskReporter);
+        }
         return LaporanResponse.from(laporan, riwayat);
     }
 
@@ -408,15 +418,15 @@ public class LaporanService {
 
         simpanRiwayat(laporan, owner, StatusTiket.DIPROSES, catatan, null, biaya, now);
 
-        String estimasiText = biaya.compareTo(BigDecimal.ZERO) > 0
-            ? " Estimasi biaya: " + formatRupiah(biaya) + "."
-            : "";
+        String prepNote = isFasilitasUmum(fasilitas)
+            ? ""
+            : " Mohon persiapkan kamar Anda sesuai jadwal tersebut.";
         notifikasiService.kirimNotifikasi(
             laporan.getPengguna(),
             laporan,
             "Jadwal Perbaikan Ditetapkan",
             "Laporan " + laporan.getJudulLaporan() + " akan ditangani oleh " + owner.getNamaLengkap()
-                + " pada jadwal " + formattedJadwal + "." + estimasiText,
+                + " pada jadwal " + formattedJadwal + " WIB." + prepNote,
             now
         );
 
@@ -509,14 +519,14 @@ public class LaporanService {
 
         simpanRiwayat(laporan, owner, StatusTiket.SELESAI, catatan, fotoSesudahUrl, biaya, now);
 
-        String biayaText = biaya.compareTo(BigDecimal.ZERO) > 0
-            ? " Total biaya: " + formatRupiah(biaya) + "."
+        String fotoNote = fotoSesudahUrl != null
+            ? " Foto bukti perbaikan telah dilampirkan pada detail laporan."
             : "";
         notifikasiService.kirimNotifikasi(
             laporan.getPengguna(),
             laporan,
             "Perbaikan Selesai",
-            "Perbaikan untuk " + laporan.getJudulLaporan() + " telah selesai dikerjakan." + biayaText,
+            "Perbaikan untuk " + laporan.getJudulLaporan() + " telah selesai dikerjakan oleh pengelola." + fotoNote,
             now
         );
 
@@ -570,7 +580,15 @@ public class LaporanService {
     ) {
         String lokasi = fasilitasUmum ? "Fasilitas Umum" : "Kamar " + fasilitas.getKamar().getNomorKamar();
         String urgencyTag = urgent ? "[DARURAT] " : "";
-        String izinNote = (!fasilitasUmum && izinMasuk) ? " Izin masuk kamar telah disetujui penghuni." : "";
+        String izinNote = "";
+        if (!fasilitasUmum && urgent) {
+            izinNote = izinMasuk
+                ? " Status Izin Masuk Kamar: DISETUJUI penghuni."
+                : " Status Izin Masuk Kamar: TIDAK dicentang.";
+        }
+        String fotoNote = !isBlank(saved.getFotoUrl())
+            ? " Silakan verifikasi melalui foto bukti kerusakan."
+            : "";
         String pelaporText = pelapor.getNamaLengkap() + " (" + lokasi + ")";
 
         for (Pengguna owner : penggunaRepository.findByRoleOrderByNamaLengkapAsc(Role.OWNER)) {
@@ -578,7 +596,7 @@ public class LaporanService {
                 owner,
                 saved,
                 urgencyTag + "Laporan Baru: " + saved.getJudulLaporan(),
-                pelaporText + " melaporkan kerusakan pada " + fasilitas.getNamaFasilitas() + "." + izinNote,
+                pelaporText + " melaporkan kerusakan pada " + fasilitas.getNamaFasilitas() + "." + izinNote + fotoNote,
                 now
             );
         }
@@ -626,7 +644,6 @@ public class LaporanService {
         String searchQuery,
         boolean ownerMode
     ) {
-        LaporanSummaryResponse summary = buildSummary(allReports);
         StatusTiket filterStatus = parseStatusFilter(statusParam);
         String keyword = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
 
@@ -640,21 +657,69 @@ public class LaporanService {
 
         List<LaporanKerusakan> filteredEntities = stream.toList();
         if (filteredEntities.isEmpty()) {
-            return new LaporanListResponse(summary, List.of());
+            BigDecimal emptyBiaya = ownerMode ? computeTotalBiayaInternal(allReports) : null;
+            return new LaporanListResponse(buildSummary(allReports, emptyBiaya), List.of());
         }
 
-        List<Integer> ids = filteredEntities.stream().map(LaporanKerusakan::getIdLaporan).toList();
+        List<Integer> filteredIds = filteredEntities.stream().map(LaporanKerusakan::getIdLaporan).toList();
         Map<Integer, List<RiwayatPenangananResponse>> riwayatByLaporan = riwayatRepository
-            .findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(ids)
+            .findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(filteredIds)
             .stream()
             .map(RiwayatPenangananResponse::from)
             .collect(Collectors.groupingBy(RiwayatPenangananResponse::idLaporan));
 
+        BigDecimal totalBiayaInternal = ownerMode
+            ? (filteredEntities.size() == allReports.size()
+                ? sumLatestBiaya(allReports, riwayatByLaporan)
+                : computeTotalBiayaInternal(allReports))
+            : null;
+        LaporanSummaryResponse summary = buildSummary(allReports, totalBiayaInternal);
+
         List<LaporanResponse> responses = filteredEntities.stream()
-            .map(item -> LaporanResponse.from(item, riwayatByLaporan.getOrDefault(item.getIdLaporan(), List.of())))
+            .map(item -> {
+                List<RiwayatPenangananResponse> entries = riwayatByLaporan.getOrDefault(item.getIdLaporan(), List.of());
+                return ownerMode
+                    ? LaporanResponse.from(item, entries)
+                    : LaporanResponse.forPenghuni(item, entries, false);
+            })
             .toList();
 
         return new LaporanListResponse(summary, responses);
+    }
+
+    private BigDecimal computeTotalBiayaInternal(List<LaporanKerusakan> allReports) {
+        if (allReports.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        List<Integer> allIds = allReports.stream().map(LaporanKerusakan::getIdLaporan).toList();
+        Map<Integer, List<RiwayatPenangananResponse>> byLaporan = riwayatRepository
+            .findByLaporanIdLaporanInOrderByWaktuUpdateAscIdRiwayatAsc(allIds)
+            .stream()
+            .map(RiwayatPenangananResponse::from)
+            .collect(Collectors.groupingBy(RiwayatPenangananResponse::idLaporan));
+        return sumLatestBiaya(allReports, byLaporan);
+    }
+
+    private BigDecimal sumLatestBiaya(
+        List<LaporanKerusakan> allReports,
+        Map<Integer, List<RiwayatPenangananResponse>> riwayatMap
+    ) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (LaporanKerusakan report : allReports) {
+            List<RiwayatPenangananResponse> list = riwayatMap.getOrDefault(report.getIdLaporan(), List.of());
+            BigDecimal latestBiaya = null;
+            for (int i = list.size() - 1; i >= 0; i--) {
+                BigDecimal candidate = list.get(i).biayaPerbaikan();
+                if (candidate != null && candidate.compareTo(BigDecimal.ZERO) > 0) {
+                    latestBiaya = candidate;
+                    break;
+                }
+            }
+            if (latestBiaya != null) {
+                total = total.add(latestBiaya);
+            }
+        }
+        return total;
     }
 
     private Comparator<LaporanKerusakan> ownerPriorityComparator() {
@@ -669,7 +734,7 @@ public class LaporanService {
             .thenComparing(LaporanKerusakan::getIdLaporan, Comparator.reverseOrder());
     }
 
-    private LaporanSummaryResponse buildSummary(List<LaporanKerusakan> reports) {
+    private LaporanSummaryResponse buildSummary(List<LaporanKerusakan> reports, BigDecimal totalBiayaInternal) {
         long menunggu = 0;
         long diproses = 0;
         long selesai = 0;
@@ -686,7 +751,7 @@ public class LaporanService {
                 case DITOLAK -> ditolak++;
             }
         }
-        return new LaporanSummaryResponse(reports.size(), menunggu, diproses, selesai, ditolak, darurat);
+        return new LaporanSummaryResponse(reports.size(), menunggu, diproses, selesai, ditolak, darurat, totalBiayaInternal);
     }
 
     private StatusTiket parseStatusFilter(String statusParam) {
@@ -770,11 +835,6 @@ public class LaporanService {
         } catch (NumberFormatException ex) {
             return 0;
         }
-    }
-
-    private String formatRupiah(BigDecimal amount) {
-        NumberFormat fmt = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID"));
-        return "Rp " + fmt.format(amount);
     }
 
     private boolean isBlank(String value) {

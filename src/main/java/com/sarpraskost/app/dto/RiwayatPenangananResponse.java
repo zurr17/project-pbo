@@ -35,4 +35,19 @@ public record RiwayatPenangananResponse(
             r.getWaktuUpdate()
         );
     }
+
+    public RiwayatPenangananResponse withoutBiaya() {
+        return new RiwayatPenangananResponse(
+            idRiwayat,
+            idLaporan,
+            idPengguna,
+            namaPengguna,
+            rolePengguna,
+            statusBaru,
+            catatanPenanganan,
+            fotoSesudahUrl,
+            null,
+            waktuUpdate
+        );
+    }
 }

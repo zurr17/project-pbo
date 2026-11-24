@@ -48,6 +48,14 @@
         <button type="button" class="filter-tab" data-status="DITOLAK">Ditolak</button>
       </div>
 
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <label class="checkbox-label-row" for="urgentOnlyCheck" style="font-size:12px;font-weight:600;color:#B91C1C;">
+          <input id="urgentOnlyCheck" type="checkbox" />
+          <span>Tampilkan Prioritas Darurat Saja</span>
+        </label>
+        <span id="urgentCountBadge" class="priority-pill high" style="display:none;">0 Darurat</span>
+      </div>
+
       <div style="display:flex;flex-direction:column;gap:12px;">
         <div class="section-header">
           <span id="countLabel" style="font-size:13px;font-weight:600;color:#172554;">0 laporan</span>
@@ -144,6 +152,8 @@
       const countLabel = document.getElementById('countLabel');
       const ownerLaporanList = document.getElementById('ownerLaporanList');
       const tabButtons = document.querySelectorAll('.filter-tab');
+      const urgentOnlyCheck = document.getElementById('urgentOnlyCheck');
+      const urgentCountBadge = document.getElementById('urgentCountBadge');
 
       const urlParams = new URLSearchParams(window.location.search);
       let activeStatus = (urlParams.get('status') || 'SEMUA').toUpperCase();
@@ -161,7 +171,18 @@
         ownerLaporanList.innerHTML = '<div class="loading-state">Memuat data laporan...</div>';
         try {
           const data = await SarprasApp.fetchOwnerLaporan(activeStatus, searchInput.value);
-          const list = data.laporan || [];
+          const ringkasan = data.ringkasan || {};
+          if (ringkasan.darurat && Number(ringkasan.darurat) > 0) {
+            urgentCountBadge.textContent = `${ringkasan.darurat} Darurat Aktif`;
+            urgentCountBadge.style.display = 'inline-flex';
+          } else {
+            urgentCountBadge.style.display = 'none';
+          }
+
+          let list = data.laporan || [];
+          if (urgentOnlyCheck.checked) {
+            list = list.filter((item) => Boolean(item.is_urgent));
+          }
           countLabel.textContent = `${list.length} laporan`;
 
           if (list.length === 0) {
@@ -173,6 +194,8 @@
           ownerLaporanList.innerHTML = `<div class="error-banner visible">${SarprasApp.escapeHtml(err.message)}</div>`;
         }
       }
+
+      urgentOnlyCheck.addEventListener('change', loadLaporan);
 
       tabButtons.forEach((btn) => {
         btn.addEventListener('click', () => {

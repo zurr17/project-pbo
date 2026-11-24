@@ -22,12 +22,14 @@
 
     <section class="page-body">
       <div id="summaryCard" class="summary-mini-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span id="summaryKode" class="report-code">Memuat...</span>
           <span id="summaryPenghuni" style="font-size:11px;color:#64748B;">-</span>
         </div>
+        <div id="summaryBadges" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
         <div id="summaryTitle" style="font-size:14px;font-weight:600;color:#172554;">Memuat detail laporan...</div>
         <div id="summaryLokasi" style="font-size:12px;color:#64748B;">-</div>
+        <div id="summarySchedule" style="display:none;font-size:11px;color:#1E40AF;font-weight:600;"></div>
       </div>
 
       <form id="tolakForm" class="form-stack" novalidate>
@@ -112,9 +114,27 @@
         document.getElementById('summaryKode').textContent = laporan.kode_tiket;
         document.getElementById('summaryPenghuni').textContent =
           `${laporan.nama_pelapor} • ${laporan.is_umum ? 'Fasilitas Umum' : 'Kamar ' + laporan.nomor_kamar}`;
+
+        const badges = [];
+        if (laporan.is_urgent) badges.push('<span class="priority-pill high">DARURAT</span>');
+        if (laporan.is_umum || Number(laporan.jumlah_terdampak) > 1) {
+          badges.push(`<span class="terdampak-pill">${Number(laporan.jumlah_terdampak || 1)} terdampak</span>`);
+        }
+        if (!laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)) {
+          badges.push(laporan.izin_masuk_kamar
+            ? '<span class="izin-pill ok">Izin Masuk: Disetujui</span>'
+            : '<span class="izin-pill warn">Tanpa Izin Masuk</span>');
+        }
+        document.getElementById('summaryBadges').innerHTML = badges.join('');
+
         document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
         document.getElementById('summaryLokasi').textContent =
           `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`;
+        if (laporan.jadwal_pengerjaan) {
+          const schEl = document.getElementById('summarySchedule');
+          schEl.textContent = `Jadwal tercatat: ${SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan)} WIB`;
+          schEl.style.display = 'block';
+        }
       } catch (err) {
         showError(err.message || 'Gagal memuat detail laporan.');
       }

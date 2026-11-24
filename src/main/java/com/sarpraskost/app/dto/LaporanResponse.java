@@ -49,19 +49,39 @@ public record LaporanResponse(
     List<RiwayatPenangananResponse> riwayat
 ) {
     public static LaporanResponse from(LaporanKerusakan laporan, List<RiwayatPenangananResponse> riwayat) {
+        return build(laporan, riwayat, true, false);
+    }
+
+    public static LaporanResponse forPenghuni(
+        LaporanKerusakan laporan,
+        List<RiwayatPenangananResponse> riwayat,
+        boolean maskReporterIdentity
+    ) {
+        return build(laporan, riwayat, false, maskReporterIdentity);
+    }
+
+    private static LaporanResponse build(
+        LaporanKerusakan laporan,
+        List<RiwayatPenangananResponse> riwayat,
+        boolean includeBiayaInternal,
+        boolean maskReporterIdentity
+    ) {
         Pengguna pelapor = laporan.getPengguna();
         FasilitasKamar fasilitas = laporan.getFasilitas();
         Kamar kamar = fasilitas.getKamar();
         KategoriFasilitas kategori = fasilitas.getKategori();
 
-        List<RiwayatPenangananResponse> safeRiwayat = riwayat == null ? List.of() : riwayat;
+        List<RiwayatPenangananResponse> rawRiwayat = riwayat == null ? List.of() : riwayat;
+        List<RiwayatPenangananResponse> safeRiwayat = includeBiayaInternal
+            ? rawRiwayat
+            : rawRiwayat.stream().map(RiwayatPenangananResponse::withoutBiaya).toList();
         RiwayatPenangananResponse latest = safeRiwayat.isEmpty() ? null : safeRiwayat.get(safeRiwayat.size() - 1);
 
         BigDecimal latestBiaya = null;
         String latestFotoSesudah = null;
         for (int i = safeRiwayat.size() - 1; i >= 0; i--) {
             RiwayatPenangananResponse item = safeRiwayat.get(i);
-            if (latestBiaya == null && item.biayaPerbaikan() != null) {
+            if (includeBiayaInternal && latestBiaya == null && item.biayaPerbaikan() != null) {
                 latestBiaya = item.biayaPerbaikan();
             }
             if (latestFotoSesudah == null && item.fotoSesudahUrl() != null && !item.fotoSesudahUrl().isBlank()) {
@@ -71,9 +91,9 @@ public record LaporanResponse(
 
         return new LaporanResponse(
             laporan.getIdLaporan(),
-            pelapor.getIdPengguna(),
-            pelapor.getNamaLengkap(),
-            pelapor.getNoHp(),
+            maskReporterIdentity ? null : pelapor.getIdPengguna(),
+            maskReporterIdentity ? "Penghuni Kost" : pelapor.getNamaLengkap(),
+            maskReporterIdentity ? null : pelapor.getNoHp(),
             kamar.getIdKamar(),
             kamar.getNomorKamar(),
             kamar.getTipeKamar(),

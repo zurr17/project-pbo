@@ -60,6 +60,14 @@
             <span class="owner-stat-label done">Selesai ditangani</span>
           </a>
         </div>
+
+        <div class="owner-expense-card">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#172554;">Pembukuan Pengeluaran Internal</div>
+            <div style="font-size:11px;color:#64748B;margin-top:2px;">Total biaya perbaikan kost (tidak ditagihkan ke penghuni)</div>
+          </div>
+          <div id="statBiayaInternal" style="font-size:15px;font-weight:700;color:#172554;white-space:nowrap;">Rp 0</div>
+        </div>
       </div>
 
       <a href="owner-kamar-fasilitas.html" class="nav-shortcut-card">
@@ -196,6 +204,8 @@
         document.getElementById('statMenunggu').textContent = ringkasan.menunggu ?? 0;
         document.getElementById('statDiproses').textContent = ringkasan.diproses ?? 0;
         document.getElementById('statSelesai').textContent = ringkasan.selesai ?? 0;
+        document.getElementById('statBiayaInternal').textContent =
+          SarprasApp.formatRupiah(ringkasan.total_biaya_internal ?? 0);
         const urgentPill = document.getElementById('urgentAlertPill');
         if (ringkasan.darurat && Number(ringkasan.darurat) > 0) {
           urgentPill.textContent = `${ringkasan.darurat} Darurat`;

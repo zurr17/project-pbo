@@ -3,6 +3,7 @@ package com.sarpraskost.app;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -146,19 +147,67 @@ class SarpraskostApiTests {
         mockMvc.perform(get("/api/laporan/penghuni/" + raka.getIdPengguna()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(1)))
+            .andExpect(jsonPath("$.ringkasan.total_biaya_internal").value(nullValue()))
             .andExpect(jsonPath("$.laporan[0].kode_tiket", startsWith("TKT-")))
-            .andExpect(jsonPath("$.laporan[0].riwayat", hasSize(greaterThanOrEqualTo(1))));
+            .andExpect(jsonPath("$.laporan[0].biaya_perbaikan").value(nullValue()))
+            .andExpect(jsonPath("$.laporan[0].riwayat", hasSize(greaterThanOrEqualTo(1))))
+            .andExpect(jsonPath("$.laporan[0].riwayat[0].biaya_perbaikan").value(nullValue()));
 
         MvcResult umumRes = mockMvc.perform(get("/api/laporan/fasilitas-umum/aktif"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
             .andReturn();
 
         JsonNode umumArr = objectMapper.readTree(umumRes.getResponse().getContentAsString());
-        JsonNode firstUmum = umumArr.get(0);
-        assertFalse(firstUmum.has("nama_pelapor"), "Public shared alert must NOT expose reporter name");
-        assertFalse(firstUmum.has("id_pengguna"), "Public shared alert must NOT expose reporter id");
-        assertFalse(firstUmum.has("no_hp_pelapor"), "Public shared alert must NOT expose reporter phone");
+        Integer tempUmumFasId = null;
+        Integer tempUmumLapId = null;
+        try {
+            if (umumArr.isEmpty()) {
+                Kamar umum = kamarRepository.findByNomorKamarIgnoreCase("UMUM").orElseThrow();
+                Integer katId = kategoriRepository.findByNamaKategoriIgnoreCase("Elektronik").orElseThrow().getIdKategori();
+                String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+                MvcResult fasRes = mockMvc.perform(post("/api/fasilitas")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.format(
+                            "{\"id_kamar\":%d,\"id_kategori\":%d,\"nama_fasilitas\":\"WiFi Uji %s\"}",
+                            umum.getIdKamar(), katId, suffix
+                        )))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+                tempUmumFasId = objectMapper.readTree(fasRes.getResponse().getContentAsString()).get("id_fasilitas").asInt();
+
+                MvcResult lapRes = mockMvc.perform(multipart("/api/laporan")
+                        .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                        .param("id_fasilitas", String.valueOf(tempUmumFasId))
+                        .param("judul_laporan", "WiFi uji gangguan")
+                        .param("deskripsi_kerusakan", "Koneksi terputus untuk verifikasi endpoint aktif."))
+                    .andExpect(status().isCreated())
+                    .andReturn();
+                tempUmumLapId = objectMapper.readTree(lapRes.getResponse().getContentAsString()).get("id_laporan").asInt();
+
+                umumRes = mockMvc.perform(get("/api/laporan/fasilitas-umum/aktif"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
+                    .andReturn();
+                umumArr = objectMapper.readTree(umumRes.getResponse().getContentAsString());
+            }
+
+            JsonNode firstUmum = umumArr.get(0);
+            assertFalse(firstUmum.has("nama_pelapor"), "Public shared alert must NOT expose reporter name");
+            assertFalse(firstUmum.has("id_pengguna"), "Public shared alert must NOT expose reporter id");
+            assertFalse(firstUmum.has("no_hp_pelapor"), "Public shared alert must NOT expose reporter phone");
+
+            int sharedId = firstUmum.get("id_laporan").asInt();
+            mockMvc.perform(get("/api/laporan/" + sharedId + "?viewer=PENGHUNI&viewerId=-1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.biaya_perbaikan").value(nullValue()))
+                .andExpect(jsonPath("$.nama_pelapor").value("Penghuni Kost"))
+                .andExpect(jsonPath("$.id_pengguna").value(nullValue()));
+        } finally {
+            safeDeleteLaporan(tempUmumLapId);
+            if (tempUmumFasId != null && fasilitasRepository.existsById(tempUmumFasId)) {
+                fasilitasRepository.deleteById(tempUmumFasId);
+            }
+        }
     }
 
     @Test
@@ -535,12 +584,29 @@ class SarpraskostApiTests {
             sesudahPath = fileStorageService.getUploadDir().resolve(fotoSesudahUrl.replace("/uploads/", ""));
             assertTrue(Files.exists(sesudahPath));
 
-            // Notification exists for Penghuni and can be marked read
+            // Notification exists for Owner (with urgent + izin_masuk_kamar) and for Penghuni (WITHOUT biaya)
+            MvcResult ownerNotifRes = mockMvc.perform(get("/api/notifikasi/" + owner.getIdPengguna()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
+                .andReturn();
+            JsonNode latestOwnerNotif = objectMapper.readTree(ownerNotifRes.getResponse().getContentAsString()).get(0);
+            assertTrue(latestOwnerNotif.get("is_urgent").asBoolean());
+            assertTrue(latestOwnerNotif.get("izin_masuk_kamar").asBoolean());
+            assertTrue(latestOwnerNotif.get("has_foto_bukti").asBoolean());
+
             MvcResult notifRes = mockMvc.perform(get("/api/notifikasi/" + raka.getIdPengguna()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
                 .andReturn();
-            int notifId = objectMapper.readTree(notifRes.getResponse().getContentAsString()).get(0).get("id_notifikasi").asInt();
+            JsonNode notifArr = objectMapper.readTree(notifRes.getResponse().getContentAsString());
+            for (JsonNode n : notifArr) {
+                if (n.get("id_laporan").asInt() == lapId1) {
+                    String pesan = n.get("pesan_notif").asText().toLowerCase();
+                    assertFalse(pesan.contains("biaya"), "Penghuni notification must NOT expose repair cost");
+                    assertFalse(pesan.contains("rp "), "Penghuni notification must NOT expose Rupiah cost");
+                }
+            }
+            int notifId = notifArr.get(0).get("id_notifikasi").asInt();
             mockMvc.perform(put("/api/notifikasi/" + notifId + "/baca"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.is_read").value(true));
@@ -568,7 +634,8 @@ class SarpraskostApiTests {
 
             mockMvc.perform(get("/api/owner/dashboard"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(4)));
+                .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(4)))
+                .andExpect(jsonPath("$.ringkasan.total_biaya_internal").isNumber());
 
             mockMvc.perform(delete("/api/laporan/" + lapId1)).andExpect(status().isOk());
             assertFalse(Files.exists(awalPath));

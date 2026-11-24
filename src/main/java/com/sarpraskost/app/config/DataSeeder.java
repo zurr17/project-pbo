@@ -1,14 +1,5 @@
 package com.sarpraskost.app.config;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.sarpraskost.app.entity.FasilitasKamar;
 import com.sarpraskost.app.entity.Kamar;
 import com.sarpraskost.app.entity.KategoriFasilitas;
@@ -29,6 +20,13 @@ import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import com.sarpraskost.app.util.PasswordHasher;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -62,7 +60,9 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (kamarRepository.count() == 0 && penggunaRepository.count() == 0) {
+        if (kamarRepository.count() == 0
+            && penggunaRepository.count() == 0
+            && kategoriRepository.count() == 0) {
             seedBaseSqlEquivalentData();
         } else {
             upgradeLegacyPlaceholderPasswords();
@@ -110,7 +110,7 @@ public class DataSeeder implements CommandLineRunner {
                 "UMM-001",
                 "Router WiFi Lantai 1",
                 "TP-Link Omada EAP225",
-                KondisiFasilitas.RUSAK_RINGAN,
+                KondisiFasilitas.BAIK,
                 LocalDate.of(2025, 6, 15)
             )));
 
@@ -159,6 +159,11 @@ public class DataSeeder implements CommandLineRunner {
         lap.setUrgent(false);
         lap.setIzinMasukKamar(false);
         lap = laporanRepository.save(lap);
+
+        if (routerWifi.getKondisi() == KondisiFasilitas.BAIK) {
+            routerWifi.setKondisi(KondisiFasilitas.RUSAK_RINGAN);
+            fasilitasRepository.save(routerWifi);
+        }
 
         RiwayatPenanganan riwayat = new RiwayatPenanganan();
         riwayat.setLaporan(lap);
@@ -318,7 +323,7 @@ public class DataSeeder implements CommandLineRunner {
         n3.setPengguna(budi);
         n3.setLaporan(l2);
         n3.setJudulNotif("Laporan Darurat Masuk");
-        n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar A-102.");
+        n3.setPesanNotif("Terdapat laporan kerusakan sanitasi darurat di kamar A-102. Izin masuk kamar telah disetujui.");
         n3.setRead(false);
         n3.setWaktuKirim(LocalDateTime.of(2026, 11, 3, 7, 46));
         notifikasiRepository.saveAll(List.of(n1, n2, n3));

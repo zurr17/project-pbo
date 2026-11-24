@@ -55,6 +55,20 @@
 
       <div id="assetDetailCard" class="summary-mini-card"></div>
 
+      <div id="scheduleHighlightCard" class="info-banner" style="display:none;">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="flex-shrink:0;margin-top:2px;">
+          <path d="M6.66675 1.66663V4.99996M13.3334 1.66663V4.99996M2.50008 8.33329H17.5001M4.16675 3.33329H15.8334C16.7539 3.33329 17.5001 4.07948 17.5001 4.99996V16.6666C17.5001 17.5871 16.7539 18.3333 15.8334 18.3333H4.16675C3.24627 18.3333 2.50008 17.5871 2.50008 16.6666V4.99996C2.50008 4.07948 3.24627 3.33329 4.16675 3.33329Z" stroke="#2563EB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#1E3A8A;">Jadwal Pengerjaan dari Pengelola</div>
+          <div id="scheduleHighlightText" style="font-size:12px;color:#1E40AF;margin-top:2px;">-</div>
+        </div>
+      </div>
+
+      <div id="umumTerdampakBox" style="display:none;">
+        <button type="button" id="detailTerdampakBtn" class="btn btn-primary">Saya Terdampak (+1)</button>
+      </div>
+
       <div id="latestHandlingCard" class="handler-card">
         <div class="handler-avatar">OW</div>
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
@@ -254,13 +268,22 @@
         document.getElementById('detailCatatan').textContent =
           laporan.catatan_terakhir || 'Menunggu verifikasi pengelola kost.';
 
+        const scheduleHighlightCard = document.getElementById('scheduleHighlightCard');
+        const scheduleHighlightText = document.getElementById('scheduleHighlightText');
+        if (laporan.jadwal_pengerjaan) {
+          const scheduleLocNote = laporan.is_umum
+            ? 'Tim pengelola akan melakukan penanganan pada fasilitas bersama sesuai jadwal.'
+            : 'Mohon persiapkan akses kamar sesuai jadwal tersebut.';
+          scheduleHighlightText.textContent = `${SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan)} WIB — ${scheduleLocNote}`;
+          scheduleHighlightCard.style.display = 'flex';
+        } else {
+          scheduleHighlightCard.style.display = 'none';
+        }
+
         const badgesEl = document.getElementById('detailMetaBadges');
         const chips = [];
         if (laporan.nama_pemroses) {
           chips.push(`<span class="priority-pill" style="background:#FFFFFF;border:1px solid #E2E8F0;">Pembaruan oleh: ${SarprasApp.escapeHtml(laporan.nama_pemroses)}</span>`);
-        }
-        if (laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0) {
-          chips.push(`<span class="priority-pill medium">Biaya: ${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span>`);
         }
         if (chips.length > 0) {
           badgesEl.innerHTML = chips.join('');
@@ -274,15 +297,34 @@
         if (laporan.foto_sesudah_url) {
           afterImg.src = laporan.foto_sesudah_url;
           afterCard.style.display = 'flex';
+          afterImg.onerror = () => {
+            afterImg.setAttribute('src', '');
+            afterCard.style.display = 'none';
+          };
         } else {
           afterCard.style.display = 'none';
         }
 
         document.getElementById('timelineContainer').innerHTML =
-          SarprasApp.renderRiwayatTimeline(laporan.riwayat);
+          SarprasApp.renderRiwayatTimeline(laporan.riwayat, { showBiaya: false });
 
-        const isOwnerOfReport = Number(laporan.id_pengguna) === Number(user.id_pengguna);
-        const isMenunggu = (laporan.status_tiket || '').toUpperCase() === 'MENUNGGU';
+        const isOwnerOfReport = laporan.id_pengguna !== null && laporan.id_pengguna !== undefined
+          && Number(laporan.id_pengguna) === Number(user.id_pengguna);
+        const statusUpper = (laporan.status_tiket || '').toUpperCase();
+        const isMenunggu = statusUpper === 'MENUNGGU';
+        const isActiveUmum = Boolean(laporan.is_umum) && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
+        const umumTerdampakBox = document.getElementById('umumTerdampakBox');
+        const detailTerdampakBtn = document.getElementById('detailTerdampakBtn');
+        if (isActiveUmum && !isOwnerOfReport) {
+          const votedKey = `sarpraskost_terdampak_${user.id_pengguna}_${laporan.id_laporan}`;
+          const voted = sessionStorage.getItem(votedKey) === '1';
+          detailTerdampakBtn.disabled = voted;
+          detailTerdampakBtn.textContent = voted ? 'Sudah Ditandai Terdampak' : 'Saya Terdampak (+1)';
+          umumTerdampakBox.style.display = 'block';
+        } else {
+          umumTerdampakBox.style.display = 'none';
+        }
+
         if (isOwnerOfReport) {
           openEditBtn.style.display = isMenunggu ? 'inline-flex' : 'none';
           actionsRow.style.gridTemplateColumns = isMenunggu ? 'repeat(2, 1fr)' : '1fr';
@@ -292,9 +334,27 @@
         }
       }
 
+      document.getElementById('detailTerdampakBtn').addEventListener('click', async () => {
+        if (!currentLaporan) return;
+        const btn = document.getElementById('detailTerdampakBtn');
+        btn.disabled = true;
+        btn.textContent = 'Mencatat...';
+        try {
+          const updated = await SarprasApp.tambahTerdampak(currentLaporan.id_laporan);
+          sessionStorage.setItem(`sarpraskost_terdampak_${user.id_pengguna}_${currentLaporan.id_laporan}`, '1');
+          currentLaporan.jumlah_terdampak = updated.jumlah_terdampak;
+          renderDetail(currentLaporan);
+          showSuccess('Status terdampak (+1) berhasil dicatat.');
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Saya Terdampak (+1)';
+          showError(err.message || 'Gagal mencatat terdampak.');
+        }
+      });
+
       try {
         const [laporan, fasilitas] = await Promise.all([
-          SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}`),
+          SarprasApp.requestJson(`/laporan/${encodeURIComponent(id)}?viewer=PENGHUNI&viewerId=${encodeURIComponent(user.id_pengguna)}`),
           SarprasApp.fetchFasilitasByPenghuni(user.id_pengguna).catch(() => [])
         ]);
         fasilitasOptions = fasilitas || [];

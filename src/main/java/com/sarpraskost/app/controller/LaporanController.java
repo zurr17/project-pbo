@@ -51,8 +51,12 @@ public class LaporanController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<LaporanResponse> getById(@PathVariable Integer id) {
-        return ResponseEntity.ok(laporanService.getLaporanById(id));
+    public ResponseEntity<LaporanResponse> getById(
+        @PathVariable Integer id,
+        @RequestParam(required = false) String viewer,
+        @RequestParam(required = false) Integer viewerId
+    ) {
+        return ResponseEntity.ok(laporanService.getLaporanById(id, viewer, viewerId));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

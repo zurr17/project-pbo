@@ -47,7 +47,7 @@
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M10.5 7.49985L8.957 5.95685C8.58 5.58 7.92 5.58 7.543 5.95685L3 10.4998M2.5 1.5H9.5C10.0523 1.5 10.5 1.94772 10.5 2.5V9.5C10.5 10.0523 10.0523 10.5 9.5 10.5H2.5C1.94772 10.5 1.5 10.0523 1.5 9.5V2.5C1.5 1.94772 1.94772 1.5 2.5 1.5ZM5.5 4.5C5.5 5.05228 5.05228 5.5 4.5 5.5C3.94772 5.5 3.5 5.05228 3.5 4.5C3.5 3.94772 3.94772 3.5 4.5 3.5C5.05228 3.5 5.5 3.94772 5.5 4.5Z" stroke="white" stroke-linecap="round" />
           </svg>
-          <span>Foto awal</span>
+          <span>Verifikasi Foto Kerusakan</span>
         </div>
       </div>
 
@@ -154,9 +154,12 @@
           const izinNote = laporan.is_umum
             ? 'Gangguan darurat pada area Fasilitas Umum.'
             : (laporan.izin_masuk_kamar
-                ? 'Penghuni SUDAH menyetujui izin masuk kamar untuk perbaikan darurat.'
-                : 'Izin masuk kamar belum tercentang.');
-          urgentBanner.innerHTML = `<div><strong>PRIORITAS DARURAT</strong> &bull; ${SarprasApp.escapeHtml(izinNote)}</div>`;
+                ? 'Status Izin Masuk Kamar: DISETUJUI penghuni untuk perbaikan darurat.'
+                : 'Status Izin Masuk Kamar: TIDAK dicentang.');
+          const photoVerifyNote = laporan.foto_url
+            ? ' Verifikasi segera melalui foto bukti kerusakan di bawah.'
+            : ' (Penghuni tidak melampirkan foto bukti).';
+          urgentBanner.innerHTML = `<div><strong>PRIORITAS DARURAT</strong> &bull; ${SarprasApp.escapeHtml(izinNote + photoVerifyNote)}</div>`;
           urgentBanner.style.display = 'flex';
         } else {
           urgentBanner.style.display = 'none';
@@ -204,16 +207,16 @@
               <span class="schedule-pill">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span>
             </div>
           ` : ''}
-          ${!laporan.is_umum && laporan.is_urgent ? `
+          ${!laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar) ? `
             <div class="kv-row">
               <span class="kv-label">Izin Masuk Kamar</span>
-              <span class="kv-value">${laporan.izin_masuk_kamar ? 'Disetujui penghuni' : 'Tidak'}</span>
+              <span class="izin-pill ${laporan.izin_masuk_kamar ? 'ok' : 'warn'}">${laporan.izin_masuk_kamar ? 'Disetujui penghuni' : 'Tidak diizinkan'}</span>
             </div>
           ` : ''}
-          ${laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0 ? `
+          ${laporan.biaya_perbaikan !== null && laporan.biaya_perbaikan !== undefined && Number(laporan.biaya_perbaikan) > 0 ? `
             <div class="kv-row">
-              <span class="kv-label">Biaya Perbaikan</span>
-              <span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span>
+              <span class="kv-label">Biaya Pengeluaran Internal</span>
+              <span class="biaya-internal-pill">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))} (Pembukuan Owner)</span>
             </div>
           ` : ''}
         `;
@@ -238,6 +241,10 @@
         if (laporan.foto_sesudah_url) {
           afterImg.src = laporan.foto_sesudah_url;
           afterCard.style.display = 'flex';
+          afterImg.onerror = () => {
+            afterImg.setAttribute('src', '');
+            afterCard.style.display = 'none';
+          };
         } else {
           afterCard.style.display = 'none';
         }
@@ -261,7 +268,7 @@
         }
 
         document.getElementById('timelineContainer').innerHTML =
-          SarprasApp.renderRiwayatTimeline(laporan.riwayat);
+          SarprasApp.renderRiwayatTimeline(laporan.riwayat, { showBiaya: true });
 
         renderActionBar(statusUpper);
       }

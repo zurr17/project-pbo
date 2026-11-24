@@ -191,7 +191,8 @@ const SarprasApp = (() => {
     const statusUpper = (laporan.status_tiket || '').toUpperCase();
     const isActiveUrgent = laporan.is_urgent && (statusUpper === 'MENUNGGU' || statusUpper === 'DIPROSES');
     const tanggal = formatDateIndo(laporan.tgl_lapor);
-    const assetLine = `${laporan.nama_fasilitas || '-'} (${laporan.nama_kategori || '-'})`;
+    const lokasiLabel = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar || '-'}`;
+    const assetLine = `${laporan.nama_fasilitas || '-'} • ${lokasiLabel}`;
     const urgentPill = laporan.is_urgent
       ? '<span class="priority-pill high">DARURAT</span>'
       : '';
@@ -199,8 +200,39 @@ const SarprasApp = (() => {
     const terdampakPill = (laporan.is_umum || terdampakCount > 1)
       ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
       : '';
+    const izinPill = !laporan.is_umum && laporan.is_urgent
+      ? (laporan.izin_masuk_kamar
+          ? '<span class="izin-pill ok">Izin Masuk Disetujui</span>'
+          : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
+      : '';
     const scheduleLine = laporan.jadwal_pengerjaan
-      ? `<div class="report-sub" style="color:#1E40AF;font-weight:600;">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</div>`
+      ? `<div style="margin-top:2px;"><span class="schedule-pill">Jadwal Pengerjaan: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span></div>`
+      : '';
+
+    const riwayatList = Array.isArray(laporan.riwayat) ? laporan.riwayat : [];
+    const previewSteps = riwayatList.slice(-2);
+    const miniTimelineHtml = previewSteps.length > 0
+      ? `
+        <div class="card-mini-timeline">
+          ${previewSteps.map((step) => {
+            const st = (step.status_baru || 'MENUNGGU').toUpperCase();
+            const dotClass = st === 'SELESAI' ? 'done' : (st === 'DITOLAK' ? 'rejected' : (st === 'MENUNGGU' ? 'wait' : ''));
+            const stLabel = getStatusMeta(st).label;
+            return `
+              <div class="mini-tl-item">
+                <span class="mini-tl-dot ${dotClass}"></span>
+                <div class="mini-tl-body">
+                  <div class="mini-tl-head">
+                    <span>${escapeHtml(stLabel)}</span>
+                    <span class="mini-tl-time">${escapeHtml(formatDateTimeIndo(step.waktu_update))}</span>
+                  </div>
+                  ${step.catatan_penanganan ? `<div class="mini-tl-note">${escapeHtml(step.catatan_penanganan)}</div>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `
       : '';
 
     return `
@@ -210,6 +242,7 @@ const SarprasApp = (() => {
             <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
             ${urgentPill}
             ${terdampakPill}
+            ${izinPill}
           </div>
           <span class="status-badge ${statusMeta.className}">
             <span class="status-dot"></span>
@@ -229,6 +262,7 @@ const SarprasApp = (() => {
             <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
+        ${miniTimelineHtml}
       </a>
     `;
   }
@@ -252,11 +286,16 @@ const SarprasApp = (() => {
     const terdampakPill = (laporan.is_umum || terdampakCount > 1)
       ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
       : '';
+    const izinPill = !laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)
+      ? (laporan.izin_masuk_kamar
+          ? '<span class="izin-pill ok">Izin Masuk: Disetujui</span>'
+          : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
+      : '';
     const biayaBadge = laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0
-      ? `<span class="priority-pill">${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`
+      ? `<span class="biaya-internal-pill">Biaya Internal: ${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`
       : '';
     const scheduleLine = laporan.jadwal_pengerjaan
-      ? `<div class="report-sub" style="color:#1E40AF;font-weight:600;">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</div>`
+      ? `<div style="margin-top:2px;"><span class="schedule-pill">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span></div>`
       : '';
 
     return `
@@ -266,6 +305,7 @@ const SarprasApp = (() => {
             <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
             ${urgentPill}
             ${terdampakPill}
+            ${izinPill}
             ${biayaBadge}
           </div>
           <span class="status-badge ${statusMeta.className}">
@@ -291,7 +331,13 @@ const SarprasApp = (() => {
     `;
   }
 
-  function renderRiwayatTimeline(riwayatList, emptyText = 'Belum ada riwayat penanganan.') {
+  function renderRiwayatTimeline(riwayatList, optionsOrEmptyText = {}) {
+    const opts = typeof optionsOrEmptyText === 'string'
+      ? { emptyText: optionsOrEmptyText }
+      : (optionsOrEmptyText || {});
+    const emptyText = opts.emptyText || 'Belum ada riwayat penanganan.';
+    const showBiaya = Boolean(opts.showBiaya);
+
     if (!riwayatList || riwayatList.length === 0) {
       return `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
     }
@@ -318,11 +364,11 @@ const SarprasApp = (() => {
         DITOLAK: 'Laporan Ditolak'
       };
       const labelText = statusLabelMap[statusUpper] || statusUpper;
-      const biayaHtml = entry.biaya_perbaikan && Number(entry.biaya_perbaikan) > 0
-        ? `<span class="timeline-cost-pill">Biaya: ${escapeHtml(formatRupiah(entry.biaya_perbaikan))}</span>`
+      const biayaHtml = showBiaya && entry.biaya_perbaikan && Number(entry.biaya_perbaikan) > 0
+        ? `<span class="timeline-cost-pill">Biaya Internal: ${escapeHtml(formatRupiah(entry.biaya_perbaikan))}</span>`
         : '';
       const photoHtml = entry.foto_sesudah_url
-        ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" /></div>`
+        ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" onerror="this.closest('.photo-box').style.display='none'" /></div>`
         : '';
 
       return `

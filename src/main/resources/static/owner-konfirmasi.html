@@ -115,7 +115,7 @@
           heading.textContent = 'Laporan Selesai';
           subtitle.textContent = 'Perbaikan berhasil diselesaikan, kondisi aset diperbarui, dan notifikasi dikirim ke penghuni.';
           banner.className = 'info-banner';
-          infoText.textContent = 'Status laporan kini Selesai. Penghuni dapat melihat bukti foto dan rincian biaya perbaikan.';
+          infoText.textContent = 'Status laporan kini Selesai. Penghuni dapat melihat foto bukti perbaikan, sedangkan nominal biaya dicatat khusus sebagai pembukuan internal Owner.';
         } else {
           document.getElementById('topBarTitle').textContent = 'Persetujuan berhasil';
           ring.className = 'success-ring';
@@ -177,6 +177,12 @@
           `<div class="kv-row"><span class="kv-label">Catatan Penanganan</span><span class="kv-value">${SarprasApp.escapeHtml(laporan.catatan_terakhir || '-')}</span></div>`,
           `<div class="kv-row"><span class="kv-label">Kondisi Aset</span><span class="status-badge ${kMeta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(kMeta.label)}</span></div>`
         ];
+        if (laporan.is_urgent) {
+          rowsHtml.push('<div class="kv-row"><span class="kv-label">Prioritas</span><span class="priority-pill high">DARURAT</span></div>');
+        }
+        if (!laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)) {
+          rowsHtml.push(`<div class="kv-row"><span class="kv-label">Izin Masuk Kamar</span><span class="izin-pill ${laporan.izin_masuk_kamar ? 'ok' : 'warn'}">${laporan.izin_masuk_kamar ? 'Disetujui penghuni' : 'Tidak diizinkan'}</span></div>`);
+        }
         if (laporan.jadwal_pengerjaan) {
           rowsHtml.push(`<div class="kv-row"><span class="kv-label">Jadwal Pengerjaan</span><span class="schedule-pill">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span></div>`);
         }
@@ -184,10 +190,10 @@
           rowsHtml.push(`<div class="kv-row"><span class="kv-label">Penghuni Terdampak</span><span class="terdampak-pill">${Number(laporan.jumlah_terdampak || 1)} orang</span></div>`);
         }
         if (laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0) {
-          rowsHtml.push(`<div class="kv-row"><span class="kv-label">Biaya Perbaikan</span><span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span></div>`);
+          rowsHtml.push(`<div class="kv-row"><span class="kv-label">Biaya Pengeluaran Internal</span><span class="biaya-internal-pill">${SarprasApp.escapeHtml(SarprasApp.formatRupiah(laporan.biaya_perbaikan))}</span></div>`);
         }
         if (laporan.foto_sesudah_url) {
-          rowsHtml.push(`<div class="photo-box has-image" style="height:130px;margin-top:4px;"><img class="photo-img" src="${SarprasApp.escapeHtml(laporan.foto_sesudah_url)}" alt="Bukti selesai" /></div>`);
+          rowsHtml.push(`<div class="photo-box has-image" style="height:130px;margin-top:4px;"><img class="photo-img" src="${SarprasApp.escapeHtml(laporan.foto_sesudah_url)}" alt="Bukti selesai" onerror="this.closest('.photo-box').style.display='none'" /></div>`);
         }
         document.getElementById('confirmDetailRows').innerHTML = rowsHtml.join('');
       } catch (err) {

@@ -259,6 +259,8 @@
       let kamarCache = [];
       let kategoriCache = [];
       let fasilitasCache = [];
+      let activeReportsByFasilitas = new Map();
+      let activeReportsByKamar = new Map();
 
       function showSuccess(msg) {
         pageError.classList.remove('visible');
@@ -294,6 +296,31 @@
           kategoriCache.map((c) => `<option value="${c.id_kategori}">${SarprasApp.escapeHtml(c.nama_kategori)}</option>`).join('');
       }
 
+      function renderActiveReportBadges(reports) {
+        if (!reports || reports.length === 0) return '';
+        const hasUrgent = reports.some((r) => r.is_urgent);
+        const maxTerdampak = reports.reduce((max, r) => Math.max(max, Number(r.jumlah_terdampak || 1)), 1);
+        const hasIzin = reports.some((r) => !r.is_umum && r.izin_masuk_kamar);
+        const firstScheduled = reports.find((r) => r.jadwal_pengerjaan);
+        const firstReport = reports[0];
+
+        const pills = [];
+        if (hasUrgent) pills.push('<span class="priority-pill high">DARURAT</span>');
+        if (firstReport.is_umum || maxTerdampak > 1) pills.push(`<span class="terdampak-pill">${maxTerdampak} terdampak</span>`);
+        if (hasIzin) pills.push('<span class="izin-pill ok">Izin Masuk: Disetujui</span>');
+        if (firstScheduled) pills.push(`<span class="schedule-pill">Jadwal: ${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(firstScheduled.jadwal_pengerjaan))} WIB</span>`);
+
+        return `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 10px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:11px;font-weight:600;color:#172554;">${reports.length} tiket aktif</span>
+              ${pills.join('')}
+            </div>
+            <a href="owner-detail-laporan.html?id=${encodeURIComponent(firstReport.id_laporan)}" class="text-link">Lihat Tiket</a>
+          </div>
+        `;
+      }
+
       function renderKamarList() {
         if (kamarCache.length === 0) {
           kamarListEl.innerHTML = '<div class="empty-state">Belum ada data kamar.</div>';
@@ -305,6 +332,7 @@
           const badgeHtml = k.is_umum
             ? '<span class="terdampak-pill">Fasilitas Bersama</span>'
             : `<span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>`;
+          const activeBadgesHtml = renderActiveReportBadges(activeReportsByKamar.get(k.id_kamar));
           return `
             <article class="facility-card">
               <div class="facility-header">
@@ -318,6 +346,7 @@
                 <span class="kv-label">Penghuni / Aset</span>
                 <span class="kv-value">${k.jumlah_penghuni} penghuni &bull; ${k.jumlah_fasilitas} aset</span>
               </div>
+              ${activeBadgesHtml}
               <div class="action-row">
                 <button type="button" class="btn btn-secondary btn-sm" data-edit-kamar="${k.id_kamar}">Edit</button>
                 <button type="button" class="btn btn-danger-outline btn-sm" data-delete-kamar="${k.id_kamar}">Hapus</button>
@@ -357,6 +386,7 @@
         fasilitasListEl.innerHTML = fasilitasCache.map((f) => {
           const meta = SarprasApp.getKondisiMeta(f.kondisi);
           const lokasiStr = f.is_umum ? 'Fasilitas Umum' : `Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
+          const activeBadgesHtml = renderActiveReportBadges(activeReportsByFasilitas.get(f.id_fasilitas));
           return `
             <article class="facility-card">
               <div class="facility-header">
@@ -371,6 +401,7 @@
                 <span class="kv-label">Tanggal Pasang</span>
                 <span class="kv-value">${SarprasApp.escapeHtml(SarprasApp.formatDateIndo(f.tgl_pasang))}</span>
               </div>
+              ${activeBadgesHtml}
               <div class="action-row">
                 <button type="button" class="btn btn-secondary btn-sm" data-edit-fasilitas="${f.id_fasilitas}">Edit</button>
                 <button type="button" class="btn btn-danger-outline btn-sm" data-delete-fasilitas="${f.id_fasilitas}">Hapus</button>
@@ -382,14 +413,32 @@
 
       async function reloadAll() {
         try {
-          const [rooms, cats, assets] = await Promise.all([
+          const [rooms, cats, assets, laporanData] = await Promise.all([
             SarprasApp.fetchKamar(),
             SarprasApp.fetchKategori(),
-            SarprasApp.fetchFasilitas(filterKamarSelect.value, '')
+            SarprasApp.fetchFasilitas(filterKamarSelect.value, ''),
+            SarprasApp.fetchOwnerLaporan().catch(() => ({ laporan: [] }))
           ]);
           kamarCache = rooms || [];
           kategoriCache = cats || [];
           fasilitasCache = assets || [];
+
+          activeReportsByFasilitas = new Map();
+          activeReportsByKamar = new Map();
+          for (const rep of (laporanData.laporan || [])) {
+            const st = (rep.status_tiket || '').toUpperCase();
+            if (st === 'MENUNGGU' || st === 'DIPROSES') {
+              if (!activeReportsByFasilitas.has(rep.id_fasilitas)) {
+                activeReportsByFasilitas.set(rep.id_fasilitas, []);
+              }
+              activeReportsByFasilitas.get(rep.id_fasilitas).push(rep);
+              if (!activeReportsByKamar.has(rep.id_kamar)) {
+                activeReportsByKamar.set(rep.id_kamar, []);
+              }
+              activeReportsByKamar.get(rep.id_kamar).push(rep);
+            }
+          }
+
           syncDropdownOptions();
           renderKamarList();
           renderKategoriList();

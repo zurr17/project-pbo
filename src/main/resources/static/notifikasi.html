@@ -61,12 +61,26 @@
           notifListEl.innerHTML = items.map((item) => {
             const statusMeta = SarprasApp.getStatusMeta(item.status_tiket);
             const urgentClass = item.is_urgent ? 'urgent-card' : '';
+            const terdampakCount = Number(item.jumlah_terdampak || 1);
+            const terdampakBadge = (item.is_umum || terdampakCount > 1)
+              ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
+              : '';
+            const izinBadge = isOwner && !item.is_umum && (item.is_urgent || item.izin_masuk_kamar)
+              ? (item.izin_masuk_kamar
+                  ? '<span class="izin-pill ok">Izin Masuk: Disetujui</span>'
+                  : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
+              : '';
+            const verifyPhotoHint = isOwner && item.has_foto_bukti
+              ? '<div style="font-size:11px;font-weight:600;color:#2563EB;">Foto bukti kerusakan tersedia — ketuk untuk verifikasi</div>'
+              : '';
             return `
               <article class="notif-card ${item.is_read ? '' : 'unread'} ${urgentClass}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
                 <div class="report-card-top">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                     <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
                     ${item.is_urgent ? '<span class="priority-pill high">DARURAT</span>' : ''}
+                    ${terdampakBadge}
+                    ${izinBadge}
                   </div>
                   <div style="display:flex;align-items:center;gap:6px;">
                     ${!item.is_read ? '<span class="priority-pill high">Baru</span>' : ''}
@@ -75,6 +89,7 @@
                 </div>
                 <div style="font-size:14px;font-weight:600;color:#172554;">${SarprasApp.escapeHtml(item.judul_notif)}</div>
                 <div style="font-size:12px;line-height:1.5;color:#475569;">${SarprasApp.escapeHtml(item.pesan_notif)}</div>
+                ${verifyPhotoHint}
                 <div style="font-size:11px;color:#64748B;">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(item.waktu_kirim))} WIB</div>
               </article>
             `;

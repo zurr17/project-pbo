@@ -22,12 +22,19 @@
 
     <section class="page-body">
       <div id="summaryCard" class="summary-mini-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span id="summaryKode" class="report-code">Memuat...</span>
           <span id="summaryPenghuni" style="font-size:11px;color:#64748B;">-</span>
         </div>
+        <div id="summaryBadges" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
         <div id="summaryTitle" style="font-size:14px;font-weight:600;color:#172554;">Memuat detail laporan...</div>
         <div id="summaryLokasi" style="font-size:12px;color:#64748B;">-</div>
+        <div id="summaryPhotoWrap" style="display:none;margin-top:4px;">
+          <div style="font-size:11px;font-weight:600;color:#475569;margin-bottom:4px;">Foto Bukti Kerusakan Awal (Verifikasi):</div>
+          <div class="photo-box has-image" style="height:120px;">
+            <img id="summaryPhotoImg" class="photo-img" src="" alt="Foto bukti kerusakan" onerror="document.getElementById('summaryPhotoWrap').style.display='none'" />
+          </div>
+        </div>
       </div>
 
       <div class="segment-tabs" style="grid-template-columns:repeat(2,1fr);" role="tablist" aria-label="Mode penanganan">
@@ -73,7 +80,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="biayaInput">Nominal biaya perbaikan (Rp)</label>
+          <label class="form-label" for="biayaInput">Catatan Biaya Perbaikan (Internal Pengelola - Tidak Ditagihkan ke Penghuni)</label>
           <div class="input-wrap">
             <input
               id="biayaInput"
@@ -85,7 +92,7 @@
               placeholder="Contoh: 150000 (opsional / 0 jika gratis)"
             />
           </div>
-          <span class="form-hint">Masukkan estimasi biaya saat diproses atau total biaya aktual saat selesai.</span>
+          <span class="form-hint">Hanya dicatat sebagai pembukuan pengeluaran internal Owner dan tidak ditagihkan kepada penghuni.</span>
         </div>
 
         <div class="form-group">
@@ -254,14 +261,29 @@
         const lokasiShort = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
         document.getElementById('summaryPenghuni').textContent =
           `${laporan.nama_pelapor} • ${lokasiShort}`;
-        const extraTags = [];
-        if (laporan.is_urgent) extraTags.push('[DARURAT]');
-        if (laporan.is_umum || Number(laporan.jumlah_terdampak) > 1) extraTags.push(`${Number(laporan.jumlah_terdampak || 1)} terdampak`);
-        if (!laporan.is_umum && laporan.izin_masuk_kamar) extraTags.push('Izin masuk disetujui');
+
+        const badges = [];
+        if (laporan.is_urgent) {
+          badges.push('<span class="priority-pill high">DARURAT</span>');
+        }
+        if (laporan.is_umum || Number(laporan.jumlah_terdampak) > 1) {
+          badges.push(`<span class="terdampak-pill">${Number(laporan.jumlah_terdampak || 1)} terdampak</span>`);
+        }
+        if (!laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)) {
+          badges.push(laporan.izin_masuk_kamar
+            ? '<span class="izin-pill ok">Izin Masuk: Disetujui</span>'
+            : '<span class="izin-pill warn">Tanpa Izin Masuk</span>');
+        }
+        document.getElementById('summaryBadges').innerHTML = badges.join('');
+
         document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
         document.getElementById('summaryLokasi').textContent =
-          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`
-          + (extraTags.length ? ` • ${extraTags.join(' • ')}` : '');
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) • ${laporan.nama_kategori}`;
+
+        if (laporan.foto_url) {
+          document.getElementById('summaryPhotoImg').src = laporan.foto_url;
+          document.getElementById('summaryPhotoWrap').style.display = 'block';
+        }
 
         if (laporan.jadwal_pengerjaan) {
           jadwalInput.value = String(laporan.jadwal_pengerjaan).slice(0, 16);
