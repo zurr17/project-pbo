@@ -141,6 +141,9 @@
           });
           const data = await response.json();
           if (!response.ok) {
+            if (response.status === 429) {
+              throw new Error(data.message || 'Terlalu banyak percobaan login gagal. Coba beberapa menit lagi.');
+            }
             throw new Error(data.message || 'Gagal masuk. Periksa kembali kredensial Anda.');
           }
 

@@ -5,6 +5,7 @@ import com.sarpraskost.app.dto.LaporanResponse;
 import com.sarpraskost.app.dto.OwnerProsesRequest;
 import com.sarpraskost.app.dto.OwnerTolakRequest;
 import com.sarpraskost.app.service.LaporanService;
+import com.sarpraskost.app.util.SqlInjectionValidator;
 import java.math.BigDecimal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -73,6 +74,8 @@ public class OwnerController {
     ) {
         Integer idPengguna = idPenggunaSnake != null ? idPenggunaSnake : idOwnerAlias;
         String catatan = catatanSnake != null ? catatanSnake : catatanCamel;
+        SqlInjectionValidator.requireSafe(catatan, "catatan_penanganan");
+        SqlInjectionValidator.requireSafe(kondisiFasilitas, "kondisi_fasilitas");
         BigDecimal biaya = parseBiaya(biayaRaw);
         MultipartFile bukti = selectPhoto(fotoSesudah, fotoSesudahCamel, fotoFallback);
 

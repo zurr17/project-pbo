@@ -189,7 +189,7 @@ INSERT INTO public.pengguna (id_pengguna, nama_lengkap, email, no_hp, password_h
 (1, 'Raka Pratama', 'raka@kost.id', '0812-3456-7890', '$2y$10$hashedpass01', 'Penghuni', 1),
 (2, 'Nadia Putri', 'nadia@kost.id', '0857-9876-5432', '$2y$10$hashedpass02', 'Penghuni', 2),
 (3, 'Dimas Anggara', 'dimas@kost.id', '0896-1122-3344', '$2y$10$hashedpass03', 'Penghuni', 9),
-(4, 'Pak Soleh', 'budi.pengelola@kost.id', '0811-2233-4455', '$2y$10$hashedpass04', 'Pengelola', NULL);
+(4, 'Pak Soleh', 'soleh.pengelola@kost.id', '0811-2233-4455', '$2y$10$hashedpass04', 'Pengelola', NULL);
 
 INSERT INTO public.kategori_fasilitas (id_kategori, nama_kategori, deskripsi) OVERRIDING SYSTEM VALUE VALUES
 (1, 'Elektronik', 'Perangkat pendingin udara, pemanas air, dan elektronik kamar'),

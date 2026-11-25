@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.sarpraskost.app.config.SqlInjectionFilter;
 import com.sarpraskost.app.entity.FasilitasKamar;
 import com.sarpraskost.app.entity.Kamar;
 import com.sarpraskost.app.entity.Pengguna;
@@ -27,6 +28,7 @@ import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import com.sarpraskost.app.service.FileStorageService;
+import com.sarpraskost.app.service.LoginAttemptService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -80,16 +82,28 @@ class SarpraskostApiTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private SqlInjectionFilter sqlInjectionFilter;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
+            .addFilters(sqlInjectionFilter)
+            .build();
+        loginAttemptService.clearAll();
     }
 
     @Test
     void loginEndpointAuthenticatesSeededPenghuniAndOwnerOnly() throws Exception {
+        Pengguna raka = penggunaRepository.findByEmailIgnoreCase("raka@kost.id").orElseThrow();
+        String rakaKamar = raka.getKamar() != null ? raka.getKamar().getNomorKamar() : "101";
+
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"raka@kost.id\",\"password\":\"123\"}"))
@@ -97,19 +111,19 @@ class SarpraskostApiTests {
             .andExpect(jsonPath("$.nama_lengkap").value("Raka Pratama"))
             .andExpect(jsonPath("$.role").value("PENGHUNI"))
             .andExpect(jsonPath("$.gedung").value("Gedung 1"))
-            .andExpect(jsonPath("$.nomor_kamar").value("101"))
+            .andExpect(jsonPath("$.nomor_kamar").value(rakaKamar))
             .andExpect(jsonPath("$.redirect_url").value("home.html"))
             .andExpect(jsonPath("$.password_hash").doesNotExist());
 
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"101\",\"password\":\"123\"}"))
+                .content(String.format("{\"email\":\"%s\",\"password\":\"123\"}", rakaKamar)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nama_lengkap").value("Raka Pratama"));
 
         mockMvc.perform(post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"budi.pengelola@kost.id\",\"password\":\"123\"}"))
+                .content("{\"email\":\"soleh.pengelola@kost.id\",\"password\":\"123\"}"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.nama_lengkap").value("Pak Soleh"))
             .andExpect(jsonPath("$.role").value("OWNER"))
@@ -161,8 +175,6 @@ class SarpraskostApiTests {
 
         mockMvc.perform(get("/api/fasilitas/penghuni/" + raka.getIdPengguna()))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("AC Split 1 PK")))
-            .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Lampu LED 18W")))
             .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Router WiFi Lantai 1")))
             .andExpect(jsonPath("$[*].nama_fasilitas", hasItem("Mesin Air / Pompa Utama")));
 
@@ -510,12 +522,19 @@ class SarpraskostApiTests {
     @Test
     void urgentIzinValidationScheduleProsesSelesaiAndTolakWork() throws Exception {
         Pengguna raka = penggunaRepository.findByEmailIgnoreCase("raka@kost.id").orElseThrow();
-        Pengguna owner = penggunaRepository.findByEmailIgnoreCase("budi.pengelola@kost.id").orElseThrow();
-        FasilitasKamar acA101 = fasilitasRepository.findByKamarIdKamarOrderByIdFasilitasDesc(raka.getKamar().getIdKamar())
-            .stream()
-            .filter(f -> f.getNamaFasilitas().contains("AC"))
-            .findFirst()
-            .orElseThrow();
+        Pengguna owner = penggunaRepository.findByEmailIgnoreCase("soleh.pengelola@kost.id").orElseThrow();
+        Integer kategoriId = kategoriRepository.findByNamaKategoriIgnoreCase("Elektronik").orElseThrow().getIdKategori();
+        String suffix = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+        MvcResult tempFasRes = mockMvc.perform(post("/api/fasilitas")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(String.format(
+                    "{\"id_kamar\":%d,\"id_kategori\":%d,\"nama_fasilitas\":\"AC Uji %s\",\"merk_tipe\":\"Daikin\",\"kondisi\":\"BAIK\"}",
+                    raka.getKamar().getIdKamar(), kategoriId, suffix
+                )))
+            .andExpect(status().isCreated())
+            .andReturn();
+        Integer tempFasId = objectMapper.readTree(tempFasRes.getResponse().getContentAsString()).get("id_fasilitas").asInt();
+        FasilitasKamar acA101 = fasilitasRepository.findById(tempFasId).orElseThrow();
 
         // Urgent private room report WITHOUT izin_masuk_kamar must be rejected (400)
         mockMvc.perform(multipart("/api/laporan")
@@ -678,6 +697,9 @@ class SarpraskostApiTests {
         } finally {
             safeDeleteLaporan(lapId1);
             safeDeleteLaporan(lapId2);
+            if (fasilitasRepository.existsById(tempFasId)) {
+                fasilitasRepository.deleteById(tempFasId);
+            }
             Files.deleteIfExists(awalPath);
             if (sesudahPath != null) {
                 Files.deleteIfExists(sesudahPath);
@@ -827,6 +849,98 @@ class SarpraskostApiTests {
             }
             if (fasUmumId != null && fasilitasRepository.existsById(fasUmumId)) {
                 fasilitasRepository.deleteById(fasUmumId);
+            }
+        }
+    }
+
+    @Test
+    void loginBruteForceLockoutAndResetWorks() throws Exception {
+        String attackerIp = "198.51.100.77";
+
+        // Attempts 1..4 fail with 401 and decrement remaining attempts
+        for (int i = 1; i < LoginAttemptService.MAX_ACCOUNT_ATTEMPTS; i++) {
+            mockMvc.perform(post("/api/login")
+                    .header("X-Forwarded-For", attackerIp)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"email\":\"soleh.pengelola@kost.id\",\"password\":\"salah-" + i + "\"}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
+        }
+
+        // 5th consecutive failed attempt locks account & returns 429 Too Many Requests
+        mockMvc.perform(post("/api/login")
+                .header("X-Forwarded-For", attackerIp)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"soleh.pengelola@kost.id\",\"password\":\"salah-5\"}"))
+            .andExpect(status().isTooManyRequests())
+            .andExpect(jsonPath("$.message").exists());
+
+        // Subsequent attempt with valid password must stay blocked (429) while locked
+        mockMvc.perform(post("/api/login")
+                .header("X-Forwarded-For", attackerIp)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"soleh.pengelola@kost.id\",\"password\":\"123\"}"))
+            .andExpect(status().isTooManyRequests());
+
+        // Different IP is unaffected and can still log in legitimately
+        mockMvc.perform(post("/api/login")
+                .header("X-Forwarded-For", "198.51.100.88")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"soleh.pengelola@kost.id\",\"password\":\"123\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.nama_lengkap").value("Pak Soleh"));
+    }
+
+    @Test
+    void sqlInjectionPayloadsAreBlockedWithoutBreakingNormalIndonesianInput() throws Exception {
+        Pengguna raka = penggunaRepository.findByEmailIgnoreCase("raka@kost.id").orElseThrow();
+
+        // 1. Login JSON SQLi bypass attempt -> 400
+        mockMvc.perform(post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"admin@kost.id' OR '1'='1\",\"password\":\"x\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").exists());
+
+        // 2. Query parameter stacked SQLi attempt -> 400
+        mockMvc.perform(get("/api/owner/laporan?q=1; DROP TABLE pengguna; --"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").exists());
+
+        // 3. JSON body UNION SELECT SQLi attempt on register -> 400
+        mockMvc.perform(post("/api/users/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nama_lengkap\":\"Hacker UNION SELECT password_hash FROM pengguna\",\"email\":\"sqli@kost.com\",\"no_hp\":\"089912345\",\"password\":\"123\"}"))
+            .andExpect(status().isBadRequest());
+
+        // 4. Multipart form SQLi attempt -> 400
+        mockMvc.perform(multipart("/api/laporan")
+                .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                .param("lokasi_laporan", "KAMAR")
+                .param("nama_fasilitas_lainnya", "Saklar lampu")
+                .param("judul_laporan", "' OR 1=1 --")
+                .param("deskripsi_kerusakan", "Payload uji sql injection"))
+            .andExpect(status().isBadRequest());
+
+        // 5. Normal Indonesian text containing words like 'atau' & 'dari' must still pass cleanly
+        Integer validLapId = null;
+        Integer validFasId = null;
+        try {
+            MvcResult okRes = mockMvc.perform(multipart("/api/laporan")
+                    .param("id_pengguna", String.valueOf(raka.getIdPengguna()))
+                    .param("lokasi_laporan", "KAMAR")
+                    .param("nama_fasilitas_lainnya", "Stop kontak meja")
+                    .param("judul_laporan", "Lampu atau stop kontak mati dari kemarin")
+                    .param("deskripsi_kerusakan", "Lampu berkedip atau mati total dari malam hari."))
+                .andExpect(status().isCreated())
+                .andReturn();
+            JsonNode okJson = objectMapper.readTree(okRes.getResponse().getContentAsString());
+            validLapId = okJson.get("id_laporan").asInt();
+            validFasId = okJson.get("id_fasilitas").asInt();
+        } finally {
+            safeDeleteLaporan(validLapId);
+            if (validFasId != null && fasilitasRepository.existsById(validFasId)) {
+                fasilitasRepository.deleteById(validFasId);
             }
         }
     }

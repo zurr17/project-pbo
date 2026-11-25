@@ -43,6 +43,7 @@ import com.sarpraskost.app.repository.LaporanKerusakanRepository;
 import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
+import com.sarpraskost.app.util.SqlInjectionValidator;
 
 @Service
 public class LaporanService {
@@ -197,6 +198,10 @@ public class LaporanService {
         Boolean izinMasukKamarParam,
         MultipartFile foto
     ) {
+        SqlInjectionValidator.requireSafe(judulLaporan, "judul_laporan");
+        SqlInjectionValidator.requireSafe(deskripsiKerusakan, "deskripsi_kerusakan");
+        SqlInjectionValidator.requireSafe(namaFasilitasLainnya, "nama_fasilitas_lainnya");
+
         if (idPengguna == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "id_pengguna wajib diisi.");
         }
@@ -744,8 +749,13 @@ public class LaporanService {
         String searchQuery,
         boolean ownerMode
     ) {
+        SqlInjectionValidator.requireSafe(statusParam, "status");
+        SqlInjectionValidator.requireSafe(searchQuery, "kata kunci pencarian");
         StatusTiket filterStatus = parseStatusFilter(statusParam);
         String keyword = searchQuery == null ? "" : searchQuery.trim().toLowerCase(Locale.ROOT);
+        if (keyword.length() > 100) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kata kunci pencarian maksimal 100 karakter.");
+        }
 
         var stream = allReports.stream()
             .filter(item -> filterStatus == null || item.getStatusTiket() == filterStatus)

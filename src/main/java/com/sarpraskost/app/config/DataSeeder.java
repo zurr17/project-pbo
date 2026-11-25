@@ -1,5 +1,14 @@
 package com.sarpraskost.app.config;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.sarpraskost.app.entity.FasilitasKamar;
 import com.sarpraskost.app.entity.Kamar;
 import com.sarpraskost.app.entity.KategoriFasilitas;
@@ -20,13 +29,6 @@ import com.sarpraskost.app.repository.NotifikasiRepository;
 import com.sarpraskost.app.repository.PenggunaRepository;
 import com.sarpraskost.app.repository.RiwayatPenangananRepository;
 import com.sarpraskost.app.util.PasswordHasher;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataSeeder implements CommandLineRunner {
@@ -82,6 +84,10 @@ public class DataSeeder implements CommandLineRunner {
             }
             if ("Budi Santoso".equalsIgnoreCase(user.getNamaLengkap())) {
                 user.setNamaLengkap("Pak Soleh");
+                dirty = true;
+            }
+            if ("budi.pengelola@kost.id".equalsIgnoreCase(user.getEmail())) {
+                user.setEmail("soleh.pengelola@kost.id");
                 dirty = true;
             }
             if (dirty) {
@@ -248,7 +254,7 @@ public class DataSeeder implements CommandLineRunner {
             k201, "Dimas Anggara", "dimas@kost.id", PasswordHasher.hash("123"), "0896-1122-3344", Role.PENGHUNI
         ));
         Pengguna pakSoleh = penggunaRepository.save(new Pengguna(
-            null, "Pak Soleh", "budi.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
+            null, "Pak Soleh", "soleh.pengelola@kost.id", PasswordHasher.hash("123"), "0811-2233-4455", Role.OWNER
         ));
 
         KategoriFasilitas katElektronik = kategoriRepository.save(new KategoriFasilitas(

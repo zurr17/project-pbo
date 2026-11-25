@@ -5,6 +5,7 @@ import com.sarpraskost.app.dto.LaporanListResponse;
 import com.sarpraskost.app.dto.LaporanResponse;
 import com.sarpraskost.app.dto.UpdateLaporanRequest;
 import com.sarpraskost.app.service.LaporanService;
+import com.sarpraskost.app.util.SqlInjectionValidator;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -99,6 +100,12 @@ public class LaporanController {
         Boolean isUrgent = firstNonNullBool(isUrgentSnake, isUrgentCamel);
         Boolean izinMasuk = firstNonNullBool(izinMasukSnake, izinMasukCamel);
         MultipartFile uploadedFoto = (foto != null && !foto.isEmpty()) ? foto : file;
+
+        SqlInjectionValidator.requireSafe(lokasiLaporan, "lokasi_laporan");
+        SqlInjectionValidator.requireSafe(namaFasilitasLainnya, "nama_fasilitas_lainnya");
+        SqlInjectionValidator.requireSafe(judul, "judul_laporan");
+        SqlInjectionValidator.requireSafe(deskripsi, "deskripsi_kerusakan");
+        SqlInjectionValidator.requireSafe(tingkatUrgensi, "tingkat_urgensi");
 
         LaporanResponse created = laporanService.createLaporan(
             idPengguna,
