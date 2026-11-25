@@ -30,6 +30,10 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-pill: 999px;
+
+  --spring-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring-snappy: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --spring-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 *,
@@ -53,6 +57,15 @@ a {
   text-decoration: none;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 button,
 input,
 select,
@@ -70,6 +83,18 @@ textarea {
   flex-direction: column;
   position: relative;
   overflow-x: hidden;
+}
+
+.mobile-shell > .app-bar,
+.mobile-shell > .page-body {
+  transform-origin: top center;
+  transition: transform 0.38s var(--spring-ios), filter 0.32s var(--spring-ios);
+}
+
+.mobile-shell.sheet-open > .app-bar,
+.mobile-shell.sheet-open > .page-body {
+  transform: scale(0.978);
+  filter: brightness(0.97);
 }
 
 @media (min-width: 480px) {
@@ -486,11 +511,18 @@ select.input-control {
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.22s var(--spring-ios),
+    transform 0.26s var(--spring-snappy),
+    opacity 0.18s ease;
 }
 
-.btn:active {
-  transform: scale(0.99);
+.btn:active:not(:disabled) {
+  transform: scale(0.968);
+  opacity: 0.92;
+  transition-duration: 0.1s;
 }
 
 .btn:disabled {
@@ -907,6 +939,7 @@ select.input-control {
 }
 
 .segment-tabs {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
@@ -915,7 +948,24 @@ select.input-control {
   border-radius: var(--radius-md);
 }
 
+.segment-pill-indicator {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: calc(100% - 8px);
+  border-radius: 9px;
+  background: var(--white);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  transform: translateX(var(--seg-x, 4px));
+  width: var(--seg-w, 0px);
+  transition: transform 0.3s var(--spring-snappy), width 0.3s var(--spring-ios), opacity 0.18s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .segment-tab {
+  position: relative;
+  z-index: 1;
   height: 36px;
   border-radius: 9px;
   border: none;
@@ -924,13 +974,22 @@ select.input-control {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.2s ease, transform 0.2s var(--spring-snappy), background 0.18s ease;
+}
+
+.segment-tab:active {
+  transform: scale(0.96);
 }
 
 .segment-tab.active {
   background: var(--white);
   color: var(--navy);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.segment-tabs.has-pill-indicator .segment-tab.active {
+  background: transparent;
+  box-shadow: none;
 }
 
 .bell-btn-wrap {
@@ -957,6 +1016,22 @@ select.input-control {
 
 .notif-count-badge.visible {
   display: inline-flex;
+  animation: iosPopBadge 0.36s var(--spring-snappy) both;
+}
+
+.notif-count-badge.visible::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 999px;
+  border: 2px solid rgba(220, 38, 38, 0.55);
+  animation: iosRadarPulse 2.2s ease-out infinite;
+  pointer-events: none;
+}
+
+.icon-btn.bell-ring svg {
+  transform-origin: top center;
+  animation: iosBellTilt 0.45s var(--spring-snappy);
 }
 
 .notif-card {
@@ -1351,8 +1426,10 @@ select.input-control {
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  background: var(--white);
-  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
   z-index: 40;
   padding: 6px 12px 12px;
 }
@@ -1375,10 +1452,20 @@ select.input-control {
   font-weight: 400;
   color: var(--text-muted);
   cursor: pointer;
+  transition: color 0.18s ease, transform 0.22s var(--spring-snappy);
 }
 
 .bottom-nav-item svg {
   color: var(--text-subtle);
+  transition: transform 0.26s var(--spring-snappy), color 0.18s ease;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.92);
+}
+
+.bottom-nav-item:active svg {
+  transform: scale(0.88);
 }
 
 .bottom-nav-item.active {
@@ -1388,34 +1475,57 @@ select.input-control {
 
 .bottom-nav-item.active svg {
   color: var(--blue);
+  transform: translateY(-1px) scale(1.04);
 }
 
 /* Modal / Sheet */
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
   z-index: 60;
-  display: none;
+  display: flex;
   align-items: flex-end;
   justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.28s var(--spring-ios),
+    visibility 0.28s,
+    backdrop-filter 0.28s var(--spring-ios);
 }
 
 .sheet-backdrop.open {
-  display: flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .sheet-panel {
   width: 100%;
   max-width: 430px;
   background: var(--white);
-  border-radius: 20px 20px 0 0;
-  padding: 20px 24px 28px;
+  border-radius: 22px 22px 0 0;
+  padding: 14px 24px 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-height: 82vh;
+  max-height: 84vh;
   overflow-y: auto;
+  box-shadow: 0 -10px 36px rgba(15, 23, 42, 0.14);
+  transform: translateY(100%);
+  transition: transform 0.24s var(--spring-exit);
+  will-change: transform;
+}
+
+.sheet-backdrop.open .sheet-panel {
+  transform: translateY(0);
+  transition: transform 0.38s var(--spring-ios);
 }
 
 .sheet-handle {
@@ -1741,8 +1851,10 @@ select.input-control {
   transform: translateX(-50%);
   width: 100%;
   max-width: 430px;
-  background: var(--white);
-  border-top: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid rgba(226, 232, 240, 0.85);
   padding: 12px 24px 20px;
   z-index: 40;
   display: grid;
@@ -2044,3 +2156,275 @@ select.input-control {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* =====================================================================
+   Apple / iOS Motion System (GPU-Composited 60fps Transforms & Opacity)
+   ===================================================================== */
+
+@keyframes iosSlideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes iosSplashPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.84) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes iosSuccessSpring {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes iosRadarPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+@keyframes iosBellTilt {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg); }
+  55% { transform: rotate(10deg); }
+  80% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes iosShimmerSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Splash Staggered Entrance */
+.splash-badge {
+  animation: iosSlideUpFade 0.42s var(--spring-ios) 0.04s both;
+}
+.splash-logo-outer {
+  animation: iosSplashPop 0.56s var(--spring-snappy) 0.1s both;
+}
+.splash-title {
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.2s both;
+}
+.splash-tagline {
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.26s both;
+}
+.splash-desc {
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.32s both;
+}
+.splash-features {
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.38s both;
+}
+.splash-footer {
+  animation: iosSlideUpFade 0.48s var(--spring-ios) 0.44s both;
+}
+
+/* Static Page & Section Entrances */
+.app-bar {
+  animation: iosSlideUpFade 0.34s var(--spring-ios) both;
+}
+
+.login-brand {
+  animation: iosSlideUpFade 0.36s var(--spring-ios) 0.02s both;
+}
+.login-intro {
+  animation: iosSlideUpFade 0.4s var(--spring-ios) 0.08s both;
+}
+.login-body .form-stack,
+.helper-card {
+  animation: iosSlideUpFade 0.42s var(--spring-ios) 0.14s both;
+}
+
+.greeting-block,
+.hero-card,
+.profile-hero,
+.info-banner,
+.owner-expense-card {
+  animation: iosSlideUpFade 0.38s var(--spring-ios) both;
+}
+
+.hero-card,
+.profile-hero {
+  animation-delay: 0.06s;
+}
+
+.owner-stats-grid .owner-stat-card,
+.stats-grid .stat-card {
+  animation: iosSlideUpFade 0.38s var(--spring-ios) both;
+}
+.owner-stats-grid .owner-stat-card:nth-child(1),
+.stats-grid .stat-card:nth-child(1) { animation-delay: 0.05s; }
+.owner-stats-grid .owner-stat-card:nth-child(2),
+.stats-grid .stat-card:nth-child(2) { animation-delay: 0.09s; }
+.owner-stats-grid .owner-stat-card:nth-child(3),
+.stats-grid .stat-card:nth-child(3) { animation-delay: 0.13s; }
+.owner-stats-grid .owner-stat-card:nth-child(4) { animation-delay: 0.17s; }
+
+/* Success / Danger Icon Entrance */
+.success-ring,
+.confirm-ring-danger {
+  animation: iosSuccessSpring 0.52s var(--spring-snappy) 0.06s both;
+}
+
+/* Tactile Press Micro-interactions */
+.icon-btn,
+.back-btn,
+.demo-chip-btn,
+.filter-tab,
+.quick-chip,
+.nav-shortcut-card,
+.report-card,
+.facility-card,
+.owner-stat-card,
+.notif-card {
+  transition:
+    transform 0.24s var(--spring-snappy),
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.22s var(--spring-ios);
+}
+
+.icon-btn:active,
+.back-btn:active,
+.demo-chip-btn:active,
+.filter-tab:active,
+.quick-chip:active {
+  transform: scale(0.93);
+  transition-duration: 0.1s;
+}
+
+.nav-shortcut-card:active,
+.report-card:active,
+.facility-card:active,
+.owner-stat-card:active,
+.notif-card:active {
+  transform: scale(0.982);
+  transition-duration: 0.1s;
+}
+
+/* Urgent Card Red Pulse Halo */
+.priority-pill.high {
+  position: relative;
+  gap: 5px;
+}
+
+.priority-pill.high::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #DC2626;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
+  animation: iosUrgentDotPulse 2s ease-out infinite;
+}
+
+@keyframes iosUrgentDotPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+/* Banners & Dynamic Containers */
+.error-banner.visible,
+.success-banner.visible,
+.warning-banner.visible,
+.ios-reveal-panel {
+  animation: iosSlideUpFade 0.26s var(--spring-ios) both;
+}
+
+/* Staggered List Card Reveal (first 8 items only, 60fps GPU) */
+.ios-enter-card {
+  animation: iosSlideUpFade 0.36s var(--spring-ios) both;
+  animation-delay: calc(var(--stagger-i, 0) * 35ms);
+}
+
+/* Skeleton Shimmer Cards */
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-card {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skeleton-line {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #E2E8F0;
+  height: 12px;
+}
+
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(-100%);
+  animation: iosShimmerSweep 1.35s linear infinite;
+}
+
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-line.w-65 { width: 65%; height: 15px; }
+.skeleton-line.w-85 { width: 85%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

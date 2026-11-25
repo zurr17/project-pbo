@@ -400,18 +400,29 @@ const SarprasApp = (() => {
     }).join('');
   }
 
+  function syncMobileShellSheetState() {
+    const shell = document.querySelector('.mobile-shell');
+    if (!shell) return;
+    const anyOpen = Boolean(document.querySelector('.sheet-backdrop.open'));
+    shell.classList.toggle('sheet-open', anyOpen);
+  }
+
   function attachSheetControls() {
     document.querySelectorAll('[data-close-sheet]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const targetId = btn.getAttribute('data-close-sheet');
         const el = document.getElementById(targetId);
         if (el) el.classList.remove('open');
+        syncMobileShellSheetState();
       });
     });
 
     document.querySelectorAll('.sheet-backdrop').forEach((backdrop) => {
       backdrop.addEventListener('click', (e) => {
-        if (e.target === backdrop) backdrop.classList.remove('open');
+        if (e.target === backdrop) {
+          backdrop.classList.remove('open');
+          syncMobileShellSheetState();
+        }
       });
     });
   }
@@ -419,11 +430,13 @@ const SarprasApp = (() => {
   function openSheet(id) {
     const el = document.getElementById(id);
     if (el) el.classList.add('open');
+    syncMobileShellSheetState();
   }
 
   function closeSheet(id) {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
+    syncMobileShellSheetState();
   }
 
   async function requestJson(path, options = {}) {
@@ -470,8 +483,17 @@ const SarprasApp = (() => {
       const data = await requestJson(`/notifikasi/${encodeURIComponent(idPengguna)}/unread-count`);
       const count = Number(data.unread || 0);
       if (count > 0) {
+        const prevText = badge.textContent;
         badge.textContent = count > 99 ? '99+' : String(count);
         badge.classList.add('visible');
+        if (prevText !== badge.textContent) {
+          const btn = badge.closest('.icon-btn');
+          if (btn) {
+            btn.classList.remove('bell-ring');
+            void btn.offsetWidth;
+            btn.classList.add('bell-ring');
+          }
+        }
       } else {
         badge.textContent = '';
         badge.classList.remove('visible');
@@ -539,6 +561,119 @@ const SarprasApp = (() => {
 
   async function markAllNotifikasiRead(idPengguna) {
     return requestJson(`/notifikasi/baca-semua/${encodeURIComponent(idPengguna)}`, { method: 'PUT' });
+  }
+
+  function createSkeletonMarkup(count = 3) {
+    return `<div class="skeleton-stack">${Array.from({ length: count }).map(() => `
+      <div class="skeleton-card" aria-hidden="true">
+        <div class="skeleton-line w-40"></div>
+        <div class="skeleton-line w-65"></div>
+        <div class="skeleton-line w-85"></div>
+      </div>
+    `).join('')}</div>`;
+  }
+
+  function upgradeLoadingStatesToSkeletons() {
+    document.querySelectorAll('.loading-state').forEach((el) => {
+      if (el.dataset.skeletonUpgraded === '1') return;
+      el.dataset.skeletonUpgraded = '1';
+      el.style.padding = '0';
+      el.innerHTML = createSkeletonMarkup(el.closest('.report-list') ? 3 : 2);
+    });
+  }
+
+  function initSegmentedPills() {
+    document.querySelectorAll('.segment-tabs').forEach((container) => {
+      if (container.dataset.pillReady === '1') return;
+      container.dataset.pillReady = '1';
+      container.classList.add('has-pill-indicator');
+
+      const pill = document.createElement('span');
+      pill.className = 'segment-pill-indicator';
+      pill.setAttribute('aria-hidden', 'true');
+      container.prepend(pill);
+
+      const syncPill = () => {
+        const active = container.querySelector('.segment-tab.active') || container.querySelector('.segment-tab');
+        if (!active) return;
+        const left = active.offsetLeft;
+        const width = active.offsetWidth;
+        if (width > 0) {
+          pill.style.setProperty('--seg-x', `${left}px`);
+          pill.style.setProperty('--seg-w', `${width}px`);
+          pill.style.opacity = '1';
+        }
+      };
+
+      requestAnimationFrame(syncPill);
+      window.addEventListener('resize', syncPill);
+
+      const observer = new MutationObserver(() => {
+        requestAnimationFrame(syncPill);
+      });
+      container.querySelectorAll('.segment-tab').forEach((tab) => {
+        observer.observe(tab, { attributes: true, attributeFilter: ['class'] });
+        tab.addEventListener('click', () => requestAnimationFrame(syncPill));
+      });
+    });
+  }
+
+  function animateCardListStagger(container) {
+    if (!container) return;
+    const cards = container.querySelectorAll(
+      ':scope > .report-card, :scope > .facility-card, :scope > .notif-card, :scope > .umum-alert-card, :scope > .timeline-item'
+    );
+    cards.forEach((card, index) => {
+      if (index < 8) {
+        card.style.setProperty('--stagger-i', String(index));
+        card.classList.add('ios-enter-card');
+      } else {
+        card.classList.remove('ios-enter-card');
+        card.style.removeProperty('--stagger-i');
+      }
+    });
+  }
+
+  function initDynamicMotionObservers() {
+    upgradeLoadingStatesToSkeletons();
+    initSegmentedPills();
+    syncMobileShellSheetState();
+
+    const listSelectors = '.report-list, .umum-banner-section, .timeline';
+    document.querySelectorAll(listSelectors).forEach((listEl) => {
+      animateCardListStagger(listEl);
+      const listObserver = new MutationObserver(() => {
+        upgradeLoadingStatesToSkeletons();
+        animateCardListStagger(listEl);
+      });
+      listObserver.observe(listEl, { childList: true });
+    });
+
+    document.querySelectorAll('.sheet-backdrop').forEach((sheet) => {
+      const sheetObserver = new MutationObserver(syncMobileShellSheetState);
+      sheetObserver.observe(sheet, { attributes: true, attributeFilter: ['class'] });
+    });
+
+    ['panelKamar', 'panelKategori', 'panelFasilitas', 'fasilitasLainnyaGroup', 'assetPreview'].forEach((panelId) => {
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+      const panelObserver = new MutationObserver(() => {
+        if (panel.style.display && panel.style.display !== 'none') {
+          panel.classList.remove('ios-reveal-panel');
+          void panel.offsetWidth;
+          panel.classList.add('ios-reveal-panel');
+        }
+      });
+      panelObserver.observe(panel, { attributes: true, attributeFilter: ['style'] });
+    });
+  }
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initDynamicMotionObservers);
+    } else {
+      initDynamicMotionObservers();
+    }
   }
 
   return {
