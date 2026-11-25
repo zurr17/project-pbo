@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fasilitas Kamar — SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Fasilitas Kamar â€” SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -62,16 +62,16 @@
     </nav>
   </main>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261125v2"></script>
   <script>
     (async () => {
       const user = SarprasApp.requirePenghuniAuth();
       if (!user) return;
 
       if (user.nomor_kamar) {
-        const gedungTxt = user.gedung ? `${user.gedung} • ` : '';
+        const gedungTxt = user.gedung ? `${user.gedung} â€¢ ` : '';
         document.getElementById('fasilitasRoomSub').textContent =
-          `${gedungTxt}Kamar ${user.nomor_kamar} • Lantai ${user.lantai || '-'}`;
+          `${gedungTxt}Kamar ${user.nomor_kamar} â€¢ Lantai ${user.lantai || '-'}`;
       }
 
       const fasilitasList = document.getElementById('fasilitasList');
@@ -81,7 +81,7 @@
         const meta = SarprasApp.getKondisiMeta(item.kondisi);
         const locationPill = item.is_umum
           ? '<span class="terdampak-pill" style="margin-bottom:4px;">Fasilitas Umum</span>'
-          : `<span class="priority-pill" style="margin-bottom:4px;">${item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' • ' : ''}Kamar ${SarprasApp.escapeHtml(item.nomor_kamar)} • Lt. ${SarprasApp.escapeHtml(item.lantai || '-')}</span>`;
+          : `<span class="priority-pill" style="margin-bottom:4px;">${item.gedung ? SarprasApp.escapeHtml(item.gedung) + ' â€¢ ' : ''}Kamar ${SarprasApp.escapeHtml(item.nomor_kamar)} â€¢ Lt. ${SarprasApp.escapeHtml(item.lantai || '-')}</span>`;
         return `
           <article class="facility-card">
             <div class="facility-header">

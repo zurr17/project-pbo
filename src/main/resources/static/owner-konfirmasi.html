@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Konfirmasi Tindakan — SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Konfirmasi Tindakan â€” SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -75,7 +75,7 @@
     </section>
   </main>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261125v2"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireOwnerAuth();
@@ -163,7 +163,7 @@
         document.getElementById('confirmJudul').textContent = laporan.judul_laporan;
         const lokasiConfirm = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
         document.getElementById('confirmLokasi').textContent =
-          `${laporan.nama_pelapor} (${lokasiConfirm}) • ${laporan.nama_fasilitas}`;
+          `${laporan.nama_pelapor} (${lokasiConfirm}) â€¢ ${laporan.nama_fasilitas}`;
         document.getElementById('confirmWaktu').textContent =
           `Diperbarui: ${SarprasApp.formatDateTimeIndo(laporan.waktu_update_terakhir || laporan.tgl_lapor)} WIB`;
 

@@ -1420,6 +1420,7 @@ select.input-control {
 
 /* Bottom Navigation */
 .bottom-nav {
+  view-transition-name: bottom-nav;
   position: fixed;
   bottom: 0;
   left: 50%;
@@ -2161,10 +2162,115 @@ select.input-control {
    Apple / iOS Motion System (GPU-Composited 60fps Transforms & Opacity)
    ===================================================================== */
 
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes iosVtOutPush {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0.45; transform: translateX(-18px) scale(0.985); }
+}
+
+@keyframes iosVtInPush {
+  from { opacity: 0; transform: translateX(28px) scale(0.992); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes iosVtOutBack {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to { opacity: 0; transform: translateX(28px) scale(0.992); }
+}
+
+@keyframes iosVtInBack {
+  from { opacity: 0.45; transform: translateX(-18px) scale(0.985); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes iosVtOutTab {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes iosVtInTab {
+  from { opacity: 0; transform: scale(0.992); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes iosNavFadeOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to { opacity: 0; transform: translateX(-50%) translateY(12px); }
+}
+
+@keyframes iosNavSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+::view-transition-old(root) {
+  animation: iosVtOutPush 0.24s var(--spring-ios) both;
+}
+
+::view-transition-new(root) {
+  animation: iosVtInPush 0.34s var(--spring-ios) both;
+}
+
+html.vt-back::view-transition-old(root) {
+  animation: iosVtOutBack 0.24s var(--spring-ios) both;
+}
+
+html.vt-back::view-transition-new(root) {
+  animation: iosVtInBack 0.32s var(--spring-ios) both;
+}
+
+html.vt-tab::view-transition-old(root) {
+  animation: iosVtOutTab 0.16s ease both;
+}
+
+html.vt-tab::view-transition-new(root) {
+  animation: iosVtInTab 0.24s var(--spring-ios) both;
+}
+
+::view-transition-group(bottom-nav) {
+  z-index: 30;
+  animation-duration: 0.22s;
+}
+
+::view-transition-old(bottom-nav):only-child {
+  animation: iosNavFadeOut 0.16s ease both;
+}
+
+::view-transition-new(bottom-nav):only-child {
+  animation: iosNavSlideIn 0.28s var(--spring-ios) both;
+}
+
+/* MPA Fallback Page Leaving Transition (non-@view-transition browsers) */
+.mobile-shell.ios-page-leaving > .app-bar,
+.mobile-shell.ios-page-leaving > .page-body {
+  opacity: 0;
+  transform: translateX(-14px) scale(0.985);
+  transition: opacity 0.14s ease, transform 0.16s var(--spring-exit);
+  pointer-events: none;
+}
+
+.mobile-shell.ios-page-leaving.dir-back > .app-bar,
+.mobile-shell.ios-page-leaving.dir-back > .page-body {
+  transform: translateX(18px) scale(0.985);
+}
+
+.mobile-shell.ios-page-leaving.dir-tab > .app-bar {
+  opacity: 1;
+  transform: none;
+}
+
+.mobile-shell.ios-page-leaving.dir-tab > .page-body {
+  opacity: 0;
+  transform: scale(0.99);
+}
+
 @keyframes iosSlideUpFade {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.985);
+    transform: translateY(16px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -2265,6 +2371,17 @@ select.input-control {
   animation: iosSlideUpFade 0.42s var(--spring-ios) 0.14s both;
 }
 
+/* Universal Page Body Section Entrance (all MPA pages incl. register, form, detail) */
+.page-body > *:not(.sheet-backdrop):not(.bottom-nav):not(.owner-bottom-action-bar):not(.report-list):not(.umum-banner-section):not(.timeline) {
+  animation: iosSlideUpFade 0.4s var(--spring-ios) both;
+}
+.page-body > *:nth-child(1) { animation-delay: 0.02s; }
+.page-body > *:nth-child(2) { animation-delay: 0.06s; }
+.page-body > *:nth-child(3) { animation-delay: 0.1s; }
+.page-body > *:nth-child(4) { animation-delay: 0.14s; }
+.page-body > *:nth-child(5) { animation-delay: 0.18s; }
+.page-body > *:nth-child(6) { animation-delay: 0.22s; }
+
 .greeting-block,
 .hero-card,
 .profile-hero,
@@ -2302,6 +2419,7 @@ select.input-control {
 .demo-chip-btn,
 .filter-tab,
 .quick-chip,
+.stat-card,
 .nav-shortcut-card,
 .report-card,
 .facility-card,
@@ -2323,12 +2441,13 @@ select.input-control {
   transition-duration: 0.1s;
 }
 
+.stat-card:active,
 .nav-shortcut-card:active,
 .report-card:active,
 .facility-card:active,
 .owner-stat-card:active,
 .notif-card:active {
-  transform: scale(0.982);
+  transform: scale(0.975);
   transition-duration: 0.1s;
 }
 

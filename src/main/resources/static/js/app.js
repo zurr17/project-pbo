@@ -634,7 +634,144 @@ const SarprasApp = (() => {
     });
   }
 
+  function initPageTransitions() {
+    if (typeof window === 'undefined' || window.__sarprasTransitionsReady) return;
+    window.__sarprasTransitionsReady = true;
+
+    const NAV_DIR_KEY = 'sarpraskost_nav_dir';
+    const rootEl = document.documentElement;
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const supportsCrossDocVt = 'onpagereveal' in window;
+
+    const clearVtClasses = () => {
+      rootEl.classList.remove('vt-push', 'vt-back', 'vt-tab');
+      const shell = document.querySelector('.mobile-shell');
+      if (shell) {
+        shell.classList.remove('ios-page-leaving', 'dir-back', 'dir-tab');
+      }
+    };
+
+    try {
+      const pendingDir = sessionStorage.getItem(NAV_DIR_KEY);
+      if (pendingDir && ['push', 'back', 'tab'].includes(pendingDir)) {
+        rootEl.classList.add(`vt-${pendingDir}`);
+      }
+    } catch {
+      // ignore storage errors
+    }
+
+    if (supportsCrossDocVt) {
+      window.addEventListener('pagereveal', (e) => {
+        if (!e.viewTransition) {
+          try { sessionStorage.removeItem(NAV_DIR_KEY); } catch {}
+          clearVtClasses();
+          return;
+        }
+        try {
+          const dir = sessionStorage.getItem(NAV_DIR_KEY) || 'push';
+          sessionStorage.removeItem(NAV_DIR_KEY);
+          clearVtClasses();
+          rootEl.classList.add(`vt-${dir}`);
+        } catch {
+          // ignore
+        }
+        e.viewTransition.finished.finally(clearVtClasses);
+      });
+
+      if ('onpageswap' in window) {
+        window.addEventListener('pageswap', (e) => {
+          try {
+            if (!sessionStorage.getItem(NAV_DIR_KEY)) {
+              const navType = e.activation && e.activation.navigationType;
+              const fallbackDir = navType === 'traverse' ? 'back' : 'push';
+              sessionStorage.setItem(NAV_DIR_KEY, fallbackDir);
+              rootEl.classList.remove('vt-push', 'vt-back', 'vt-tab');
+              rootEl.classList.add(`vt-${fallbackDir}`);
+            }
+          } catch {
+            // ignore
+          }
+        });
+      }
+    } else {
+      clearVtClasses();
+    }
+
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted) {
+        try { sessionStorage.removeItem(NAV_DIR_KEY); } catch {}
+      }
+      setTimeout(clearVtClasses, 400);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+
+      const rawHref = link.getAttribute('href') || '';
+      if (
+        !rawHref ||
+        rawHref.startsWith('#') ||
+        rawHref.startsWith('javascript:') ||
+        rawHref.startsWith('mailto:') ||
+        rawHref.startsWith('tel:') ||
+        link.target === '_blank' ||
+        link.hasAttribute('download')
+      ) {
+        return;
+      }
+
+      let dest;
+      try {
+        dest = new URL(link.href, window.location.href);
+      } catch {
+        return;
+      }
+      if (dest.origin !== window.location.origin) return;
+
+      if (dest.href === window.location.href) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+        return;
+      }
+
+      let dir = 'push';
+      if (link.closest('.bottom-nav')) {
+        dir = 'tab';
+      } else if (link.classList.contains('back-btn') || link.dataset.navDir === 'back') {
+        dir = 'back';
+      }
+
+      try {
+        sessionStorage.setItem(NAV_DIR_KEY, dir);
+      } catch {
+        // ignore
+      }
+      rootEl.classList.remove('vt-push', 'vt-back', 'vt-tab');
+      rootEl.classList.add(`vt-${dir}`);
+
+      if (supportsCrossDocVt || reducedMotion) {
+        return;
+      }
+
+      const shell = document.querySelector('.mobile-shell');
+      if (shell) {
+        e.preventDefault();
+        shell.classList.add('ios-page-leaving');
+        if (dir === 'back') shell.classList.add('dir-back');
+        if (dir === 'tab') shell.classList.add('dir-tab');
+        setTimeout(() => {
+          window.location.href = dest.href;
+        }, 130);
+      }
+    });
+  }
+
   function initDynamicMotionObservers() {
+    initPageTransitions();
     upgradeLoadingStatesToSkeletons();
     initSegmentedPills();
     syncMobileShellSheetState();
@@ -669,6 +806,7 @@ const SarprasApp = (() => {
   }
 
   if (typeof document !== 'undefined') {
+    initPageTransitions();
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initDynamicMotionObservers);
     } else {

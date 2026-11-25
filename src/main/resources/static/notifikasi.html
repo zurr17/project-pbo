@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notifikasi — SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <title>Notifikasi â€” SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -29,7 +29,7 @@
     </section>
   </main>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261125v2"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireAuth();
@@ -71,7 +71,7 @@
                   : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
               : '';
             const verifyPhotoHint = isOwner && item.has_foto_bukti
-              ? '<div style="font-size:11px;font-weight:600;color:#2563EB;">Foto bukti kerusakan tersedia — ketuk untuk verifikasi</div>'
+              ? '<div style="font-size:11px;font-weight:600;color:#2563EB;">Foto bukti kerusakan tersedia â€” ketuk untuk verifikasi</div>'
               : '';
             return `
               <article class="notif-card ${item.is_read ? '' : 'unread'} ${urgentClass}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
