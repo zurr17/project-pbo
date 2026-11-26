@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.my.sarpraskost.twa",
+      "sha256_cert_fingerprints": [
+        "E3:47:99:09:FF:49:44:49:DC:6C:20:B3:4C:95:3C:92:FC:CF:38:17:48:56:7B:0B:DC:35:F6:8A:2B:A8:2C:A2"
+      ]
+    }
+  }
+]
