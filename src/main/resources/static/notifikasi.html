@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Notifikasi â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Notifikasi - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
     <header class="app-bar">
       <a id="backBtn" href="home.html" class="back-btn" aria-label="Kembali">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </a>
@@ -29,7 +29,7 @@
     </section>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireAuth();
@@ -51,10 +51,10 @@
           const items = await SarprasApp.fetchNotifikasi(user.id_pengguna);
           const unreadCount = (items || []).filter((n) => !n.is_read).length;
           notifSubtitle.textContent = unreadCount > 0 ? `${unreadCount} notifikasi belum dibaca` : 'Semua notifikasi sudah dibaca';
-          markAllBtn.style.display = unreadCount > 0 ? 'inline-block' : 'none';
+          markAllBtn.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
 
           if (!items || items.length === 0) {
-            notifListEl.innerHTML = '<div class="empty-state">Belum ada notifikasi yang masuk.</div>';
+            notifListEl.innerHTML = '<div class="empty-state">Belum ada notifikasi yang masuk. Dari sini Anda bisa memantau perubahan status laporan.</div>';
             return;
           }
 
@@ -71,10 +71,10 @@
                   : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
               : '';
             const verifyPhotoHint = isOwner && item.has_foto_bukti
-              ? '<div style="font-size:11px;font-weight:600;color:#2563EB;">Foto bukti kerusakan tersedia â€” ketuk untuk verifikasi</div>'
+              ? '<div style="font-size:11px;font-weight:600;color:#1D4ED8;">Foto bukti tersedia, ketuk untuk verifikasi</div>'
               : '';
             return `
-              <article class="notif-card ${item.is_read ? '' : 'unread'} ${urgentClass}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
+              <a class="notif-card ${item.is_read ? '' : 'unread'} ${urgentClass}" href="${detailPage}?id=${encodeURIComponent(item.id_laporan)}" data-notif-id="${item.id_notifikasi}" data-laporan-id="${item.id_laporan}">
                 <div class="report-card-top">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                     <span class="report-code">${SarprasApp.escapeHtml(item.kode_tiket)}</span>
@@ -90,8 +90,8 @@
                 <div style="font-size:14px;font-weight:600;color:#172554;">${SarprasApp.escapeHtml(item.judul_notif)}</div>
                 <div style="font-size:12px;line-height:1.5;color:#475569;">${SarprasApp.escapeHtml(item.pesan_notif)}</div>
                 ${verifyPhotoHint}
-                <div style="font-size:11px;color:#64748B;">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(item.waktu_kirim))} WIB</div>
-              </article>
+                <div style="font-size:11px;color:#475569;">${SarprasApp.escapeHtml(SarprasApp.formatDateTimeIndo(item.waktu_kirim))} WIB</div>
+              </a>
             `;
           }).join('');
         } catch (err) {
@@ -104,14 +104,14 @@
       notifListEl.addEventListener('click', async (e) => {
         const card = e.target.closest('[data-notif-id]');
         if (!card) return;
+        e.preventDefault();
         const notifId = card.getAttribute('data-notif-id');
-        const laporanId = card.getAttribute('data-laporan-id');
         try {
           await SarprasApp.markNotifikasiRead(notifId);
         } catch {
           // navigate even if mark-read request fails
         }
-        window.location.href = `${detailPage}?id=${encodeURIComponent(laporanId)}`;
+        window.location.href = card.href;
       });
 
       markAllBtn.addEventListener('click', async () => {

@@ -195,23 +195,27 @@ const SarprasApp = (() => {
     const tanggal = formatDateIndo(laporan.tgl_lapor);
     const lokasiLabel = laporan.is_umum
       ? 'Fasilitas Umum'
-      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' • Lt. ' + laporan.lantai : ''}`;
-    const assetLine = `${laporan.nama_fasilitas || '-'} • ${lokasiLabel}`;
+      : `${laporan.gedung ? laporan.gedung + ' \u2022 ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' \u2022 Lt. ' + laporan.lantai : ''}`;
+    const assetLine = `${laporan.nama_fasilitas || '-'} \u2022 ${lokasiLabel}`;
     const urgentPill = laporan.is_urgent
       ? '<span class="priority-pill high">DARURAT</span>'
       : '';
     const terdampakCount = Number(laporan.jumlah_terdampak || 1);
-    const terdampakPill = (laporan.is_umum || terdampakCount > 1)
-      ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
-      : '';
-    const izinPill = !laporan.is_umum && laporan.is_urgent
-      ? (laporan.izin_masuk_kamar
-          ? '<span class="izin-pill ok">Izin Masuk Disetujui</span>'
-          : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
-      : '';
-    const scheduleLine = laporan.jadwal_pengerjaan
-      ? `<div style="margin-top:2px;"><span class="schedule-pill">Jadwal Pengerjaan: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span></div>`
-      : '';
+    const metaTags = [];
+    if (laporan.is_umum || terdampakCount > 1) {
+      metaTags.push(`<span class="meta-chip-flat info">${terdampakCount} terdampak</span>`);
+    }
+    if (!laporan.is_umum && laporan.is_urgent) {
+      metaTags.push(
+        laporan.izin_masuk_kamar
+          ? '<span class="meta-chip-flat ok">Izin Masuk: Disetujui</span>'
+          : '<span class="meta-chip-flat warn">Tanpa Izin Masuk</span>'
+      );
+    }
+    if (laporan.jadwal_pengerjaan) {
+      metaTags.push(`<span class="meta-chip-flat info">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span>`);
+    }
+    const metaRow = metaTags.length > 0 ? `<div class="card-meta-line">${metaTags.join('')}</div>` : '';
 
     const riwayatList = Array.isArray(laporan.riwayat) ? laporan.riwayat : [];
     const previewSteps = riwayatList.slice(-2);
@@ -245,8 +249,6 @@ const SarprasApp = (() => {
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;">
             <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
             ${urgentPill}
-            ${terdampakPill}
-            ${izinPill}
           </div>
           <span class="status-badge ${statusMeta.className}">
             <span class="status-dot"></span>
@@ -254,16 +256,16 @@ const SarprasApp = (() => {
           </span>
         </div>
         <div class="report-card-body">
-          <div class="report-cat-icon">
+          <div class="report-cat-icon" aria-hidden="true">
             ${getCategoryIconSvg(laporan.nama_kategori)}
           </div>
           <div class="report-card-text">
             <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
             <div class="report-sub">${escapeHtml(assetLine)} &bull; ${escapeHtml(tanggal)}</div>
-            ${scheduleLine}
+            ${metaRow}
           </div>
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#526075" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
         ${miniTimelineHtml}
@@ -278,7 +280,7 @@ const SarprasApp = (() => {
     const tanggal = formatDateIndo(laporan.tgl_lapor);
     const kamarLabel = laporan.is_umum
       ? 'Fasilitas Umum'
-      : `${laporan.gedung ? laporan.gedung + ' • ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' • Lt. ' + laporan.lantai : ''}`;
+      : `${laporan.gedung ? laporan.gedung + ' \u2022 ' : ''}Kamar ${laporan.nomor_kamar || '-'}${laporan.lantai ? ' \u2022 Lt. ' + laporan.lantai : ''}`;
     const pelapor = laporan.nama_pelapor
       ? `${laporan.nama_pelapor} (${kamarLabel})`
       : kamarLabel;
@@ -289,20 +291,24 @@ const SarprasApp = (() => {
           ? '<span class="priority-pill medium">Prioritas Tinggi</span>'
           : '');
     const terdampakCount = Number(laporan.jumlah_terdampak || 1);
-    const terdampakPill = (laporan.is_umum || terdampakCount > 1)
-      ? `<span class="terdampak-pill">${terdampakCount} terdampak</span>`
-      : '';
-    const izinPill = !laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)
-      ? (laporan.izin_masuk_kamar
-          ? '<span class="izin-pill ok">Izin Masuk: Disetujui</span>'
-          : '<span class="izin-pill warn">Tanpa Izin Masuk</span>')
-      : '';
-    const biayaBadge = laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0
-      ? `<span class="biaya-internal-pill">Biaya Internal: ${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`
-      : '';
-    const scheduleLine = laporan.jadwal_pengerjaan
-      ? `<div style="margin-top:2px;"><span class="schedule-pill">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span></div>`
-      : '';
+    const metaTags = [];
+    if (laporan.is_umum || terdampakCount > 1) {
+      metaTags.push(`<span class="meta-chip-flat info">${terdampakCount} terdampak</span>`);
+    }
+    if (!laporan.is_umum && (laporan.is_urgent || laporan.izin_masuk_kamar)) {
+      metaTags.push(
+        laporan.izin_masuk_kamar
+          ? '<span class="meta-chip-flat ok">Izin Masuk: Disetujui</span>'
+          : '<span class="meta-chip-flat warn">Tanpa Izin Masuk</span>'
+      );
+    }
+    if (laporan.biaya_perbaikan && Number(laporan.biaya_perbaikan) > 0) {
+      metaTags.push(`<span class="meta-chip-flat">Biaya Internal: ${escapeHtml(formatRupiah(laporan.biaya_perbaikan))}</span>`);
+    }
+    if (laporan.jadwal_pengerjaan) {
+      metaTags.push(`<span class="meta-chip-flat info">Jadwal: ${escapeHtml(formatDateTimeIndo(laporan.jadwal_pengerjaan))} WIB</span>`);
+    }
+    const metaRow = metaTags.length > 0 ? `<div class="card-meta-line">${metaTags.join('')}</div>` : '';
 
     return `
       <a class="report-card ${isActiveUrgent ? 'urgent-card' : ''}" href="owner-detail-laporan.html?id=${encodeURIComponent(laporan.id_laporan)}">
@@ -310,9 +316,6 @@ const SarprasApp = (() => {
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0;">
             <span class="report-code">${escapeHtml(laporan.kode_tiket)}</span>
             ${urgentPill}
-            ${terdampakPill}
-            ${izinPill}
-            ${biayaBadge}
           </div>
           <span class="status-badge ${statusMeta.className}">
             <span class="status-dot"></span>
@@ -320,17 +323,17 @@ const SarprasApp = (() => {
           </span>
         </div>
         <div class="report-card-body">
-          <div class="report-cat-icon">
+          <div class="report-cat-icon" aria-hidden="true">
             ${getCategoryIconSvg(laporan.nama_kategori)}
           </div>
           <div class="report-card-text">
             <div class="report-title">${escapeHtml(laporan.judul_laporan)}</div>
             <div class="report-sub">${escapeHtml(pelapor)} &bull; ${escapeHtml(tanggal)}</div>
-            <div class="report-sub" style="color:#2563EB;font-weight:500;">${escapeHtml(laporan.nama_fasilitas || '-')} (${escapeHtml(laporan.kode_aset || '-')})</div>
-            ${scheduleLine}
+            <div class="report-sub" style="color:#1D4ED8;font-weight:500;">${escapeHtml(laporan.nama_fasilitas || '-')} (${escapeHtml(laporan.kode_aset || '-')})</div>
+            ${metaRow}
           </div>
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#94A3B8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6.375 12.75L10.625 8.5L6.375 4.25" stroke="#526075" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
       </a>
@@ -347,8 +350,8 @@ const SarprasApp = (() => {
     if (!riwayatList || riwayatList.length === 0) {
       return `<div class="empty-state">${escapeHtml(emptyText)}</div>`;
     }
-    const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M9.99969 3L4.50024 8.4996L2.00049 5.99978" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    const closeSvg = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M9 3L3 9M3 3L9 9" stroke="#B91C1C" stroke-width="1.6" stroke-linecap="round"/></svg>';
+    const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M9.99969 3L4.50024 8.4996L2.00049 5.99978" stroke="#2563EB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const closeSvg = '<svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M9 3L3 9M3 3L9 9" stroke="#B91C1C" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
     return riwayatList.map((entry, index) => {
       const isLast = index === riwayatList.length - 1;
@@ -374,7 +377,7 @@ const SarprasApp = (() => {
         ? `<span class="timeline-cost-pill">Biaya Internal: ${escapeHtml(formatRupiah(entry.biaya_perbaikan))}</span>`
         : '';
       const photoHtml = entry.foto_sesudah_url
-        ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" onerror="this.closest('.photo-box').style.display='none'" /></div>`
+        ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" width="600" height="252" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" onerror="this.closest('.photo-box').style.display='none'" /></div>`
         : '';
 
       return `
@@ -400,6 +403,8 @@ const SarprasApp = (() => {
     }).join('');
   }
 
+  let lastSheetTrigger = null;
+
   function syncMobileShellSheetState() {
     const shell = document.querySelector('.mobile-shell');
     if (!shell) return;
@@ -407,36 +412,81 @@ const SarprasApp = (() => {
     shell.classList.toggle('sheet-open', anyOpen);
   }
 
-  function attachSheetControls() {
-    document.querySelectorAll('[data-close-sheet]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-close-sheet');
-        const el = document.getElementById(targetId);
-        if (el) el.classList.remove('open');
-        syncMobileShellSheetState();
-      });
-    });
-
-    document.querySelectorAll('.sheet-backdrop').forEach((backdrop) => {
-      backdrop.addEventListener('click', (e) => {
-        if (e.target === backdrop) {
-          backdrop.classList.remove('open');
+  function ensureGlobalSheetEscapeListener() {
+    if (typeof document === 'undefined' || window.__sarprasSheetEscapeReady) return;
+    window.__sarprasSheetEscapeReady = true;
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const openSheets = document.querySelectorAll('.sheet-backdrop.open');
+      if (!openSheets.length) return;
+      openSheets.forEach((sheet) => {
+        if (sheet.id) {
+          closeSheet(sheet.id);
+        } else {
+          sheet.classList.remove('open');
           syncMobileShellSheetState();
         }
       });
     });
   }
 
+  function attachSheetControls() {
+    ensureGlobalSheetEscapeListener();
+    document.querySelectorAll('[data-close-sheet]').forEach((btn) => {
+      if (btn.dataset.sheetCloseBound === '1') return;
+      btn.dataset.sheetCloseBound = '1';
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-close-sheet');
+        closeSheet(targetId);
+      });
+    });
+
+    document.querySelectorAll('.sheet-backdrop').forEach((backdrop) => {
+      if (backdrop.dataset.sheetBackdropBound === '1') return;
+      backdrop.dataset.sheetBackdropBound = '1';
+      backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) {
+          if (backdrop.id) closeSheet(backdrop.id);
+          else {
+            backdrop.classList.remove('open');
+            syncMobileShellSheetState();
+          }
+        }
+      });
+    });
+  }
+
   function openSheet(id) {
+    ensureGlobalSheetEscapeListener();
     const el = document.getElementById(id);
-    if (el) el.classList.add('open');
+    if (!el) return;
+    const active = document.activeElement;
+    if (active && typeof active.focus === 'function' && !el.contains(active)) {
+      lastSheetTrigger = active;
+    }
+    el.classList.add('open');
     syncMobileShellSheetState();
+    requestAnimationFrame(() => {
+      const panel = el.querySelector('.sheet-panel');
+      const focusTarget = el.querySelector('input:not([type="hidden"]):not(:disabled), select:not(:disabled), textarea:not(:disabled), button:not(:disabled), a[href]') || panel;
+      if (focusTarget) {
+        if (!focusTarget.hasAttribute('tabindex') && focusTarget === panel) {
+          focusTarget.setAttribute('tabindex', '-1');
+        }
+        focusTarget.focus({ preventScroll: true });
+      }
+    });
   }
 
   function closeSheet(id) {
     const el = document.getElementById(id);
     if (el) el.classList.remove('open');
     syncMobileShellSheetState();
+    if (!document.querySelector('.sheet-backdrop.open') && lastSheetTrigger && typeof lastSheetTrigger.focus === 'function') {
+      const triggerToFocus = lastSheetTrigger;
+      lastSheetTrigger = null;
+      requestAnimationFrame(() => triggerToFocus.focus({ preventScroll: true }));
+    }
   }
 
   async function requestJson(path, options = {}) {
@@ -564,13 +614,13 @@ const SarprasApp = (() => {
   }
 
   function createSkeletonMarkup(count = 3) {
-    return `<div class="skeleton-stack">${Array.from({ length: count }).map(() => `
+    return `<div class="skeleton-stack" role="status" aria-busy="true" aria-label="Memuat data">${Array.from({ length: count }).map(() => `
       <div class="skeleton-card" aria-hidden="true">
         <div class="skeleton-line w-40"></div>
         <div class="skeleton-line w-65"></div>
         <div class="skeleton-line w-85"></div>
       </div>
-    `).join('')}</div>`;
+    `).join('')}<span class="sr-only">Memuat data...</span></div>`;
   }
 
   function upgradeLoadingStatesToSkeletons() {
@@ -675,7 +725,10 @@ const SarprasApp = (() => {
         } catch {
           // ignore
         }
-        e.viewTransition.finished.finally(clearVtClasses);
+        if (e.viewTransition.ready) {
+          e.viewTransition.ready.catch(() => {});
+        }
+        e.viewTransition.finished.catch(() => {}).finally(clearVtClasses);
       });
 
       if ('onpageswap' in window) {
@@ -772,6 +825,7 @@ const SarprasApp = (() => {
 
   function initDynamicMotionObservers() {
     initPageTransitions();
+    attachSheetControls();
     upgradeLoadingStatesToSkeletons();
     initSegmentedPills();
     syncMobileShellSheetState();

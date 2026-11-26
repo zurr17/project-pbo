@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Laporan Terkirim â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Laporan Terkirim - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -16,19 +16,19 @@
       <div class="success-center">
         <div class="success-ring">
           <div class="success-circle">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17L4 12" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
         </div>
 
         <h2 style="margin:6px 0 0;font-size:24px;font-weight:700;color:#172554;">Laporan Berhasil Dikirim</h2>
-        <p style="margin:0;font-size:13px;line-height:1.6;color:#64748B;max-width:300px;">
+        <p style="margin:0;font-size:13px;line-height:1.6;color:#475569;max-width:300px;">
           Laporan kerusakan Anda sudah tercatat di sistem dan notifikasi telah dikirim kepada pengelola kost.
         </p>
 
         <div class="success-ticket-card" style="margin-top:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div>
-              <div style="font-size:11px;color:#64748B;">Nomor Tiket Laporan</div>
+              <div style="font-size:11px;color:#475569;">Nomor Tiket Laporan</div>
               <div id="successKode" style="font-size:17px;font-weight:700;color:#172554;margin-top:3px;">TKT-...</div>
             </div>
             <span id="successStatusBadge" class="status-badge status-menunggu">
@@ -41,12 +41,12 @@
 
           <div style="display:flex;flex-direction:column;gap:4px;">
             <div id="successJudul" style="font-size:14px;font-weight:600;color:#172554;">-</div>
-            <div id="successMeta" style="font-size:12px;color:#64748B;">-</div>
+            <div id="successMeta" style="font-size:12px;color:#475569;">-</div>
           </div>
         </div>
 
         <div class="info-banner" style="width:100%;text-align:left;">
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;" aria-hidden="true"><path d="M8.50004 11.3336V8.50001M8.50004 5.66645H8.50712M15.5839 8.50001C15.5839 12.4123 12.4124 15.5839 8.50004 15.5839C4.58771 15.5839 1.41614 12.4123 1.41614 8.50001C1.41614 4.58768 4.58771 1.41611 8.50004 1.41611C12.4124 1.41611 15.5839 4.58768 15.5839 8.50001Z" stroke="#2563EB" stroke-width="1.4" stroke-linecap="round"/></svg>
           <span>Perubahan status dan riwayat penanganan dapat dipantau kapan saja melalui halaman Riwayat atau Notifikasi.</span>
         </div>
       </div>
@@ -58,7 +58,7 @@
     </section>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       const user = SarprasApp.requirePenghuniAuth();
@@ -92,9 +92,9 @@
         document.getElementById('successKode').textContent = laporan.kode_tiket;
         document.getElementById('successJudul').textContent = laporan.judul_laporan;
         const lokasiTxt = laporan.is_umum ? 'Fasilitas Umum' : `Kamar ${laporan.nomor_kamar}`;
-        const urgentTxt = laporan.is_urgent ? ' â€¢ PRIORITAS DARURAT' : '';
+        const urgentTxt = laporan.is_urgent ? ' \u2022 PRIORITAS DARURAT' : '';
         document.getElementById('successMeta').textContent =
-          `${laporan.nama_fasilitas} (${laporan.kode_aset}) â€¢ ${lokasiTxt} â€¢ ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}${urgentTxt}`;
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) \u2022 ${lokasiTxt} \u2022 ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}${urgentTxt}`;
 
         const meta = SarprasApp.getStatusMeta(laporan.status_tiket);
         const badge = document.getElementById('successStatusBadge');

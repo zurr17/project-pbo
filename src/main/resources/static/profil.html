@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Profil Penghuni â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Profil Penghuni - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -75,7 +75,7 @@
                 name="password"
                 type="password"
                 class="input-control"
-                placeholder="Kosongkan jika tidak ingin mengubah"
+                placeholder="Kosongkan jika tidak diubah"
                 autocomplete="new-password"
               />
               <button type="button" id="toggleProfilePasswordBtn" class="input-icon-btn" aria-label="Tampilkan kata sandi">
@@ -142,7 +142,7 @@
     </div>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       let currentUser = SarprasApp.requirePenghuniAuth();
@@ -175,9 +175,9 @@
         profileHeroNama.textContent = u.nama_lengkap || '-';
         profileRoleBadge.textContent = u.role || 'PENGHUNI';
         profileHeroEmail.textContent = u.email || '-';
-        const gedungTxt = u.gedung ? `${u.gedung} â€¢ ` : '';
+        const gedungTxt = u.gedung ? `${u.gedung} \u2022 ` : '';
         profileHeroKamar.textContent = u.nomor_kamar
-          ? `${gedungTxt}Kamar ${u.nomor_kamar} â€¢ Lantai ${u.lantai || '-'}`
+          ? `${gedungTxt}Kamar ${u.nomor_kamar} \u2022 Lantai ${u.lantai || '-'}`
           : 'Kamar belum dipilih';
         profileEmailDisplay.textContent = u.email || '-';
         profileNamaInput.value = u.nama_lengkap || '';

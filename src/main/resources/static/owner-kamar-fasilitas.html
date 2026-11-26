@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kelola Kamar &amp; Fasilitas â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Kelola Kamar &amp; Fasilitas - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -257,7 +257,7 @@
     </div>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireOwnerAuth();
@@ -313,7 +313,7 @@
       function syncDropdownOptions() {
         const formatOpt = (k) => k.is_umum
           ? 'Area Fasilitas Umum (UMUM)'
-          : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} â€¢ Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} â€¢ Lantai ${SarprasApp.escapeHtml(k.lantai)}`;
+          : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} \u2022 Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)} \u2022 Lantai ${SarprasApp.escapeHtml(k.lantai)}`;
 
         const currentFilter = filterKamarSelect.value;
         filterKamarSelect.innerHTML = '<option value="">Semua Kamar</option>' +
@@ -372,7 +372,7 @@
           const meta = SarprasApp.getStatusHunianMeta(k.status_hunian);
           const roomTitle = k.is_umum
             ? 'Area Fasilitas Umum (UMUM)'
-            : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} â€¢ Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}`;
+            : `${SarprasApp.escapeHtml(k.gedung || 'Gedung 1')} \u2022 Kamar ${SarprasApp.escapeHtml(k.nomor_kamar)}`;
           const badgeHtml = k.is_umum
             ? '<span class="terdampak-pill">Fasilitas Bersama</span>'
             : `<span class="status-badge ${meta.className}"><span class="status-dot"></span>${SarprasApp.escapeHtml(meta.label)}</span>`;
@@ -435,7 +435,7 @@
           const meta = SarprasApp.getKondisiMeta(f.kondisi);
           const lokasiStr = f.is_umum
             ? 'Fasilitas Umum'
-            : `${f.gedung ? SarprasApp.escapeHtml(f.gedung) + ' â€¢ ' : ''}Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
+            : `${f.gedung ? SarprasApp.escapeHtml(f.gedung) + ' \u2022 ' : ''}Kamar ${SarprasApp.escapeHtml(f.nomor_kamar)}`;
           const activeBadgesHtml = renderActiveReportBadges(activeReportsByFasilitas.get(f.id_fasilitas));
           return `
             <article class="facility-card">

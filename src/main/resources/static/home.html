@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beranda â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Beranda - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 
 <body>
@@ -183,7 +183,7 @@
     </nav>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       let user = SarprasApp.requirePenghuniAuth();
@@ -192,9 +192,9 @@
       function applyUserHeader(u) {
         document.getElementById('greetingText').textContent = `${SarprasApp.getGreetingByHour()}, ${u.nama_lengkap}`;
         document.getElementById('heroKamar').textContent = u.nomor_kamar ? `Kamar ${u.nomor_kamar}` : 'Belum ada kamar';
-        const gedungTxt = u.gedung ? `${u.gedung} â€¢ ` : '';
-        const roomMeta = u.nomor_kamar ? `${gedungTxt}Kamar ${u.nomor_kamar} â€¢ Lantai ${u.lantai || '-'}` : 'Kost Lodaya 9';
-        document.getElementById('heroResident').textContent = `${u.nama_lengkap} â€¢ ${roomMeta}`;
+        const gedungTxt = u.gedung ? `${u.gedung} \u2022 ` : '';
+        const roomMeta = u.nomor_kamar ? `${gedungTxt}Kamar ${u.nomor_kamar} \u2022 Lantai ${u.lantai || '-'}` : 'Kost Lodaya 9';
+        document.getElementById('heroResident').textContent = `${u.nama_lengkap} \u2022 ${roomMeta}`;
       }
 
       applyUserHeader(user);

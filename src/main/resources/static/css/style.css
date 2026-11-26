@@ -10,9 +10,10 @@
   --white: #FFFFFF;
   --border: #E2E8F0;
   --text-primary: #172554;
-  --text-muted: #64748B;
-  --text-subtle: #94A3B8;
+  --text-muted: #475569;
+  --text-subtle: #526075;
   --text-on-dark-muted: #CBD5E1;
+  --shell-max: 430px;
 
   --status-wait-bg: #FEF9C3;
   --status-wait-fg: #A16207;
@@ -66,6 +67,48 @@ textarea {
   touch-action: manipulation;
 }
 
+a[href],
+button:not(:disabled),
+summary,
+select:not(:disabled),
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+button:disabled,
+select:disabled,
+input:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.input-wrap:has(:focus-visible),
+.search-box:has(:focus-visible) {
+  border-color: var(--blue);
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.input-control:focus-visible,
+.textarea-control:focus-visible,
+.search-input:focus-visible {
+  outline: none;
+}
+
 button,
 input,
 select,
@@ -73,9 +116,21 @@ textarea {
   font-family: inherit;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .mobile-shell {
   width: 100%;
-  max-width: 430px;
+  max-width: var(--shell-max);
   min-height: 100vh;
   margin: 0 auto;
   background: var(--white);
@@ -179,9 +234,9 @@ textarea {
 
 .splash-tagline {
   margin: 0;
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--white);
+  font-size: 16px;
+  font-weight: 600;
+  color: #DBEAFE;
 }
 
 .splash-desc {
@@ -189,27 +244,7 @@ textarea {
   font-size: 14px;
   line-height: 1.7;
   color: var(--text-on-dark-muted);
-  max-width: 295px;
-}
-
-.splash-features {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding-top: 6px;
-}
-
-.splash-feature-pill {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-on-dark-muted);
+  max-width: 305px;
 }
 
 .splash-footer {
@@ -225,25 +260,6 @@ textarea {
   color: var(--text-on-dark-muted);
 }
 
-/* Status bar (compact top accent matching mobile viewport) */
-.status-bar {
-  height: 44px;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.status-bar-icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-/* Page Header / App Bar */
 .app-bar {
   min-height: 68px;
   padding: 12px 24px;
@@ -283,13 +299,15 @@ textarea {
 
 .app-bar-subtitle {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .icon-btn {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--radius-pill);
   background: var(--surface-muted);
   border: none;
@@ -307,8 +325,10 @@ textarea {
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: var(--radius-md);
   background: transparent;
   border: none;
@@ -317,7 +337,7 @@ textarea {
   justify-content: center;
   color: var(--text-primary);
   cursor: pointer;
-  margin-left: -6px;
+  margin-left: -10px;
   flex-shrink: 0;
 }
 
@@ -476,7 +496,11 @@ select.input-control {
 .input-icon-btn {
   background: transparent;
   border: none;
-  padding: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 6px;
+  margin-right: -8px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -491,7 +515,10 @@ select.input-control {
   cursor: pointer;
   background: none;
   border: none;
-  padding: 0;
+  min-height: 44px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .text-link:hover {
@@ -923,19 +950,14 @@ select.input-control {
 
 .filter-tabs.five-cols {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.filter-tabs.five-cols::-webkit-scrollbar {
-  display: none;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .filter-tabs.five-cols .filter-tab {
-  flex: 0 0 auto;
-  padding: 0 12px;
+  flex: 1 0 auto;
+  min-width: 72px;
+  padding: 0 14px;
 }
 
 .segment-tabs {
@@ -966,14 +988,20 @@ select.input-control {
 .segment-tab {
   position: relative;
   z-index: 1;
-  height: 36px;
+  min-height: 44px;
+  padding: 6px 10px;
   border-radius: 9px;
   border: none;
   background: transparent;
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 600;
+  line-height: 1.25;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
   transition: color 0.2s ease, transform 0.2s var(--spring-snappy), background 0.18s ease;
 }
 
@@ -1025,7 +1053,7 @@ select.input-control {
   inset: -2px;
   border-radius: 999px;
   border: 2px solid rgba(220, 38, 38, 0.55);
-  animation: iosRadarPulse 2.2s ease-out infinite;
+  animation: iosRadarPulse 0.9s ease-out 1 forwards;
   pointer-events: none;
 }
 
@@ -1056,12 +1084,13 @@ select.input-control {
 }
 
 .filter-tab {
-  height: 36px;
+  min-height: 44px;
+  padding: 0 12px;
   border-radius: var(--radius-tab);
   border: 1px solid var(--border);
   background: var(--white);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1077,18 +1106,21 @@ select.input-control {
 .quick-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .quick-chip {
-  padding: 5px 10px;
+  min-height: 44px;
+  padding: 8px 12px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: var(--surface-muted);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
 }
 
 .quick-chip:hover {
@@ -1426,7 +1458,7 @@ select.input-control {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 430px;
+  max-width: var(--shell-max);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -1441,7 +1473,7 @@ select.input-control {
 }
 
 .bottom-nav-item {
-  height: 52px;
+  min-height: 52px;
   border: none;
   background: transparent;
   display: flex;
@@ -1449,8 +1481,8 @@ select.input-control {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  font-size: 10px;
-  font-weight: 400;
+  font-size: 11px;
+  font-weight: 500;
   color: var(--text-muted);
   cursor: pointer;
   transition: color 0.18s ease, transform 0.22s var(--spring-snappy);
@@ -1509,7 +1541,7 @@ select.input-control {
 
 .sheet-panel {
   width: 100%;
-  max-width: 430px;
+  max-width: var(--shell-max);
   background: var(--white);
   border-radius: 22px 22px 0 0;
   padding: 14px 24px 28px;
@@ -1597,8 +1629,9 @@ select.input-control {
 }
 
 .btn-sm {
-  height: 38px;
-  padding: 0 12px;
+  min-height: 44px;
+  height: auto;
+  padding: 8px 14px;
   font-size: 12px;
   border-radius: 10px;
 }
@@ -1790,6 +1823,7 @@ select.input-control {
   color: var(--text-primary);
   font-size: 10px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .priority-pill.high {
@@ -1851,7 +1885,7 @@ select.input-control {
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 430px;
+  max-width: var(--shell-max);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: saturate(180%) blur(14px);
   -webkit-backdrop-filter: saturate(180%) blur(14px);
@@ -1924,7 +1958,7 @@ select.input-control {
   word-break: break-word;
 }
 
-/* Penanda Darurat, Fasilitas Umum (+1 Terdampak), dan Kontrol Form Tambahan */
+/* Urgent indicators, public-facility alerts, and compact card metadata */
 .report-card.urgent-card,
 .notif-card.urgent-card {
   border-color: #FCA5A5;
@@ -1943,6 +1977,42 @@ select.input-control {
   color: #1D4ED8;
   font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.card-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.meta-chip-flat {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.meta-chip-flat.info {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.meta-chip-flat.ok {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.meta-chip-flat.warn {
+  background: #FEF2F2;
+  color: #B91C1C;
 }
 
 .umum-banner-section {
@@ -2010,8 +2080,10 @@ select.input-control {
 
 .checkbox-label-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
+  min-height: 44px;
+  padding: 4px 0;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
@@ -2020,9 +2092,8 @@ select.input-control {
 }
 
 .checkbox-label-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
+  width: 20px;
+  height: 20px;
   accent-color: #DC2626;
   flex-shrink: 0;
   cursor: pointer;
@@ -2043,6 +2114,7 @@ select.input-control {
   color: #1E40AF;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .izin-pill {
@@ -2053,6 +2125,7 @@ select.input-control {
   border-radius: var(--radius-sm);
   font-size: 10px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .izin-pill.ok {
@@ -2158,9 +2231,7 @@ select.input-control {
   overflow: hidden;
 }
 
-/* =====================================================================
-   Apple / iOS Motion System (GPU-Composited 60fps Transforms & Opacity)
-   ===================================================================== */
+/* Motion system (GPU-composited transforms and opacity) */
 
 @view-transition {
   navigation: auto;
@@ -2333,26 +2404,20 @@ html.vt-tab::view-transition-new(root) {
 }
 
 /* Splash Staggered Entrance */
-.splash-badge {
-  animation: iosSlideUpFade 0.42s var(--spring-ios) 0.04s both;
-}
 .splash-logo-outer {
-  animation: iosSplashPop 0.56s var(--spring-snappy) 0.1s both;
+  animation: iosSplashPop 0.56s var(--spring-snappy) 0.08s both;
 }
 .splash-title {
-  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.2s both;
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.16s both;
 }
 .splash-tagline {
-  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.26s both;
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.22s both;
 }
 .splash-desc {
-  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.32s both;
-}
-.splash-features {
-  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.38s both;
+  animation: iosSlideUpFade 0.45s var(--spring-ios) 0.28s both;
 }
 .splash-footer {
-  animation: iosSlideUpFade 0.48s var(--spring-ios) 0.44s both;
+  animation: iosSlideUpFade 0.48s var(--spring-ios) 0.34s both;
 }
 
 /* Static Page & Section Entrances */
@@ -2373,14 +2438,14 @@ html.vt-tab::view-transition-new(root) {
 
 /* Universal Page Body Section Entrance (all MPA pages incl. register, form, detail) */
 .page-body > *:not(.sheet-backdrop):not(.bottom-nav):not(.owner-bottom-action-bar):not(.report-list):not(.umum-banner-section):not(.timeline) {
-  animation: iosSlideUpFade 0.4s var(--spring-ios) both;
+  animation: iosSlideUpFade 0.28s var(--spring-ios) both;
 }
-.page-body > *:nth-child(1) { animation-delay: 0.02s; }
-.page-body > *:nth-child(2) { animation-delay: 0.06s; }
-.page-body > *:nth-child(3) { animation-delay: 0.1s; }
-.page-body > *:nth-child(4) { animation-delay: 0.14s; }
-.page-body > *:nth-child(5) { animation-delay: 0.18s; }
-.page-body > *:nth-child(6) { animation-delay: 0.22s; }
+.page-body > *:nth-child(1) { animation-delay: 0s; }
+.page-body > *:nth-child(2) { animation-delay: 0.02s; }
+.page-body > *:nth-child(3) { animation-delay: 0.04s; }
+.page-body > *:nth-child(4) { animation-delay: 0.06s; }
+.page-body > *:nth-child(5) { animation-delay: 0.08s; }
+.page-body > *:nth-child(6) { animation-delay: 0.1s; }
 
 .greeting-block,
 .hero-card,
@@ -2451,7 +2516,7 @@ html.vt-tab::view-transition-new(root) {
   transition-duration: 0.1s;
 }
 
-/* Urgent Card Red Pulse Halo */
+/* Urgent card indicator (static dot, no endless pulse loop) */
 .priority-pill.high {
   position: relative;
   gap: 5px;
@@ -2464,20 +2529,6 @@ html.vt-tab::view-transition-new(root) {
   border-radius: 50%;
   background: #DC2626;
   flex-shrink: 0;
-  box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
-  animation: iosUrgentDotPulse 2s ease-out infinite;
-}
-
-@keyframes iosUrgentDotPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.55);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(220, 38, 38, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
-  }
 }
 
 /* Banners & Dynamic Containers */
@@ -2537,10 +2588,51 @@ html.vt-tab::view-transition-new(root) {
 .skeleton-line.w-65 { width: 65%; height: 15px; }
 .skeleton-line.w-85 { width: 85%; }
 
+/* Tablet and desktop layout reflow */
+@media (min-width: 768px) {
+  :root {
+    --shell-max: 720px;
+  }
+
+  .splash-content,
+  .login-body {
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .owner-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .report-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+
+  .report-list > .empty-state,
+  .report-list > .error-banner,
+  .report-list > .loading-state,
+  .report-list > .skeleton-stack {
+    grid-column: 1 / -1;
+  }
+
+  .report-card,
+  .facility-card,
+  .notif-card {
+    min-width: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
-  *::after {
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

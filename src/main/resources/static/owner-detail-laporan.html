@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verifikasi Laporan â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Verifikasi Laporan - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
@@ -95,7 +95,7 @@
     <div id="ownerActionBar" class="owner-bottom-action-bar" style="display:none;"></div>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireOwnerAuth();
@@ -142,12 +142,12 @@
 
       function renderDetail(laporan) {
         document.getElementById('detailKodeSub').textContent = laporan.kode_tiket;
-        document.getElementById('detailMeta').textContent = `${laporan.nama_kategori} â€¢ ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
+        document.getElementById('detailMeta').textContent = `${laporan.nama_kategori} \u2022 ${SarprasApp.formatDateIndo(laporan.tgl_lapor)}`;
         document.getElementById('detailTitle').textContent = laporan.judul_laporan;
         document.getElementById('detailDesc').textContent = laporan.deskripsi_kerusakan || '-';
         document.getElementById('detailLokasi').textContent = laporan.is_umum
-          ? `Fasilitas Umum / Bersama â€¢ ${Number(laporan.jumlah_terdampak || 1)} penghuni terdampak`
-          : `${laporan.gedung ? laporan.gedung + ' â€¢ ' : ''}Kamar ${laporan.nomor_kamar} â€¢ Lantai ${laporan.lantai}`;
+          ? `Fasilitas Umum / Bersama \u2022 ${Number(laporan.jumlah_terdampak || 1)} penghuni terdampak`
+          : `${laporan.gedung ? laporan.gedung + ' \u2022 ' : ''}Kamar ${laporan.nomor_kamar} \u2022 Lantai ${laporan.lantai}`;
 
         const urgentBanner = document.getElementById('urgentPriorityBanner');
         if (laporan.is_urgent) {
@@ -175,9 +175,9 @@
         document.getElementById('detailPenghuniNama').textContent = namaPelapor;
         const kamarShort = laporan.is_umum
           ? 'Fasilitas Umum'
-          : `${laporan.gedung ? laporan.gedung + ' â€¢ ' : ''}Kamar ${laporan.nomor_kamar} â€¢ Lantai ${laporan.lantai}`;
+          : `${laporan.gedung ? laporan.gedung + ' \u2022 ' : ''}Kamar ${laporan.nomor_kamar} \u2022 Lantai ${laporan.lantai}`;
         document.getElementById('detailPenghuniMeta').textContent =
-          `${kamarShort} â€¢ ${laporan.no_hp_pelapor || 'No. HP belum diisi'}`;
+          `${kamarShort} \u2022 ${laporan.no_hp_pelapor || 'No. HP belum diisi'}`;
 
         const kMeta = SarprasApp.getKondisiMeta(laporan.kondisi_fasilitas);
         const uMeta = SarprasApp.getUrgensiMeta(laporan.tingkat_urgensi, laporan.is_urgent);

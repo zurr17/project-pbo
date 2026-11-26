@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tolak Laporan â€” SarprasKost</title>
-  <link rel="stylesheet" href="css/style.css?v=20261125v2" />
+  <title>Tolak Laporan - SarprasKost</title>
+  <link rel="stylesheet" href="css/style.css?v=20261125v3" />
 </head>
 <body>
   <main class="mobile-shell">
     <header class="app-bar">
       <a id="backToDetailBtn" href="owner-laporan.html" class="back-btn" aria-label="Kembali ke detail laporan">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path d="M10 4.166L4.16602 10L10 15.834M4.16602 10H15.834" stroke="#172554" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </a>
@@ -24,11 +24,11 @@
       <div id="summaryCard" class="summary-mini-card">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span id="summaryKode" class="report-code">Memuat...</span>
-          <span id="summaryPenghuni" style="font-size:11px;color:#64748B;">-</span>
+          <span id="summaryPenghuni" style="font-size:11px;color:#475569;">-</span>
         </div>
         <div id="summaryBadges" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"></div>
         <div id="summaryTitle" style="font-size:14px;font-weight:600;color:#172554;">Memuat detail laporan...</div>
-        <div id="summaryLokasi" style="font-size:12px;color:#64748B;">-</div>
+        <div id="summaryLokasi" style="font-size:12px;color:#475569;">-</div>
         <div id="summarySchedule" style="display:none;font-size:11px;color:#1E40AF;font-weight:600;"></div>
       </div>
 
@@ -63,7 +63,7 @@
         </div>
 
         <div class="info-banner danger">
-          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;">
+          <svg width="17" height="17" viewBox="0 0 17 17" fill="none" style="flex-shrink:0;margin-top:2px;" aria-hidden="true">
             <path d="M8.5 5.66667V8.97917M8.5 11.3333H8.50708M15.5833 8.5C15.5833 12.412 12.412 15.5833 8.5 15.5833C4.58798 15.5833 1.41667 12.412 1.41667 8.5C1.41667 4.58798 4.58798 1.41667 8.5 1.41667C12.412 1.41667 15.5833 4.58798 15.5833 8.5Z" stroke="#B91C1C" stroke-width="1.4" stroke-linecap="round" />
           </svg>
           <span>Laporan yang ditolak akan berstatus <strong>Ditolak</strong> dan penghuni akan menerima pemberitahuan.</span>
@@ -74,7 +74,7 @@
     </section>
   </main>
 
-  <script src="js/app.js?v=20261125v2"></script>
+  <script src="js/app.js?v=20261125v3"></script>
   <script>
     (async () => {
       const user = SarprasApp.requireOwnerAuth();
@@ -113,7 +113,7 @@
         document.getElementById('pageKodeSub').textContent = laporan.kode_tiket;
         document.getElementById('summaryKode').textContent = laporan.kode_tiket;
         document.getElementById('summaryPenghuni').textContent =
-          `${laporan.nama_pelapor} â€¢ ${laporan.is_umum ? 'Fasilitas Umum' : 'Kamar ' + laporan.nomor_kamar}`;
+          `${laporan.nama_pelapor} \u2022 ${laporan.is_umum ? 'Fasilitas Umum' : 'Kamar ' + laporan.nomor_kamar}`;
 
         const badges = [];
         if (laporan.is_urgent) badges.push('<span class="priority-pill high">DARURAT</span>');
@@ -129,7 +129,7 @@
 
         document.getElementById('summaryTitle').textContent = laporan.judul_laporan;
         document.getElementById('summaryLokasi').textContent =
-          `${laporan.nama_fasilitas} (${laporan.kode_aset}) â€¢ ${laporan.nama_kategori}`;
+          `${laporan.nama_fasilitas} (${laporan.kode_aset}) \u2022 ${laporan.nama_kategori}`;
         if (laporan.jadwal_pengerjaan) {
           const schEl = document.getElementById('summarySchedule');
           schEl.textContent = `Jadwal tercatat: ${SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan)} WIB`;
