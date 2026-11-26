@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sarpraskost-pwa-v1';
+const CACHE_NAME = 'sarpraskost-pwa-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -23,7 +23,8 @@ const PRECACHE_URLS = [
   '/js/app.js?v=20261125v3',
   '/manifest.json',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/logo-sarpraskost.svg'
 ];
 
 self.addEventListener('install', (event) => {

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none" role="img" aria-label="Logo SarprasKost">
+  <!-- Rounded squircle background -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="#1D54E2" />
+
+  <!-- Symmetrical white house silhouette with rounded eaves and base -->
+  <path
+    d="M256 98
+       L404 222
+       A 14 14 0 0 1 395 246
+       L366 246
+       L366 386
+       A 22 22 0 0 1 344 408
+       L168 408
+       A 22 22 0 0 1 146 386
+       L146 246
+       L117 246
+       A 14 14 0 0 1 108 222
+       Z"
+    fill="#FFFFFF"
+  />
+
+  <!-- Symmetrical rounded square windows -->
+  <rect x="174" y="264" width="34" height="34" rx="7" fill="#1D54E2" />
+  <rect x="304" y="264" width="34" height="34" rx="7" fill="#1D54E2" />
+
+  <!-- Deep navy wrench centered along x=256, flush with house base -->
+  <path
+    d="M236 178
+       A 52 52 0 0 0 227 264
+       Q 237 273 237 288
+       L237 408
+       L275 408
+       L275 288
+       Q 275 273 285 264
+       A 52 52 0 0 0 276 178
+       L276 226
+       A 20 20 0 0 1 236 226
+       Z"
+    fill="#132245"
+  />
+</svg>
