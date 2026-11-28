@@ -132,6 +132,11 @@
       });
 
       loadNotifs();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          loadNotifs();
+        }
+      });
     })();
   </script>
 </body>

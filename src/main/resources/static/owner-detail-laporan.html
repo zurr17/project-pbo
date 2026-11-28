@@ -259,15 +259,16 @@
         const statusBanner = document.getElementById('detailStatusBanner');
         const statusInfo = document.getElementById('detailStatusInfo');
 
+        const parsedOwnerNote = SarprasApp.splitCatatanAndJadwal(laporan.catatan_terakhir).catatan;
         if (statusUpper === 'DITOLAK') {
           statusBanner.className = 'info-banner danger';
-          statusInfo.textContent = laporan.catatan_terakhir || 'Laporan telah ditolak oleh pengelola kost.';
+          statusInfo.textContent = parsedOwnerNote || 'Laporan telah ditolak oleh pengelola kost.';
         } else if (statusUpper === 'SELESAI') {
           statusBanner.className = 'info-banner';
-          statusInfo.textContent = laporan.catatan_terakhir || 'Perbaikan telah selesai ditangani.';
+          statusInfo.textContent = parsedOwnerNote || 'Perbaikan telah selesai ditangani.';
         } else if (statusUpper === 'DIPROSES') {
           statusBanner.className = 'info-banner';
-          statusInfo.textContent = laporan.catatan_terakhir || 'Sedang dalam penanganan. Tekan tombol di bawah saat perbaikan selesai.';
+          statusInfo.textContent = parsedOwnerNote || 'Sedang dalam penanganan. Tekan tombol di bawah saat perbaikan selesai.';
         } else {
           statusBanner.className = 'info-banner';
           statusInfo.textContent = 'Laporan baru masuk. Setujui untuk memproses perbaikan atau tolak dengan alasan jelas.';

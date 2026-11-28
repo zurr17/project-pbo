@@ -505,7 +505,7 @@ public class LaporanService {
         String baseCatatan = !isBlank(request.catatanPenanganan())
             ? request.catatanPenanganan().trim()
             : "Laporan disetujui dan dijadwalkan untuk diperbaiki oleh pengelola.";
-        String catatan = baseCatatan + " Jadwal pengerjaan: " + formattedJadwal + ".";
+        String catatan = baseCatatan;
         BigDecimal biaya = validateBiayaNonNull(request.biayaPerbaikan());
         KondisiFasilitas nextKondisi = parseKondisiOptional(
             request.kondisiFasilitas(),

@@ -684,6 +684,19 @@ class SarpraskostApiTests {
                 .andExpect(jsonPath("$.kondisi_fasilitas").value("BAIK"))
                 .andExpect(jsonPath("$.riwayat", hasSize(2)));
 
+            MvcResult tolakNotifRes = mockMvc.perform(get("/api/notifikasi/" + raka.getIdPengguna()))
+                .andExpect(status().isOk())
+                .andReturn();
+            JsonNode tolakNotifs = objectMapper.readTree(tolakNotifRes.getResponse().getContentAsString());
+            boolean hasTolakNotif = false;
+            for (JsonNode n : tolakNotifs) {
+                if (n.get("id_laporan").asInt() == lapId2 && "Laporan Ditolak".equals(n.get("judul_notif").asText())) {
+                    hasTolakNotif = true;
+                    break;
+                }
+            }
+            assertTrue(hasTolakNotif, "Penghuni must receive Laporan Ditolak notification");
+
             mockMvc.perform(get("/api/owner/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ringkasan.total", greaterThanOrEqualTo(4)))

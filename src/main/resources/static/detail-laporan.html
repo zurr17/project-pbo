@@ -75,10 +75,17 @@
 
       <div id="latestHandlingCard" class="handler-card">
         <div class="handler-avatar">OW</div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
-          <div style="font-size:10px;color:#64748B;">Ringkasan Penanganan Terbaru</div>
-          <div id="detailCatatan" style="font-size:12px;font-weight:500;color:#172554;line-height:1.5;">
-            Menunggu verifikasi pengelola kost.
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#64748B;">Keterangan &amp; Jadwal Penanganan</div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font-size:11px;font-weight:600;color:#475569;">Keterangan Pengelola:</span>
+            <div id="detailCatatan" style="font-size:13px;font-weight:500;color:#172554;line-height:1.5;">
+              Menunggu verifikasi pengelola kost.
+            </div>
+          </div>
+          <div id="detailScheduleInline" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;padding-top:4px;border-top:1px dashed #CBD5E1;">
+            <span style="font-size:11px;font-weight:600;color:#475569;">Waktu Pengerjaan:</span>
+            <span id="detailSchedulePill" class="schedule-pill">-</span>
           </div>
           <div id="detailMetaBadges" style="display:none;flex-wrap:wrap;gap:6px;"></div>
         </div>
@@ -269,8 +276,21 @@
           ` : ''}
         `;
 
+        const parsedCatatan = SarprasApp.splitCatatanAndJadwal(laporan.catatan_terakhir);
         document.getElementById('detailCatatan').textContent =
-          laporan.catatan_terakhir || 'Menunggu verifikasi pengelola kost.';
+          parsedCatatan.catatan || 'Menunggu verifikasi pengelola kost.';
+
+        const detailScheduleInline = document.getElementById('detailScheduleInline');
+        const detailSchedulePill = document.getElementById('detailSchedulePill');
+        if (laporan.jadwal_pengerjaan) {
+          detailSchedulePill.textContent = `${SarprasApp.formatDateTimeIndo(laporan.jadwal_pengerjaan)} WIB`;
+          detailScheduleInline.style.display = 'flex';
+        } else if (parsedCatatan.jadwalText) {
+          detailSchedulePill.textContent = `${parsedCatatan.jadwalText} WIB`;
+          detailScheduleInline.style.display = 'flex';
+        } else {
+          detailScheduleInline.style.display = 'none';
+        }
 
         const scheduleHighlightCard = document.getElementById('scheduleHighlightCard');
         const scheduleHighlightText = document.getElementById('scheduleHighlightText');

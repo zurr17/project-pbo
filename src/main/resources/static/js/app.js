@@ -340,6 +340,17 @@ const SarprasApp = (() => {
     `;
   }
 
+  function splitCatatanAndJadwal(rawText) {
+    const text = (rawText || '').trim();
+    if (!text) return { catatan: '', jadwalText: '' };
+    const match = text.match(/^(.*?)\s*Jadwal pengerjaan:\s*([^.]+)\.?\s*$/i);
+    if (!match) return { catatan: text, jadwalText: '' };
+    return {
+      catatan: (match[1] || '').trim(),
+      jadwalText: (match[2] || '').trim()
+    };
+  }
+
   function renderRiwayatTimeline(riwayatList, optionsOrEmptyText = {}) {
     const opts = typeof optionsOrEmptyText === 'string'
       ? { emptyText: optionsOrEmptyText }
@@ -380,6 +391,11 @@ const SarprasApp = (() => {
         ? `<div class="photo-box has-image" style="height:126px;margin-top:6px;"><img class="photo-img" width="600" height="252" src="${escapeHtml(entry.foto_sesudah_url)}" alt="Foto sesudah perbaikan" onerror="this.closest('.photo-box').style.display='none'" /></div>`
         : '';
 
+      const parsedNote = splitCatatanAndJadwal(entry.catatan_penanganan);
+      const jadwalBadgeHtml = parsedNote.jadwalText
+        ? `<div style="margin-top:6px;"><span class="schedule-pill">Jadwal Pengerjaan: ${escapeHtml(parsedNote.jadwalText)} WIB</span></div>`
+        : '';
+
       return `
         <div class="timeline-item">
           <div class="timeline-rail">
@@ -391,7 +407,8 @@ const SarprasApp = (() => {
               <span class="timeline-label ${isLast ? 'bold' : ''}">${escapeHtml(labelText)}</span>
               <span class="timeline-time">${escapeHtml(formatDateTimeIndo(entry.waktu_update))}</span>
             </div>
-            ${entry.catatan_penanganan ? `<div class="timeline-note">${escapeHtml(entry.catatan_penanganan)}</div>` : ''}
+            ${parsedNote.catatan ? `<div class="timeline-note">${escapeHtml(parsedNote.catatan)}</div>` : ''}
+            ${jadwalBadgeHtml}
             <div class="timeline-meta">
               <span>Oleh: ${escapeHtml(entry.nama_pengguna || '-')} (${escapeHtml(entry.role_pengguna || '-')})</span>
               ${biayaHtml}
@@ -494,7 +511,11 @@ const SarprasApp = (() => {
     if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
-    const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+    const fetchOptions = { ...options, headers };
+    if (!fetchOptions.method || fetchOptions.method.toUpperCase() === 'GET') {
+      fetchOptions.cache = 'no-store';
+    }
+    const res = await fetch(`${API_BASE}${path}`, fetchOptions);
     const text = await res.text();
     let data = {};
     if (text) {
@@ -889,6 +910,7 @@ const SarprasApp = (() => {
     getCategoryIconSvg,
     renderReportCard,
     renderOwnerReportCard,
+    splitCatatanAndJadwal,
     renderRiwayatTimeline,
     attachSheetControls,
     openSheet,
