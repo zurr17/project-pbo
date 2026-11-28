@@ -35,7 +35,8 @@ CREATE TABLE public.pengguna (
     CONSTRAINT pengguna_email_key UNIQUE (email),
     CONSTRAINT pengguna_no_hp_key UNIQUE (no_hp),
     CONSTRAINT pengguna_role_check CHECK ((role)::text = ANY ((ARRAY['Penghuni'::character varying, 'Pengelola'::character varying])::text[])),
-    CONSTRAINT pengguna_id_kamar_fkey FOREIGN KEY (id_kamar) REFERENCES public.kamar(id_kamar) ON DELETE SET NULL
+    CONSTRAINT pengguna_kamar_by_role_check CHECK (((role)::text = 'Penghuni'::text AND id_kamar IS NOT NULL) OR ((role)::text = 'Pengelola'::text)),
+    CONSTRAINT pengguna_id_kamar_fkey FOREIGN KEY (id_kamar) REFERENCES public.kamar(id_kamar) ON DELETE RESTRICT
 );
 
 CREATE TABLE public.kategori_fasilitas (
@@ -189,7 +190,7 @@ INSERT INTO public.pengguna (id_pengguna, nama_lengkap, email, no_hp, password_h
 (1, 'Raka Pratama', 'raka@kost.id', '0812-3456-7890', '$2y$10$hashedpass01', 'Penghuni', 1),
 (2, 'Nadia Putri', 'nadia@kost.id', '0857-9876-5432', '$2y$10$hashedpass02', 'Penghuni', 2),
 (3, 'Dimas Anggara', 'dimas@kost.id', '0896-1122-3344', '$2y$10$hashedpass03', 'Penghuni', 9),
-(4, 'Pak Soleh', 'soleh.pengelola@kost.id', '0811-2233-4455', '$2y$10$hashedpass04', 'Pengelola', NULL);
+(4, 'Pak Soleh', 'soleh.pengelola@kost.id', '+62 812-2834-0386', '$2y$10$hashedpass04', 'Pengelola', NULL);
 
 INSERT INTO public.kategori_fasilitas (id_kategori, nama_kategori, deskripsi) OVERRIDING SYSTEM VALUE VALUES
 (1, 'Elektronik', 'Perangkat pendingin udara, pemanas air, dan elektronik kamar'),
